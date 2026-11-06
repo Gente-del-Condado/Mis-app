@@ -25,7 +25,7 @@ from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 
 
 class SupervisorUncertain(Problem):
@@ -204,6 +204,35 @@ class Supervisor:
                     "supervisor_uncertain",
                 ) from exc
             raise Problem("No se pudo consultar el Supervisor.", "supervisor_unavailable") from exc
+
+    def logs(self, path):
+        if not self.token:
+            raise Problem("Supervisor no disponible.", "supervisor_missing")
+        limit = 512 * 1024
+        try:
+            with httpx.Client(transport=self.transport, trust_env=False, timeout=20) as client:
+                with client.stream(
+                    "GET",
+                    "http://supervisor" + path,
+                    headers={"Authorization": f"Bearer {self.token}", "Accept": "text/plain"},
+                ) as response:
+                    if response.status_code >= 400:
+                        raise Problem(
+                            "No se pudieron leer los logs de la aplicación.", "app_logs_failed"
+                        )
+                    chunks = bytearray()
+                    truncated = False
+                    for chunk in response.iter_bytes():
+                        room = limit - len(chunks)
+                        chunks.extend(chunk[:room])
+                        if len(chunk) > room:
+                            truncated = True
+                            break
+                    return chunks.decode("utf-8", errors="replace"), truncated
+        except httpx.HTTPError as exc:
+            raise Problem(
+                "No se pudieron leer los logs de la aplicación.", "app_logs_failed"
+            ) from exc
 
 
 class Manager:

@@ -15,6 +15,7 @@ el botón anterior y selecciona **HA Private Git Manager**.
 - Claves SSH Ed25519, identidades de servidor verificadas y HTTPS con token.
 - Instalación, desinstalación y actualización desde el gestor, control de ejecución y sincronización programada.
 - Borrado individual de copias locales y ocultación reversible de aplicaciones del catálogo maestro.
+- Configuración YAML validada y logs de cada aplicación con búsqueda, refresco automático y descarga.
 - Trabajos en segundo plano, recuperación explícita y registros filtrables/exportables.
 
 Abre la pestaña **Documentación** para comenzar. Compatible con aarch64 y amd64. Requiere Supervisor.

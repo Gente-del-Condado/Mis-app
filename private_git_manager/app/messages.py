@@ -1,6 +1,7 @@
 """Stable event identifiers, translated for the UI; container logs default to Spanish."""
 
 EVENTS = {
+    "app_configured": ("Configuración de la aplicación guardada.", "App configuration saved."),
     "app_uninstalled": (
         "Aplicación desinstalada; código local conservado.",
         "App uninstalled; local source kept.",

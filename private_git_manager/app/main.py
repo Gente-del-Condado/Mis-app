@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Res
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
+from .application import Applications
 from .core import VERSION, Manager, Problem, endpoint
 from .documentation import RepositoryDocs
 from .jobs import Jobs, Scheduler
@@ -177,6 +178,16 @@ class RemoveInput(UninstallInput):
 class RecoveryInput(ConfirmInput):
     accept_current: bool = False
     retry_uninstall: bool = False
+
+
+class ConfigurationInput(Input):
+    yaml: str = Field(min_length=1, max_length=24000)
+
+
+class ConfigurationSave(ConfigurationInput):
+    expected_revision: str = Field(min_length=64, max_length=64)
+    restart: bool = False
+    confirmed: bool = False
 
 
 def confirmed(body):
@@ -413,6 +424,41 @@ def restore_app(repo_id: str, body: PreflightInput):
     with mutation():
         manager.restore_app(repo_id, body.slug)
         return {"ok": True}
+
+
+@app.get("/api/repos/{repo_id}/apps/{slug}/configuration")
+def app_configuration(repo_id: str, slug: str):
+    return Applications(manager).configuration(repo_id, slug)
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/configuration/validate")
+def validate_configuration(repo_id: str, slug: str, body: ConfigurationInput):
+    with mutation():
+        Applications(manager).validate(repo_id, slug, body.yaml)
+        return {"valid": True}
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/configuration")
+def save_configuration(repo_id: str, slug: str, body: ConfigurationSave, request: Request):
+    confirmed(body)
+    return queued(
+        request,
+        "configure",
+        "repo:" + repo_id,
+        lambda: Applications(manager).save(
+            repo_id, slug, body.yaml, body.expected_revision, body.restart
+        ),
+    )
+
+
+@app.get("/api/repos/{repo_id}/apps/{slug}/logs")
+def app_logs(repo_id: str, slug: str, download: bool = False):
+    result = Applications(manager).logs(repo_id, slug)
+    if download:
+        return PlainTextResponse(
+            result["text"], headers={"Content-Disposition": f'attachment; filename="{slug}.log"'}
+        )
+    return result
 
 
 @app.post("/api/apps/{slug}/recover")

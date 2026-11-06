@@ -401,6 +401,15 @@ function appRow(repo, app, busy = false) {
         data + ' data-document="docs"',
       );
   }
+  if (repo && runtime && !app.blocked_reason && (!deployment || managed)) {
+    buttons += button("app-logs", t("appLogs"), data);
+    if (!transaction)
+      buttons += button(
+        "app-configuration",
+        t("configureApp"),
+        data + (disabled ? " disabled" : ""),
+      );
+  }
   if (managed && !transaction) {
     if (state.supervisor && runtime) {
       buttons += button(
@@ -525,10 +534,11 @@ function showView(next) {
   render();
 }
 function modal(type, title, body, footer = actions(), context = {}) {
+  clearTimeout(modalContext.timer);
   modalContext = { type, ...context };
   $("#modal").classList.toggle(
     "documentation-dialog",
-    type === "documentation",
+    ["documentation", "app-configuration", "app-logs"].includes(type),
   );
   $("#modal-title").textContent = title;
   $("#modal-body").innerHTML = body;
@@ -541,7 +551,7 @@ function modal(type, title, body, footer = actions(), context = {}) {
   if (!context.safeFocus)
     requestAnimationFrame(() =>
       $(
-        "#modal-form input:not([type=hidden]), #modal-form select, #modal-actions button",
+        "#modal-form textarea, #modal-form input:not([type=hidden]), #modal-form select, #modal-actions button",
       )?.focus(),
     );
 }
@@ -717,11 +727,143 @@ function confirm(title, text, callback, queued = false) {
     safeFocus: true,
   });
 }
-function closeModal() {
+function applicationPath(repo, slug) {
+  return `repos/${encodeURIComponent(repo)}/apps/${encodeURIComponent(slug)}`;
+}
+function modalMessage(message) {
+  $("#modal-notice").textContent = message;
+  $("#modal-notice").hidden = false;
+}
+async function openAppConfiguration(repo, slug) {
+  const config = await api(`${applicationPath(repo, slug)}/configuration`);
+  modal(
+    "app-configuration",
+    `${t("configureApp")}: ${config.name || slug}`,
+    `<p id="configuration-help">${esc(t("configurationHelp"))}</p><label for="app-configuration-yaml">${esc(t("configurationYaml"))}</label><textarea id="app-configuration-yaml" name="yaml" class="configuration-editor" required maxlength="24000" rows="17" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off" aria-describedby="configuration-help modal-notice"></textarea><div class="config-toolbar">${button("validate-configuration", t("validateConfiguration"))}</div><label class="radio" for="configuration-restart"><input id="configuration-restart" type="checkbox" name="restart" value="true">${esc(t("configurationRestart"))}</label><details><summary>${esc(t("configurationSchema"))}</summary><pre class="schema-view">${esc(JSON.stringify(config.schema, null, 2))}</pre></details>`,
+    button(
+      "discard-configuration",
+      t("discardChanges"),
+      'aria-describedby="modal-notice"',
+      "danger discard-config",
+    ) + actions("saveConfiguration"),
+    {
+      repo,
+      slug,
+      revision: config.revision,
+      original: config.yaml,
+      queued: true,
+    },
+  );
+  $("#app-configuration-yaml").value = config.yaml;
+}
+async function validateAppConfiguration(node) {
+  if (!$("#modal-form").reportValidity()) return;
+  const context = modalContext;
+  node.disabled = true;
+  try {
+    await api(
+      `${applicationPath(context.repo, context.slug)}/configuration/validate`,
+      "POST",
+      { yaml: $("#app-configuration-yaml").value },
+    );
+    if (modalContext === context) modalMessage(t("configurationValid"));
+  } catch (error) {
+    if (modalContext === context) {
+      $("#app-configuration-yaml").setAttribute("aria-invalid", "true");
+      modalMessage(errorText(error));
+      $("#app-configuration-yaml").focus();
+    }
+  } finally {
+    node.disabled = false;
+  }
+}
+function renderApplicationLogs(context) {
+  if (modalContext !== context || !$("#application-log-output")) return;
+  const output = $("#application-log-output");
+  const follow =
+    output.scrollHeight - output.clientHeight - output.scrollTop < 32;
+  const search = $("#application-log-search").value.toLocaleLowerCase();
+  output.textContent =
+    (context.text || "")
+      .split("\n")
+      .filter((line) => !search || line.toLocaleLowerCase().includes(search))
+      .join("\n") || t("noAppLogs");
+  if (follow) output.scrollTop = output.scrollHeight;
+}
+async function refreshApplicationLogs(context = modalContext) {
+  if (context.type !== "app-logs" || context.busy || context !== modalContext)
+    return;
+  clearTimeout(context.timer);
+  context.busy = true;
+  try {
+    const result = await api(
+      `${applicationPath(context.repo, context.slug)}/logs`,
+    );
+    if (context !== modalContext || !$("#modal").open) return;
+    context.text = result.text;
+    renderApplicationLogs(context);
+    $("#application-log-status").textContent =
+      `${t("lastLogRefresh")}: ${date(Date.now() / 1000)}${result.truncated ? " · " + t("logsTruncated") : ""}`;
+    $("#modal-notice").hidden = true;
+  } catch (error) {
+    if (modalContext === context) modalMessage(errorText(error));
+  } finally {
+    context.busy = false;
+    if (
+      context === modalContext &&
+      $("#modal").open &&
+      $("#application-log-auto")?.checked
+    )
+      context.timer = setTimeout(
+        () =>
+          document.hidden
+            ? scheduleApplicationLogs(context)
+            : refreshApplicationLogs(context),
+        5000,
+      );
+  }
+}
+function scheduleApplicationLogs(context) {
+  if (
+    context === modalContext &&
+    $("#modal").open &&
+    $("#application-log-auto")?.checked
+  )
+    context.timer = setTimeout(
+      () =>
+        document.hidden
+          ? scheduleApplicationLogs(context)
+          : refreshApplicationLogs(context),
+      5000,
+    );
+}
+async function openApplicationLogs(repo, slug) {
+  modal(
+    "app-logs",
+    `${t("appLogs")}: ${slug}`,
+    `<div class="app-log-toolbar"><label for="application-log-search">${esc(t("searchAppLogs"))}<input id="application-log-search" name="log_search" type="search" autocorrect="off" autocapitalize="off" spellcheck="false"></label><label class="radio" for="application-log-auto"><input id="application-log-auto" name="auto_logs" type="checkbox" checked>${esc(t("autoAppLogs"))}</label>${button("refresh-app-logs", t("refresh"))}<a class="button" download href="api/${applicationPath(repo, slug)}/logs?download=true">${esc(t("downloadAppLogs"))}</a></div><p id="application-log-status" class="muted"></p><pre id="application-log-output" class="application-log-output" tabindex="0" aria-label="${esc(t("appLogs"))}"></pre>`,
+    button("close-modal", t("close")),
+    { repo, slug, text: "" },
+  );
+  await refreshApplicationLogs();
+}
+function closeModal(discard = false) {
   if (loadingModal) return;
+  if (
+    !discard &&
+    modalContext.type === "app-configuration" &&
+    $("#app-configuration-yaml")?.value !== modalContext.original
+  ) {
+    modalMessage(t("unsavedConfiguration"));
+    const button = $("#modal-actions [data-action=discard-configuration]");
+    button.style.visibility = "visible";
+    button.focus();
+    return;
+  }
   if (modalContext.draft) {
     openRepo(modalContext.draft);
   } else {
+    clearTimeout(modalContext.timer);
     $("#modal").close();
     modalContext = {};
   }
@@ -739,15 +881,34 @@ async function queue(path, data = {}) {
   const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
     byte.toString(16).padStart(2, "0"),
   ).join("");
-  await api(path, "POST", data, id);
+  const job = await api(path, "POST", data, id);
   notice(t("accepted"));
   await refresh();
   clearTimeout(pollTimer);
   pollTimer = setTimeout(poll, 1500);
+  return job;
+}
+async function waitConfigurationJob(id) {
+  const deadline = Date.now() + 900000;
+  while (Date.now() < deadline) {
+    const result = await api("state");
+    const job = result.jobs[id];
+    if (job?.status === "succeeded") return;
+    if (job && terminal.has(job.status)) {
+      const error = new Error(job.error || t("operation_failed"));
+      error.code = job.code || "operation_failed";
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  const error = new Error(t("config_uncertain"));
+  error.code = "config_uncertain";
+  throw error;
 }
 async function submitModal(event) {
   event.preventDefault();
-  if (loadingModal) return;
+  if (loadingModal || ["app-logs", "documentation"].includes(modalContext.type))
+    return;
   loadingModal = true;
   const submits = $("#modal").querySelectorAll("button");
   submits.forEach((b) => (b.disabled = true));
@@ -827,6 +988,25 @@ async function submitModal(event) {
         confirmed: true,
         retry_uninstall: data.retry_uninstall === "true",
       });
+    if (context.type === "app-configuration") {
+      $("#app-configuration-yaml").readOnly = true;
+      modalMessage(t("processing"));
+      await api(
+        `${applicationPath(context.repo, context.slug)}/configuration/validate`,
+        "POST",
+        { yaml: data.yaml },
+      );
+      const job = await queue(
+        `${applicationPath(context.repo, context.slug)}/configuration`,
+        {
+          yaml: data.yaml,
+          expected_revision: context.revision,
+          restart: data.restart === "true",
+          confirmed: true,
+        },
+      );
+      await waitConfigurationJob(job.id);
+    }
     if (context.type === "confirm") await context.callback();
     if (context.type === "recover")
       await queue(`apps/${context.slug}/recover`, {
@@ -843,12 +1023,35 @@ async function submitModal(event) {
     $("#modal-notice").hidden = false;
   } finally {
     loadingModal = false;
+    if ($("#app-configuration-yaml"))
+      $("#app-configuration-yaml").readOnly = false;
     $("#modal")
       .querySelectorAll("button")
       .forEach((b) => (b.disabled = false));
   }
 }
 $("#modal-form").addEventListener("submit", submitModal);
+$("#modal").addEventListener("close", () => {
+  if ($("#modal").open) return;
+  clearTimeout(modalContext.timer);
+  modalContext = {};
+  $("#modal-body").replaceChildren();
+  $("#modal-actions").replaceChildren();
+});
+$("#modal-body").addEventListener("input", (event) => {
+  if (event.target.id === "app-configuration-yaml") {
+    event.target.removeAttribute("aria-invalid");
+    $("#modal-notice").hidden = true;
+  }
+  if (event.target.id === "application-log-search")
+    renderApplicationLogs(modalContext);
+});
+$("#modal-body").addEventListener("change", (event) => {
+  if (event.target.id === "application-log-auto") {
+    clearTimeout(modalContext.timer);
+    if (event.target.checked) refreshApplicationLogs();
+  }
+});
 $("#modal").addEventListener("cancel", (event) => {
   event.preventDefault();
   closeModal();
@@ -870,6 +1073,27 @@ document.addEventListener("click", async (event) => {
   if (!action) return;
   if (action === "close-modal") {
     closeModal();
+    return;
+  }
+  if (action === "discard-configuration") {
+    closeModal(true);
+    return;
+  }
+  if (action === "validate-configuration") {
+    await validateAppConfiguration(node);
+    return;
+  }
+  if (action === "refresh-app-logs") {
+    await refreshApplicationLogs();
+    return;
+  }
+  if (action === "app-configuration" || action === "app-logs") {
+    try {
+      if (action === "app-configuration") await openAppConfiguration(id, slug);
+      else await openApplicationLogs(id, slug);
+    } catch (error) {
+      notice(errorText(error), true);
+    }
     return;
   }
   if (action === "activity") {

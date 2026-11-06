@@ -1454,3 +1454,57 @@ dialog::backdrop {
   margin-block: 12px;
   overflow-wrap: anywhere;
 }
+
+.configuration-editor,
+.application-log-output,
+.schema-view {
+  font-family: ui-monospace, monospace;
+  font-size: 1rem;
+  line-height: 1.5;
+  tab-size: 2;
+}
+.configuration-editor {
+  inline-size: 100%;
+  resize: vertical;
+  min-block-size: 14rem;
+}
+.config-toolbar {
+  margin-block: 12px;
+}
+.discard-config {
+  visibility: hidden;
+}
+.app-log-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+.app-log-toolbar label {
+  margin: 0;
+}
+.application-log-output,
+.schema-view {
+  max-block-size: 55vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.documentation-dialog .dialog-actions {
+  flex-wrap: wrap;
+}
+.configuration-editor,
+.app-log-toolbar input[type="search"] {
+  font-size: max(1rem, 16px);
+}
+.config-toolbar button,
+.app-log-toolbar button,
+.app-log-toolbar .button,
+.documentation-dialog .dialog-actions button,
+.documentation-dialog .radio {
+  min-block-size: 48px;
+}

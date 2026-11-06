@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.5.0
+# HA Private Git Manager · 0.6.0
 
 ## Empezar
 
@@ -7,7 +7,7 @@
 3. Añade un repositorio con su URL, rama o etiqueta y clave. Para Forgejo con puerto personalizado: `ssh://forgejo@servidor:2233/usuario/repo.git`.
 4. Verifica la identidad del servidor: obtiene su huella, compárala por un canal de confianza y pega la huella SHA256 verificada.
 5. Guarda y sincroniza. Revisa las aplicaciones detectadas, confirma el commit e instala la deseada.
-6. Configura sus opciones desde Home Assistant. La primera instalación queda detenida; iníciala cuando esté configurada.
+6. Pulsa **Configurar** para editar sus opciones y **Logs de la aplicación** para revisar su salida. La primera instalación queda detenida; iníciala desde el gestor cuando esté configurada.
 
 Para HTTPS, utiliza una URL sin credenciales y completa usuario/token si es privado. Dejar el token vacío al cambiar credenciales elimina la credencial guardada.
 
@@ -30,6 +30,16 @@ La adopción guarda una copia del código anterior durante la operación. Si la 
 Las instalaciones y reconstrucciones continúan en segundo plano al cerrar la interfaz. Puedes consultar progreso y resultado en **Registros y actividad**.
 
 Sincronizar descarga cambios sin aplicarlos. **Actualizar / reconstruir** aplica el commit confirmado y conserva el estado de ejecución anterior. En **Editar** puedes programar comprobaciones desde 5 minutos hasta 7 días. `0` significa manual. La programación nunca instala automáticamente.
+
+## Configuración y logs de aplicaciones
+
+**Configurar** abre un editor YAML para `options` y los ajustes disponibles del Supervisor: arranque (`boot`), watchdog, puertos (`network`), actualizaciones automáticas, panel Ingress y audio. Admite opciones anidadas y referencias `!secret nombre`. Usa claves únicas de texto; pon las fechas entre comillas si deben ser cadenas.
+
+Valida antes de guardar y consulta el esquema desplegable. El Supervisor comprueba todos los ajustes al guardar. Los cambios de opciones se aplican al próximo inicio; puedes elegir reiniciar una aplicación que ya esté en marcha. Una aplicación detenida no se inicia sola. Los conflictos y errores conservan el texto del editor, y cerrar con cambios requiere descartarlos explícitamente.
+
+Las opciones no se guardan en el historial, estado ni trabajos del gestor. El editor puede mostrar credenciales y admite hasta 24.000 caracteres, dentro del límite HTTP de 32 KiB.
+
+**Logs de la aplicación** permite buscar, actualizar cada cinco segundos, pausar, refrescar manualmente y descargar. La salida se muestra como texto, con límite de 512 KiB por lectura; el refresco se pausa al ocultar la página y termina al cerrar. Se ocultan valores sensibles conocidos, aunque no se pueden detectar todos los secretos que una aplicación imprima. Los logs no se almacenan en el gestor y siguen disponibles durante una recuperación pendiente.
 
 ## Recuperación
 
@@ -63,7 +73,7 @@ El gestor necesita el rol `manager` y escritura en `/addons`. Instala solo códi
 
 ## English quick start
 
-Select **EN** in the web UI. Generate an SSH key, register the public key as a read-only deploy key, verify the server fingerprint and add a repository. Sync to detect apps, then confirm the version/commit to install. Configure options in Home Assistant before starting the app.
+Select **EN** in the web UI. Generate an SSH key, register the public key as a read-only deploy key, verify the server fingerprint and add a repository. Sync to detect apps, then confirm the version/commit to install. Use **Configure** to edit options and **App logs** to inspect output before starting the app.
 
 Jobs continue after closing the UI. Scheduled sync only downloads changes. A recovery warning means Supervisor state needs checking before restoring source or accepting a verified current version. Source recovery does not roll back images or app data. Protect app backups: they include credentials.
 

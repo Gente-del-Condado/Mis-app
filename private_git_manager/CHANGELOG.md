@@ -1,3 +1,12 @@
+# 0.6.0
+
+- Editor YAML de configuración por aplicación instalada: opciones anidadas, referencias !secret y ajustes nativos de arranque, watchdog, puertos, actualizaciones, panel Ingress y audio.
+- Validación preliminar y comprobación del Supervisor al guardar; detección de cambios desde otra ventana, conservación del editor ante errores y confirmación antes de descartar cambios.
+- Reinicio opcional tras guardar, limitado a aplicaciones que estén en marcha. Las opciones no se persisten en el estado ni historial del gestor.
+- Visor de logs por aplicación: texto seguro, búsqueda, actualización automática cada cinco segundos, pausa, refresco y descarga; límite de 512 KiB y ocultación de valores sensibles conocidos.
+- Logs disponibles durante recuperaciones pendientes y lectura privada exclusiva mediante Ingress.
+- Interfaz y documentación en español e inglés; pruebas de navegador, API y protección de datos.
+
 # 0.5.0
 
 - Selección del endpoint oficial: actualizar cuando cambia la versión y reconstruir código local cuando mantiene su versión.
