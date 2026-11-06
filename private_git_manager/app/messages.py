@@ -1,6 +1,8 @@
 """Stable event identifiers, translated for the UI; container logs default to Spanish."""
 
 EVENTS = {
+    "app_removed": ("Copia local eliminada.", "Local copy deleted."),
+    "app_restored": ("Aplicación visible de nuevo en el catálogo.", "App restored to the catalog."),
     "local_adopted": (
         "Carpeta local adoptada por el gestor.",
         "Local folder adopted by the manager.",

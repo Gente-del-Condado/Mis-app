@@ -14,6 +14,7 @@ el botón anterior y selecciona **HA Private Git Manager**.
 - Presentaciones README/DOCS, iconos y catálogos maestros privados con `repository.yaml`.
 - Claves SSH Ed25519, identidades de servidor verificadas y HTTPS con token.
 - Instalación y actualización manual, control de ejecución y sincronización programada.
+- Borrado individual de copias locales y ocultación reversible de aplicaciones del catálogo maestro.
 - Trabajos en segundo plano, recuperación explícita y registros filtrables/exportables.
 
 Abre la pestaña **Documentación** para comenzar. Compatible con aarch64 y amd64. Requiere Supervisor.

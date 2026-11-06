@@ -163,6 +163,12 @@ class DeployInput(ConfirmInput):
     expected_local_digest: str | None = Field(default=None, min_length=64, max_length=64)
 
 
+class RemoveInput(ConfirmInput):
+    slug: str = Field(min_length=1, max_length=80)
+    expected_local_digest: str | None = Field(default=None, min_length=64, max_length=64)
+    hide: bool = True
+
+
 class RecoveryInput(ConfirmInput):
     accept_current: bool = False
 
@@ -357,6 +363,30 @@ def deploy(repo_id: str, body: DeployInput, request: Request):
             body.expected_local_digest,
         ),
     )
+
+
+@app.post("/api/repos/{repo_id}/remove-preflight")
+def remove_preflight(repo_id: str, body: PreflightInput):
+    with mutation():
+        return manager.inspect_removal(repo_id, body.slug)
+
+
+@app.post("/api/repos/{repo_id}/remove-app")
+def remove_app(repo_id: str, body: RemoveInput, request: Request):
+    confirmed(body)
+    return queued(
+        request,
+        "remove",
+        "repo:" + repo_id,
+        lambda: manager.remove_app(repo_id, body.slug, body.expected_local_digest, body.hide),
+    )
+
+
+@app.post("/api/repos/{repo_id}/restore-app")
+def restore_app(repo_id: str, body: PreflightInput):
+    with mutation():
+        manager.restore_app(repo_id, body.slug)
+        return {"ok": True}
 
 
 @app.post("/api/apps/{slug}/recover")

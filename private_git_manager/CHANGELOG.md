@@ -1,3 +1,12 @@
+# 0.4.0
+
+- Borrado individual de la copia local de una aplicación, incluida una copia ya desvinculada, sin borrar las demás aplicaciones de un catálogo maestro ni el repositorio Git.
+- Revisión de la ruta, consentimiento explícito y comprobación de desinstalación en Home Assistant antes del borrado. Rechazo de carpetas ajenas, enlaces y borrado del propio gestor.
+- Ocultación opcional del catálogo persistente entre sincronizaciones y reinicios, con opción de volver a mostrar sin instalar.
+- Diario de borrado y recuperación explícita tras fallos o reinicios; limpieza limitada a la carpeta apartada para la aplicación.
+- Reinstalación de aplicaciones gestionadas que se habían desinstalado desde Home Assistant; indicación de estado real y controles de ejecución únicamente cuando está instalada.
+- Interfaz, registros y documentación actualizados en español e inglés.
+
 # 0.3.0
 
 - Fichas para repositorios individuales y catálogos maestros privados con `repository.yaml`, `.yml` o `.json`.

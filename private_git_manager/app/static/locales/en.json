@@ -226,7 +226,9 @@
     "recovered": "Source recovered. Review runtime state.",
     "released": "App released from this manager.",
     "startup": "Manager ready.",
-    "local_adopted": "Local folder adopted by the manager."
+    "local_adopted": "Local folder adopted by the manager.",
+    "app_removed": "Local copy deleted.",
+    "app_restored": "App restored to the catalog."
   },
   "invalid_identifier": "Invalid identifier.",
   "invalid_url": "Invalid URL.",
@@ -312,5 +314,17 @@
   "documentation_image": "The repository image is invalid or uses an unsupported format.",
   "catalog_invalid": "The repository.yaml metadata file is invalid.",
   "gitRepository": "Git repository",
-  "manager_self": "Update through Home Assistant"
+  "manager_self": "Update through Home Assistant",
+  "removeApp": "Delete app",
+  "removeAppText": "Only this local source folder and its manager record will be deleted. The remote repository and other apps are kept. Uninstall the app from Home Assistant first.",
+  "removeAppConsent": "I confirm that I want to delete this local copy.",
+  "hideApp": "Also hide this app from the manager catalog (you can show it again).",
+  "hiddenApps": "Hidden apps ({count})",
+  "restoreApp": "Show again",
+  "finishRemoval": "Finish deletion",
+  "finishRemovalText": "The manager will check that the app is still uninstalled and finish deleting the folder set aside for this deletion. Other apps are kept.",
+  "job_remove": "App deletion",
+  "notInstalled": "Not installed",
+  "removal_forbidden": "This app cannot be deleted.",
+  "app_missing": "App not found."
 }

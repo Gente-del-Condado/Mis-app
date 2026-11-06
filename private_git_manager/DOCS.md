@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.3.0
+# HA Private Git Manager · 0.4.0
 
 ## Empezar
 
@@ -43,7 +43,11 @@ No borres las carpetas ocultas `.pgm-stage-*` o `.pgm-backup-*` mientras haya re
 
 Para rotar una clave, crea otra, registra la pública, cambia las credenciales y sincroniza antes de revocar la anterior. Las claves y servidores en uso no se pueden eliminar.
 
-Desinstala aplicaciones desde Home Assistant. **Desvincular** retira su registro del gestor conservando el código local. Solo se pueden eliminar repositorios sin aplicaciones gestionadas.
+Desinstala primero la aplicación desde Home Assistant. **Borrar aplicación** elimina únicamente su carpeta local `/addons/<slug>` y su registro, después de revisar la ruta y confirmar. También permite borrar copias ya desvinculadas. Las demás aplicaciones del maestro y el repositorio Git se conservan.
+
+La casilla **Ocultar también esta aplicación** evita que siga apareciendo como disponible; la preferencia sobrevive a sincronizaciones y reinicios. **Aplicaciones ocultas → Volver a mostrar** restaura su ficha sin instalarla. Desmarca la casilla al borrar si quieres mantenerla visible.
+
+**Desvincular** solo retira el registro y conserva sus archivos. Solo se pueden eliminar repositorios sin aplicaciones gestionadas. Si un borrado falla, utiliza **Revisar recuperación → Terminar borrado**; conserva las carpetas `.pgm-remove-*` hasta completarlo. Se comprueba el Supervisor antes de borrar, y no se borran aplicaciones instaladas.
 
 ## Registros y privacidad
 
@@ -60,3 +64,5 @@ El gestor necesita el rol `manager` y escritura en `/addons`. Instala solo códi
 Select **EN** in the web UI. Generate an SSH key, register the public key as a read-only deploy key, verify the server fingerprint and add a repository. Sync to detect apps, then confirm the version/commit to install. Configure options in Home Assistant before starting the app.
 
 Jobs continue after closing the UI. Scheduled sync only downloads changes. A recovery warning means Supervisor state needs checking before restoring source or accepting a verified current version. Source recovery does not roll back images or app data. Protect app backups: they include credentials.
+
+To remove one app: uninstall it in Home Assistant, then use **Delete app**. Other catalog apps and the remote repository are preserved. Optionally hide its listing and restore it later from **Hidden apps → Show again**. **Release** keeps its source folder. Interrupted deletion can be completed through **Review recovery → Finish deletion**.

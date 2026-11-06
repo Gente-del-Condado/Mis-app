@@ -131,6 +131,7 @@ async function api(path, method = "GET", data, requestId) {
 }
 async function refresh() {
   const next = await api("state");
+  let runtimeChanged = false;
   for (const job of Object.values(next.jobs)) {
     if (
       state &&
@@ -139,6 +140,7 @@ async function refresh() {
       !rememberedJobs.has(job.id)
     ) {
       rememberedJobs.add(job.id);
+      runtimeChanged = true;
       notice(
         job.status === "succeeded"
           ? t("stage_done")
@@ -148,6 +150,7 @@ async function refresh() {
     }
   }
   state = next;
+  if (runtimeChanged) await checkSupervisor();
   if (disconnected) {
     disconnected = false;
     notice(t("connectedAgain"));
@@ -296,7 +299,7 @@ function renderRepos() {
   else
     html += filtered
       .map((r) => {
-        const managed = r.apps.some(
+        const managed = visibleApps(r).some(
           (a) =>
             state.deployments[a.slug]?.repo_id === r.id &&
             appHasChanges(r, a, state.deployments[a.slug]),
@@ -304,7 +307,7 @@ function renderRepos() {
         const busy = Object.values(state.jobs).some(
           (j) => j.resource === "repo:" + r.id && !terminal.has(j.status),
         );
-        return `<article class="card"><div class="repo-head"><div class="repo-icon" aria-hidden="true">${r.catalog?.icon_path ? `<img src="${esc(repositoryAsset(r.id, r.catalog.icon_path))}" alt="" loading="lazy">` : "⑂"}</div><div class="repo-main"><h3 class="repo-name">${esc(r.name)}</h3>${r.catalog ? `<div class="catalog-meta">${badge(t(r.catalog.kind === "collection" ? "masterRepository" : r.catalog.kind === "single" ? "singleRepository" : "gitRepository"))} <span>${esc(t("catalogAppCount", { count: r.apps.length }))}</span>${r.catalog.name ? `<strong>${esc(r.catalog.name)}</strong>` : ""}${r.catalog.maintainer ? `<span>${esc(r.catalog.maintainer)}</span>` : ""}</div>${r.catalog.description ? `<p class="catalog-summary">${esc(r.catalog.description)}</p>` : ""}` : ""}<div class="repo-url">${esc(r.url)}</div><div class="repo-meta"><span>⑂ ${esc(r.ref)}</span><span>${r.url.startsWith("https:") ? "HTTPS" : "SSH"}</span><span>${esc(short(r.commit))}</span><span>${esc(r.sync_interval ? t("every", { minutes: r.sync_interval / 60 }) : t("manual"))}</span></div></div>${badge(busy ? t("running") : managed ? t("changes") : r.commit ? t("synced") : t("pending"), busy || managed ? "pending" : "")}<div class="repo-actions">${r.commit ? button("readme", t(r.catalog?.kind === "collection" ? "viewCatalog" : "viewReadme"), controls(r.id)) : ""}${button("sync", "↻ " + t("sync"), controls(r.id) + (busy ? " disabled" : ""))}${button("edit-repo", t("edit"), controls(r.id))}${button("credentials", t("credentials"), controls(r.id))}${button("delete-repo", t("remove"), controls(r.id), "subtle danger")}</div></div><div class="sync-time">${esc(t("lastSync"))}: ${esc(date(r.synced_at))}</div>${r.apps.map((a) => appRow(r, a, busy)).join("")}${r.commit && !r.apps.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
+        return `<article class="card"><div class="repo-head"><div class="repo-icon" aria-hidden="true">${r.catalog?.icon_path ? `<img src="${esc(repositoryAsset(r.id, r.catalog.icon_path))}" alt="" loading="lazy">` : "⑂"}</div><div class="repo-main"><h3 class="repo-name">${esc(r.name)}</h3>${r.catalog ? `<div class="catalog-meta">${badge(t(r.catalog.kind === "collection" ? "masterRepository" : r.catalog.kind === "single" ? "singleRepository" : "gitRepository"))} <span>${esc(t("catalogAppCount", { count: visibleApps(r).length }))}</span>${r.catalog.name ? `<strong>${esc(r.catalog.name)}</strong>` : ""}${r.catalog.maintainer ? `<span>${esc(r.catalog.maintainer)}</span>` : ""}</div>${r.catalog.description ? `<p class="catalog-summary">${esc(r.catalog.description)}</p>` : ""}` : ""}<div class="repo-url">${esc(r.url)}</div><div class="repo-meta"><span>⑂ ${esc(r.ref)}</span><span>${r.url.startsWith("https:") ? "HTTPS" : "SSH"}</span><span>${esc(short(r.commit))}</span><span>${esc(r.sync_interval ? t("every", { minutes: r.sync_interval / 60 }) : t("manual"))}</span></div></div>${badge(busy ? t("running") : managed ? t("changes") : r.commit ? t("synced") : t("pending"), busy || managed ? "pending" : "")}<div class="repo-actions">${r.commit ? button("readme", t(r.catalog?.kind === "collection" ? "viewCatalog" : "viewReadme"), controls(r.id)) : ""}${button("sync", "↻ " + t("sync"), controls(r.id) + (busy ? " disabled" : ""))}${button("edit-repo", t("edit"), controls(r.id))}${button("credentials", t("credentials"), controls(r.id))}${button("delete-repo", t("remove"), controls(r.id), "subtle danger")}</div></div><div class="sync-time">${esc(t("lastSync"))}: ${esc(date(r.synced_at))}</div>${visibleApps(r).map((a) => appRow(r, a, busy)).join("")}${hiddenApps(r)}${r.commit && !r.apps.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
       })
       .join("");
   const detached = Object.values(state.deployments).filter(
@@ -330,6 +333,14 @@ function renderRepos() {
     `<div class="info-box"><span aria-hidden="true">◇</span><div><strong>${esc(t("privateTitle"))}</strong><p>${esc(t("privateText"))}</p></div></div>`
   );
 }
+function visibleApps(repo) {
+  return repo.apps.filter((app) => !repo.hidden_apps?.includes(app.slug));
+}
+function hiddenApps(repo) {
+  const hidden = repo.hidden_apps || [];
+  if (!hidden.length) return "";
+  return `<details class="hidden-apps"><summary>${esc(t("hiddenApps", { count: hidden.length }))}</summary><ul>${hidden.map((slug) => `<li><code>${esc(slug)}</code> ${button("restore-app", t("restoreApp"), controls(repo.id) + ` data-slug="${esc(slug)}"`)}</li>`).join("")}</ul></details>`;
+}
 function appRow(repo, app, busy = false) {
   const deployment = state.deployments[app.slug],
     managed = deployment?.repo_id === repo?.id,
@@ -343,7 +354,9 @@ function appRow(repo, app, busy = false) {
     : transaction
       ? t("recovery")
       : managed
-        ? deployment.status === "installed"
+        ? supervisor?.connected && !runtime && !transaction
+          ? t("notInstalled")
+          : deployment.status === "installed"
           ? changed
             ? t("changes")
             : t("installed")
@@ -367,7 +380,7 @@ function appRow(repo, app, busy = false) {
       )
     : button(
         "deploy",
-        managed ? t("update") : t("install"),
+        managed && (!supervisor?.connected || runtime) ? t("update") : t("install"),
         data + (disabled ? " disabled" : ""),
         managed ? "" : "primary",
       );
@@ -381,7 +394,7 @@ function appRow(repo, app, busy = false) {
       );
   }
   if (managed && !transaction) {
-    if (state.supervisor) {
+    if (state.supervisor && runtime) {
       buttons += button(
         "runtime",
         t(runtime?.state === "started" ? "stop" : "start"),
@@ -401,6 +414,8 @@ function appRow(repo, app, busy = false) {
       "subtle",
     );
   }
+  if (!transaction && repo && !app.blocked_reason)
+    buttons += button("remove-app", t("removeApp"), data + (disabled ? " disabled" : ""), "subtle danger");
   return `<div class="app-row"><div class="app-description">${app.icon_path && repo ? `<img class="app-logo" src="${esc(repositoryAsset(repo.id, app.icon_path))}" alt="" loading="lazy">` : ""}<strong>${esc(app.name)}</strong> ${badge(label, transaction || deployment?.status === "error" ? "error" : changed ? "pending" : "")}<p>${metadata}</p><p>${esc(app.description)}</p>${managed ? `<p>${esc(t("appliedCommit"))}: <code>${esc(short(deployment.commit))}</code> · ${esc(t(runtime?.state || "unknown"))}</p>` : ""}</div><div class="app-actions">${buttons}</div></div>`;
 }
 function renderKeys() {
@@ -591,7 +606,7 @@ async function openDocumentation(
     if (!$("#modal").open || modalContext.request !== request) return;
     const catalog =
       !app && !path && repo.catalog?.kind === "collection"
-        ? `<section class="catalog-apps"><h3>${esc(t("catalogApplications"))}</h3>${repo.apps.map((a) => button("readme", a.name, controls(repoId) + ` data-slug="${esc(a.slug)}"`)).join("")}</section>`
+        ? `<section class="catalog-apps"><h3>${esc(t("catalogApplications"))}</h3>${visibleApps(repo).map((a) => button("readme", a.name, controls(repoId) + ` data-slug="${esc(a.slug)}"`)).join("")}</section>`
         : "";
     $("#modal-body").innerHTML =
       `${catalog}<div class="document-toolbar"><span>${esc(doc.path || "README.md")}</span><small>${esc(t("privateDocument"))}</small></div><article id="document-content" class="markdown-viewer"></article>`;
@@ -663,6 +678,7 @@ function confirm(title, text, callback, queued = false) {
   modal("confirm", title, `<p>${esc(text)}</p>`, actions("confirm"), {
     callback,
     queued,
+    safeFocus: true,
   });
 }
 function closeModal() {
@@ -690,6 +706,8 @@ async function queue(path, data = {}) {
   await api(path, "POST", data, id);
   notice(t("accepted"));
   await refresh();
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(poll, 1500);
 }
 async function submitModal(event) {
   event.preventDefault();
@@ -752,6 +770,12 @@ async function submitModal(event) {
             : null,
       });
     }
+    if (context.type === "remove-app")
+      await queue(`repos/${context.repo}/remove-app`, {
+        confirmed: true, slug: context.slug,
+        expected_local_digest: context.inspection.local_digest,
+        hide: data.hide === "true",
+      });
     if (context.type === "confirm") await context.callback();
     if (context.type === "recover")
       await queue(`apps/${context.slug}/recover`, {
@@ -937,11 +961,28 @@ document.addEventListener("click", async (event) => {
       () => queue(`apps/${slug}/${node.dataset.runtime}`, { confirmed: true }),
       true,
     );
+  if (action === "restore-app") {
+    try {
+      await api(`repos/${id}/restore-app`, "POST", { slug });
+      await refresh();
+    } catch (error) { notice(errorText(error), true); }
+  }
+  if (action === "remove-app") {
+    try {
+      const inspection = await api(`repos/${id}/remove-preflight`, "POST", { slug });
+      modal("remove-app", t("removeApp"),
+        `<p id="removal-help">${esc(t("removeAppText"))}</p><p><code>${esc(inspection.path)}</code></p><label class="radio" for="removal-hide"><input id="removal-hide" type="checkbox" name="hide" value="true" checked>${esc(t("hideApp"))}</label><label class="radio" for="removal-consent"><input id="removal-consent" type="checkbox" required aria-describedby="removal-help">${esc(t("removeAppConsent"))}</label>`,
+        actions("removeApp"), { repo: id, slug, inspection, queued: true, safeFocus: true });
+    } catch (error) { notice(errorText(error), true); }
+  }
   if (action === "release")
     confirm(t("release"), t("releaseText"), () =>
       api(`apps/${slug}/release`, "POST", { confirmed: true }),
     );
-  if (action === "recover")
+  if (action === "recover" && state.transactions[slug]?.kind === "remove") {
+    confirm(t("finishRemoval"), t("finishRemovalText"), () =>
+      queue(`apps/${slug}/recover`, { confirmed: true }), true);
+  } else if (action === "recover")
     modal(
       "recover",
       t("reviewRecovery"),

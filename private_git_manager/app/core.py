@@ -25,7 +25,7 @@ from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 
 
 class SupervisorUncertain(Problem):
@@ -812,12 +812,12 @@ class Manager:
                 "La carpeta local ha cambiado desde la revisión. Compruébala y confirma de nuevo.",
                 "local_folder_changed",
             )
-        if update != bool(previous):
+        if not previous and update:
             raise Problem(
                 "Utiliza Actualizar para aplicaciones ya gestionadas; Instalar para nuevas."
             )
         info = self.installed_info(slug)
-        if unmanaged_existing or (previous and previous.get("status") in {"error", "interrupted"}):
+        if unmanaged_existing or previous:
             update = bool(info)
         if bool(info) != update:
             raise Problem(
@@ -971,6 +971,9 @@ class Manager:
         """Explicit recovery after reviewing Supervisor; never guess after a disconnect."""
         if not re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,79}", slug):
             raise Problem("Identificador no válido.")
+        removal = self.state["transactions"].get(slug)
+        if removal and removal.get("kind") == "remove":
+            return self.finish_removal(slug)
         transaction = self.state["transactions"].get(slug)
         if not transaction:
             raise Problem("No hay una recuperación pendiente para esta aplicación.")
@@ -1072,6 +1075,110 @@ class Manager:
         # Keep source deliberately: removing a repository must never delete local app data.
         self.state["deployments"].pop(slug)
         self.event("released", slug=slug)
+
+    def inspect_removal(self, repo_id, slug):
+        repo = self.repo(repo_id)
+        previous = self.state["deployments"].get(slug)
+        if not re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,79}", slug) or slug == "private_git_manager":
+            raise Problem("No se puede borrar esta aplicación.", "removal_forbidden")
+        if previous and previous["repo_id"] != repo_id:
+            raise Problem("Otra fuente gestiona una aplicación con este slug.")
+        if not previous and not any(a["slug"] == slug for a in repo["apps"]):
+            raise Problem("Aplicación no encontrada.", "app_missing")
+        if slug in self.state["transactions"]:
+            raise Problem("Revisa primero la recuperación pendiente.", "recovery_required")
+        target = self.addons / slug
+        if target.is_symlink() or (target.exists() and not target.is_dir()):
+            raise Problem("La ruta local no es segura.", "unsafe_local_folder")
+        if target.exists() and any(target.iterdir()):
+            apps = self.discover(target, local=True)
+            if len(apps) != 1 or apps[0]["path"] != "." or apps[0]["slug"] != slug:
+                raise Problem(
+                    "La carpeta local pertenece a otra aplicación.", "local_manifest_mismatch"
+                )
+        if self.installed_info(slug):
+            raise Problem(
+                "Desinstala primero la aplicación desde Home Assistant.", "app_still_installed"
+            )
+        return {
+            "path": str(target),
+            "exists": target.exists(),
+            "local_digest": self.tree_digest(target) if target.exists() else None,
+        }
+
+    def remove_app(self, repo_id, slug, expected_local_digest=None, hide=True):
+        inspection = self.inspect_removal(repo_id, slug)
+        if inspection["local_digest"] != expected_local_digest:
+            raise Problem("La carpeta local ha cambiado desde la revisión.", "local_folder_changed")
+        # Persist intent before renaming. Recovery removes only this generated staging folder.
+        self.state["transactions"][slug] = {
+            "kind": "remove",
+            "repo_id": repo_id,
+            "slug": slug,
+            "stage": ".pgm-remove-" + uuid.uuid4().hex,
+            "digest": expected_local_digest,
+            "hide": hide,
+            "phase": "prepared",
+        }
+        self.state["deployments"].setdefault(
+            slug,
+            {
+                "repo_id": repo_id,
+                "slug": slug,
+                "status": "removing",
+                "version": "",
+            },
+        )
+        self.save()
+        self.finish_removal(slug)
+
+    def finish_removal(self, slug):
+        transaction = self.state["transactions"][slug]
+        stage_name = transaction.get("stage", "")
+        if transaction.get("kind") != "remove" or not re.fullmatch(
+            r"\.pgm-remove-[a-f0-9]{32}", stage_name
+        ):
+            raise Problem("No se puede verificar la eliminación pendiente.", "removal_forbidden")
+        if self.installed_info(slug):
+            raise Problem(
+                "Desinstala primero la aplicación desde Home Assistant.", "app_still_installed"
+            )
+        target, stage = self.addons / slug, self.addons / stage_name
+        if stage.is_symlink() or target.is_symlink():
+            raise Problem("La ruta local no es segura.", "unsafe_local_folder")
+        if transaction["phase"] == "prepared":
+            if target.exists():
+                if stage.exists() or self.tree_digest(target) != transaction["digest"]:
+                    raise Problem(
+                        "La carpeta local ha cambiado desde la revisión.", "local_folder_changed"
+                    )
+                target.rename(stage)
+            elif not stage.exists() and transaction["digest"] is not None:
+                raise Problem("No se encuentra la carpeta revisada.", "local_folder_changed")
+            transaction["phase"] = "staged"
+            self.save()
+        # A new folder at the original location is never part of this deletion.
+        self.supervisor.call("POST", "/store/reload")
+        if stage.exists() and transaction["phase"] != "purging":
+            if self.tree_digest(stage) != transaction["digest"]:
+                raise Problem(
+                    "La carpeta local ha cambiado desde la revisión.", "local_folder_changed"
+                )
+        transaction["phase"] = "purging"
+        self.save()
+        if stage.exists():
+            shutil.rmtree(stage)
+        repo = self.repo(transaction["repo_id"])
+        if transaction["hide"]:
+            repo["hidden_apps"] = sorted(set(repo.get("hidden_apps", [])) | {slug})
+        self.state["deployments"].pop(slug, None)
+        self.state["transactions"].pop(slug)
+        self.event("app_removed", repo_id=repo["id"], slug=slug, hidden=transaction["hide"])
+
+    def restore_app(self, repo_id, slug):
+        repo = self.repo(repo_id)
+        repo["hidden_apps"] = [s for s in repo.get("hidden_apps", []) if s != slug]
+        self.event("app_restored", repo_id=repo_id, slug=slug)
 
     def repo_edit(self, repo_id, name, ref, sync_interval=0):
         repo = self.repo(repo_id)

@@ -226,7 +226,9 @@
     "recovered": "Código recuperado. Revisa el estado de ejecución.",
     "released": "Aplicación desvinculada del gestor.",
     "startup": "Gestor preparado.",
-    "local_adopted": "Carpeta local adoptada por el gestor."
+    "local_adopted": "Carpeta local adoptada por el gestor.",
+    "app_removed": "Copia local eliminada.",
+    "app_restored": "Aplicación visible de nuevo en el catálogo."
   },
   "invalid_identifier": "Identificador no válido.",
   "invalid_url": "URL no válida.",
@@ -312,5 +314,17 @@
   "documentation_image": "La imagen del repositorio no es válida o no tiene un formato admitido.",
   "catalog_invalid": "El archivo de metadatos repository.yaml no es válido.",
   "gitRepository": "Repositorio Git",
-  "manager_self": "Actualizar desde Home Assistant"
+  "manager_self": "Actualizar desde Home Assistant",
+  "removeApp": "Borrar aplicación",
+  "removeAppText": "Se eliminará únicamente esta carpeta local y su registro en el gestor. El repositorio remoto y las demás aplicaciones se conservan. Desinstala antes la aplicación desde Home Assistant.",
+  "removeAppConsent": "Confirmo que quiero borrar esta copia local.",
+  "hideApp": "Ocultar también esta aplicación del catálogo del gestor (se puede volver a mostrar).",
+  "hiddenApps": "Aplicaciones ocultas ({count})",
+  "restoreApp": "Volver a mostrar",
+  "finishRemoval": "Terminar borrado",
+  "finishRemovalText": "Se comprobará que la aplicación sigue desinstalada y se terminará de eliminar la carpeta apartada para este borrado. Las demás aplicaciones se conservan.",
+  "job_remove": "Borrado de aplicación",
+  "notInstalled": "No instalada",
+  "removal_forbidden": "No se puede borrar esta aplicación.",
+  "app_missing": "Aplicación no encontrada."
 }
