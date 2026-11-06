@@ -1,3 +1,13 @@
+# 0.10.0
+
+- Descarga de copias desde el gestor: archivo .tar original por streaming, cifrado intacto y sin crear una segunda copia ni cargar el archivo completo en memoria.
+- Borrado confirmado desde el gestor, con casilla obligatoria, foco en Cancelar, ubicaciones revisadas, trabajo en segundo plano y comprobación del resultado.
+- Advertencia explícita para copias generales: se descarga o borra el archivo completo, aunque contenga otros datos o aplicaciones. La restauración sigue limitada a la aplicación seleccionada.
+- Protección ante cambios entre revisión y ejecución; exclusión de Home Assistant Link y ninguna repetición automática ante resultados inciertos.
+- Cierre del streaming al terminar, cancelar o fallar; cabeceras de descarga propias sin reenviar credenciales, cookies o nombres arbitrarios del Supervisor.
+- Corrección de una carrera de foco que podía desplazar la escritura rápida al cambiar de formulario.
+- Pruebas de HTTP y navegador, español/inglés y prefijo Ingress con transferencia real del archivo de prueba.
+
 # 0.9.0
 
 - Nuevo panel Copias de seguridad por aplicación con nombre, fecha, tamaño, ubicación y cifrado, en español e inglés.

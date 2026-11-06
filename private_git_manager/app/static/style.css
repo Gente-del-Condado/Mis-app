@@ -1565,3 +1565,5 @@ dialog::backdrop {
 .backup-list { display: grid; gap: 12px; }
 .backup-card { border: 1px solid var(--border); border-radius: 12px; padding: 16px; overflow-wrap: anywhere; }
 .backup-card p { margin: 8px 0 12px; }
+
+.backup-actions { display: flex; flex-wrap: wrap; gap: 8px; }

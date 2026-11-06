@@ -570,18 +570,13 @@ function modal(type, title, body, footer = actions(), context = {}) {
   $("#modal-body").innerHTML = body;
   $("#modal-actions").innerHTML = footer;
   $("#modal-notice").hidden = true;
-  if (context.safeFocus) {
-    $("#modal-actions [data-action=close-modal]").autofocus = true;
-  }
+  const initialFocus = context.safeFocus
+    ? $("#modal-actions [data-action=close-modal]")
+    : $("#modal-form textarea, #modal-form input:not([type=hidden]), #modal-form select, #modal-actions button");
+  if (initialFocus) initialFocus.autofocus = true;
   if (!$("#modal").open) $("#modal").showModal();
-  if (context.safeFocus)
-    $("#modal-actions [data-action=close-modal]").focus();
-  else
-    requestAnimationFrame(() =>
-      $(
-        "#modal-form textarea, #modal-form input:not([type=hidden]), #modal-form select, #modal-actions button",
-      )?.focus(),
-    );
+  // Focus before returning; a delayed callback can steal focus during fast typing.
+  initialFocus?.focus();
 }
 function repositoryAsset(repo, path) {
   return `api/repos/${encodeURIComponent(repo)}/asset?${new URLSearchParams({ path })}`;
@@ -778,7 +773,7 @@ async function openAppBackups(repo, slug) {
     const result = await api(`${applicationPath(repo, slug)}/backups`);
     if (modalContext !== current) return;
     current.installed = result.installed;
-    $("#modal-body").innerHTML = `<p>${esc(t("backupsHelp"))}</p><div class="backup-list">${result.backups.length ? result.backups.map((backup) => `<article class="backup-card"><strong>${esc(backup.name || backup.slug)}</strong><p class="muted">${esc(backupSummary(backup))}</p>${button("restore-app-backup", t("restoreBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("restoreBackup") + ": " + (backup.name || backup.slug))}"`)}</article>`).join("") : `<p class="empty">${esc(t("emptyBackups"))}</p>`}</div>`;
+    $("#modal-body").innerHTML = `<p>${esc(t("backupsHelp"))}</p><div class="backup-list">${result.backups.length ? result.backups.map((backup) => `<article class="backup-card"><strong>${esc(backup.name || backup.slug)}</strong><p class="muted">${esc(backupSummary(backup))}</p><div class="backup-actions">${button("restore-app-backup", t("restoreBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("restoreBackup") + ": " + (backup.name || backup.slug))}"`)}${button("download-app-backup", t("downloadBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("downloadBackup") + ": " + (backup.name || backup.slug))}"`)}${button("delete-app-backup", t("deleteBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("deleteBackup") + ": " + (backup.name || backup.slug))}"`, "subtle danger")}</div></article>`).join("") : `<p class="empty">${esc(t("emptyBackups"))}</p>`}</div>`;
     $("#modal-actions").innerHTML = `${button("close-modal", t("close"))}${button("refresh-app-backups", t("refresh"))}${button("create-app-backup", t("createBackup"), result.installed ? "" : "disabled", "primary")}`;
   } catch (error) {
     if (modalContext === current) modalMessage(errorText(error));
@@ -796,6 +791,22 @@ async function openRestoreBackup(repo, slug, selected) {
   modal("restore-app-backup", t("restoreBackup") + ": " + slug,
     `<p><strong>${esc(backup.name || backup.slug)}</strong></p><p>${esc(backupSummary(backup))}</p><p>${esc(t("version"))}: ${esc(backup.version)}</p><p id="backup-restore-help">${esc(t("restoreBackupHelp"))}</p>${backup.protected ? field("backupRestorePassword", "password", "", 'type="password" required maxlength="1024" autocomplete="off"') : ""}<label class="radio"><input id="backup-restore-consent" type="checkbox" name="consent" required aria-describedby="backup-restore-help">${esc(t("restoreBackupConsent"))}</label>`,
     actions("restoreBackup"), { repo, slug, selected, queued: true, safeFocus: true });
+}
+async function openBackupTransfer(repo, slug, selected, deleting) {
+  const previous = modalContext;
+  const backup = await api(`${applicationPath(repo, slug)}/backups/${encodeURIComponent(selected)}`);
+  if (modalContext !== previous) return;
+  const locationNames = backup.locations.map((item) => item || t("backupLocal")).join(", ");
+  const body = `<p><strong>${esc(backup.name || backup.slug)}</strong></p><p>${esc(backupSummary(backup))}</p><p>${esc(t(backup.other_content ? "backupSharedWarning" : "backupWholeArchive"))}</p>`;
+  if (deleting) {
+    modal("delete-app-backup", t("deleteBackup"),
+      body + `<p id="backup-delete-help">${esc(t("deleteBackupHelp", { locations: locationNames }))}</p><label class="radio"><input id="backup-delete-consent" name="consent" type="checkbox" required aria-describedby="backup-delete-help">${esc(t("deleteBackupConsent"))}</label>`,
+      actions("deleteBackup"), { repo, slug, selected, revision: backup.revision, queued: true, safeFocus: true });
+  } else {
+    const href = `api/${applicationPath(repo, slug)}/backups/${encodeURIComponent(selected)}/download?${new URLSearchParams({ expected_revision: backup.revision })}`;
+    modal("download-app-backup", t("downloadBackup"), body + `<p>${esc(t("downloadBackupHelp"))}</p>`,
+      `${button("close-modal", t("close"))}<a class="button primary" href="${esc(href)}" download="ha-backup-${esc(selected)}.tar">${esc(t("downloadBackup"))}</a>`, { repo, slug, safeFocus: true });
+  }
 }
 function configurationSignature(value) {
   if (Array.isArray(value))
@@ -1063,7 +1074,7 @@ async function waitConfigurationJob(id) {
 }
 async function submitModal(event) {
   event.preventDefault();
-  if (loadingModal || ["app-logs", "documentation", "app-backups"].includes(modalContext.type))
+  if (loadingModal || ["app-logs", "documentation", "app-backups", "download-app-backup"].includes(modalContext.type))
     return;
   loadingModal = true;
   const submits = $("#modal").querySelectorAll("button");
@@ -1149,6 +1160,11 @@ async function submitModal(event) {
         throw Object.assign(new Error(t("backupPasswordMismatch")), { code: "backupPasswordMismatch" });
       await queue(`${applicationPath(context.repo, context.slug)}/backups`, {
         name: data.name, password: data.password || null, confirmed: true,
+      });
+    }
+    if (context.type === "delete-app-backup") {
+      await queue(`${applicationPath(context.repo, context.slug)}/backups/${encodeURIComponent(context.selected)}/delete`, {
+        expected_revision: context.revision, confirmed: true,
       });
     }
     if (context.type === "restore-app-backup") {
@@ -1264,13 +1280,15 @@ document.addEventListener("click", async (event) => {
     await refreshApplicationLogs();
     return;
   }
-  if (["app-backups", "refresh-app-backups", "create-app-backup", "restore-app-backup"].includes(action)) {
+  if (["app-backups", "refresh-app-backups", "create-app-backup", "restore-app-backup", "download-app-backup", "delete-app-backup"].includes(action)) {
     const context = modalContext;
     try {
       if (action === "app-backups") await openAppBackups(id, slug);
       if (action === "refresh-app-backups") await openAppBackups(context.repo, context.slug);
       if (action === "create-app-backup") openCreateBackup(context.repo, context.slug);
       if (action === "restore-app-backup") await openRestoreBackup(context.repo, context.slug, node.dataset.backup);
+      if (action === "download-app-backup" || action === "delete-app-backup")
+        await openBackupTransfer(context.repo, context.slug, node.dataset.backup, action === "delete-app-backup");
     } catch (error) { modalMessage(errorText(error)); }
     return;
   }

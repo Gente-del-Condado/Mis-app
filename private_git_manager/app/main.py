@@ -4,11 +4,19 @@ import shutil
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 
+from anyio import CancelScope
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
+from fastapi.responses import (
+    FileResponse,
+    JSONResponse,
+    PlainTextResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
+from starlette.concurrency import run_in_threadpool
 
 from .application import Applications
 from .backups import Backups
@@ -198,6 +206,10 @@ class BackupCreate(ConfirmInput):
 
 class BackupRestore(ConfirmInput):
     password: str | None = Field(default=None, max_length=1024)
+
+
+class BackupDelete(ConfirmInput):
+    expected_revision: str = Field(min_length=64, max_length=64)
 
 
 def confirmed(body):
@@ -444,6 +456,50 @@ def app_backups(repo_id: str, slug: str):
 @app.get("/api/repos/{repo_id}/apps/{slug}/backups/{selected}")
 def app_backup_details(repo_id: str, slug: str, selected: str):
     return Backups(manager).details(repo_id, slug, selected)
+
+
+class BackupStreamingResponse(StreamingResponse):
+    def __init__(self, stream, selected):
+        self.backup_stream = stream
+        super().__init__(
+            stream.chunks(),
+            media_type="application/x-tar",
+            headers={
+                **stream.headers,
+                "Content-Disposition": f'attachment; filename="ha-backup-{selected}.tar"',
+                "Accept-Ranges": "none",
+            },
+        )
+
+    async def __call__(self, scope, receive, send):
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            # Also close if cancellation happens before the first archive chunk is requested.
+            with CancelScope(shield=True):
+                await run_in_threadpool(self.backup_stream.close)
+
+
+@app.get("/api/repos/{repo_id}/apps/{slug}/backups/{selected}/download")
+def download_app_backup(
+    repo_id: str,
+    slug: str,
+    selected: str,
+    expected_revision: str = Query(min_length=64, max_length=64),
+):
+    stream = Backups(manager).download(repo_id, slug, selected, expected_revision)
+    return BackupStreamingResponse(stream, selected)
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/backups/{selected}/delete")
+def delete_app_backup(repo_id: str, slug: str, selected: str, body: BackupDelete, request: Request):
+    confirmed(body)
+    return queued(
+        request,
+        "backup_delete",
+        "repo:" + repo_id,
+        lambda: Backups(manager).delete(repo_id, slug, selected, body.expected_revision),
+    )
 
 
 @app.post("/api/repos/{repo_id}/apps/{slug}/backups")

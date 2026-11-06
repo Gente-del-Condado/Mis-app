@@ -16,7 +16,7 @@ el botón anterior y selecciona **HA Private Git Manager**.
 - Instalación, desinstalación y actualización desde el gestor, control de ejecución y sincronización programada.
 - Borrado individual de copias locales y ocultación reversible de aplicaciones del catálogo maestro.
 - Formulario generado desde el esquema nativo de Home Assistant, traducciones de cada aplicación y YAML avanzado opcional.
-- Copias nativas por aplicación: crear, cifrar y restaurar con confirmación desde el gestor.
+- Copias nativas por aplicación: crear, cifrar, restaurar, descargar y borrar con confirmación desde el gestor.
 - Logs de cada aplicación con búsqueda, refresco automático y descarga.
 - Botón para abrir las aplicaciones mediante Ingress y la sesión de Home Assistant.
 - Trabajos en segundo plano, recuperación explícita y registros filtrables/exportables.

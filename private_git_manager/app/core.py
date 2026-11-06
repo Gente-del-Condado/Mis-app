@@ -25,7 +25,7 @@ from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.9.0"
+VERSION = "0.10.0"
 
 
 class SupervisorUncertain(Problem):
@@ -170,13 +170,15 @@ class Supervisor:
             with httpx.Client(
                 transport=self.transport,
                 trust_env=False,
-                timeout=httpx.Timeout(900 if method == "POST" else 20, connect=15),
+                timeout=httpx.Timeout(900 if method in {"POST", "DELETE"} else 20, connect=15),
             ) as client:
                 response = client.request(
                     method,
                     "http://supervisor" + path,
                     headers={"Authorization": f"Bearer {self.token}"},
-                    json=(payload if payload is not None else {}) if method == "POST" else None,
+                    json=(payload if payload is not None else {})
+                    if method in {"POST", "DELETE"}
+                    else None,
                 )
             if response.status_code >= 500:
                 raise SupervisorUncertain(
@@ -198,12 +200,17 @@ class Supervisor:
         except SupervisorRejected:
             raise
         except (httpx.HTTPError, ValueError) as exc:
-            if method == "POST":
+            if method in {"POST", "DELETE"}:
                 raise SupervisorUncertain(
                     "La conexión con Supervisor se interrumpió. La operación podría seguir en curso; comprueba su estado.",
                     "supervisor_uncertain",
                 ) from exc
             raise Problem("No se pudo consultar el Supervisor.", "supervisor_unavailable") from exc
+
+    def backup_download(self, path):
+        if not self.token:
+            raise Problem("Supervisor no disponible.", "supervisor_missing")
+        return BackupDownload(self.token, self.transport, path)
 
     def logs(self, path):
         if not self.token:
@@ -233,6 +240,57 @@ class Supervisor:
             raise Problem(
                 "No se pudieron leer los logs de la aplicación.", "app_logs_failed"
             ) from exc
+
+
+class BackupDownload:
+    """One authenticated upstream stream, closed on completion or client cancellation."""
+
+    def __init__(self, token, transport, path):
+        self.client = httpx.Client(
+            transport=transport, trust_env=False, timeout=httpx.Timeout(120, connect=15)
+        )
+        self.response = None
+        try:
+            request = self.client.build_request(
+                "GET",
+                "http://supervisor" + path,
+                headers={"Authorization": f"Bearer {token}", "Accept-Encoding": "identity"},
+            )
+            self.response = self.client.send(request, stream=True)
+            mime = self.response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+            if (
+                self.response.status_code != 200
+                or mime not in {"application/x-tar", "application/tar", "application/octet-stream"}
+                or self.response.headers.get("content-encoding", "identity") != "identity"
+            ):
+                raise ValueError("Invalid backup response")
+        except (httpx.HTTPError, ValueError) as exc:
+            self.close()
+            raise Problem(
+                "No se pudo descargar la copia. Actualiza el listado y vuelve a intentarlo.",
+                "backup_download_failed",
+            ) from exc
+
+    @property
+    def headers(self):
+        length = self.response.headers.get("content-length", "")
+        return {"Content-Length": length} if length.isascii() and length.isdigit() else {}
+
+    def chunks(self):
+        try:
+            yield from self.response.iter_bytes(chunk_size=64 * 1024)
+        except httpx.HTTPError:
+            raise Problem(
+                "La descarga se interrumpió. Vuelve a descargar la copia completa.",
+                "backup_download_failed",
+            ) from None
+        finally:
+            self.close()
+
+    def close(self):
+        if self.response is not None:
+            self.response.close()
+        self.client.close()
 
 
 class Manager:

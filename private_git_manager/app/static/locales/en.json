@@ -428,5 +428,17 @@
   "job_backup_restore": "Restore app backup",
   "stage_backupCreating": "Saving app backup in Home Assistant",
   "stage_backupRestoring": "Restoring app data and configuration",
-  "installedVersion": "Installed version"
+  "installedVersion": "Installed version",
+  "downloadBackup": "Download backup",
+  "deleteBackup": "Delete backup",
+  "backupWholeArchive": "This operation affects the entire backup archive.",
+  "backupSharedWarning": "This backup also contains other data or apps. The entire archive will be downloaded or deleted, not just this app’s part.",
+  "downloadBackupHelp": "Download the original .tar archive, retaining password encryption when present. No password is needed to download. Your browser shows progress; if interrupted, download the whole archive again. Store it safely.",
+  "deleteBackupHelp": "The entire backup will be deleted from these locations: {locations}. This cannot be undone. Installed apps and their current data are retained. Downloaded copies and Home Assistant Link will not be deleted.",
+  "deleteBackupConsent": "I understand the entire backup will be deleted from the listed locations.",
+  "backup_changed": "The backup changed. Refresh the list and review the operation again.",
+  "backup_download_failed": "The backup could not be downloaded or the transfer was interrupted. Refresh the list and download the whole archive again.",
+  "backup_delete_uncertain": "Deletion could not be confirmed. It may still be running or have been partial. Refresh backups and check Supervisor before retrying.",
+  "job_backup_delete": "Delete backup",
+  "stage_backupDeleting": "Deleting backup from reviewed locations"
 }

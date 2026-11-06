@@ -428,5 +428,17 @@
   "job_backup_restore": "Restaurar copia de seguridad",
   "stage_backupCreating": "Guardando copia de la aplicación en Home Assistant",
   "stage_backupRestoring": "Restaurando datos y configuración de la aplicación",
-  "installedVersion": "Versión instalada"
+  "installedVersion": "Versión instalada",
+  "downloadBackup": "Descargar copia",
+  "deleteBackup": "Borrar copia",
+  "backupWholeArchive": "Esta operación afecta al archivo completo de la copia de seguridad.",
+  "backupSharedWarning": "Esta copia contiene también otros datos o aplicaciones. Se descargará o borrará el archivo completo, no solo la parte de esta aplicación.",
+  "downloadBackupHelp": "Descarga el archivo .tar original, conservando su cifrado si tiene contraseña. No necesitas la contraseña para descargarlo. El navegador muestra el progreso; si se interrumpe, vuelve a descargarlo completo. Guárdalo en un lugar seguro.",
+  "deleteBackupHelp": "Se borrará esta copia completa en estas ubicaciones: {locations}. No se puede deshacer. No se desinstalarán aplicaciones ni se modificarán sus datos actuales. Las copias descargadas y Home Assistant Link no se borrarán.",
+  "deleteBackupConsent": "Entiendo que se borrará la copia completa en las ubicaciones indicadas.",
+  "backup_changed": "La copia cambió. Actualiza el listado y revisa la operación de nuevo.",
+  "backup_download_failed": "No se pudo descargar la copia o la descarga se interrumpió. Actualiza el listado y vuelve a descargarla completa.",
+  "backup_delete_uncertain": "No se pudo confirmar el borrado. Puede seguir en curso o haber sido parcial. Actualiza las copias y revisa el Supervisor antes de repetir.",
+  "job_backup_delete": "Borrar copia de seguridad",
+  "stage_backupDeleting": "Borrando copia en las ubicaciones revisadas"
 }

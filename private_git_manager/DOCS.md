@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.9.0
+# HA Private Git Manager · 0.10.0
 
 ## Empezar
 
@@ -97,6 +97,16 @@ Ambas operaciones son trabajos en segundo plano con progreso e historial en espa
 
 Estas copias nativas de datos son distintas de las copias temporales de código `.pgm-backup-*` usadas para recuperar instalaciones fallidas.
 
+### Descargar y borrar copias
+
+En **Copias de seguridad**, cada archivo ofrece **Descargar copia** y **Borrar copia**. Ambos permiten revisar nombre, fecha, tamaño, cifrado y si contiene otros datos. **La descarga y el borrado afectan al archivo completo**, también cuando la copia incluye Core, carpetas u otras aplicaciones; la restauración sigue siendo únicamente de la aplicación elegida.
+
+**Descargar copia** entrega el `.tar` original por streaming, conservando su cifrado. No requiere la contraseña ni guarda otro archivo en el gestor. La descarga utiliza la ubicación mostrada; el navegador indica el progreso y permite elegir dónde guardarla. Si se interrumpe, vuelve a descargar el archivo completo: no se ofrecen descargas parciales ni reanudación. El gestor registra el inicio, sin afirmar que la transferencia haya terminado en el navegador.
+
+**Borrar copia** muestra todas las ubicaciones accesibles que se eliminarán, pide marcar una casilla de consentimiento y enfoca inicialmente **Cancelar**. Borra el archivo completo en esas ubicaciones; no desinstala aplicaciones ni altera sus datos actuales. Las copias ya descargadas y Home Assistant Link quedan fuera del borrado. No puede deshacerse. Si cambian los datos revisados o las ubicaciones antes de ejecutar la operación, hay que actualizar y revisar de nuevo.
+
+El borrado se ejecuta en segundo plano y comprueba el resultado. Si no se puede confirmar o queda una eliminación parcial, el gestor lo indica sin reintentar automáticamente. La descarga y el borrado también están disponibles para aplicaciones desinstaladas que conservan su vínculo y código local.
+
 ## English quick start
 
 Select **EN** in the web UI. Generate an SSH key, register the public key as a read-only deploy key, verify the server fingerprint and add a repository. Sync to detect apps, then confirm the version/commit to install. Use **Configure** to edit options and **App logs** to inspect output before starting the app.
@@ -120,3 +130,13 @@ Restoring can stop/restart the app and change its installed version, shown on it
 Both operations use background jobs with translated progress and history and continue after closing the manager. Passwords are kept only in memory during the operation, never in state, jobs, logs or browser storage; retain them securely because the manager cannot recover them. A lost Supervisor connection produces an uncertain outcome with no automatic retry. Refresh backups and check the app before repeating. Interrupted jobs are never replayed on restart.
 
 These native data backups are separate from temporary `.pgm-backup-*` source trees used for deployment recovery.
+
+### Download and delete backups
+
+Each backup offers **Download backup** and **Delete backup**, with a review of its name, date, size, encryption and whether it contains other data. **Both actions affect the whole archive**, including Core, folders or other apps in a general backup. Restore remains limited to the chosen app.
+
+**Download backup** streams the original `.tar` archive from the displayed location, preserving encryption and requiring no password. No second archive is stored in the manager. Your browser handles progress and destination. Interrupted downloads must restart from the beginning; partial downloads and resuming are not offered. The manager records download start, without claiming completion in your browser.
+
+**Delete backup** shows all accessible locations to remove, requires a consent checkbox and initially focuses **Cancel**. It deletes the whole archive from those locations, keeping installed apps and their current data. Downloaded copies and Home Assistant Link are excluded. Deletion cannot be undone. If reviewed metadata or locations change before execution, refresh and review again.
+
+Deletion runs in the background and verifies the result. Unconfirmed or partial deletion is reported with no automatic retry. Downloading and deleting remain available for uninstalled apps that retain their manager link and local source.

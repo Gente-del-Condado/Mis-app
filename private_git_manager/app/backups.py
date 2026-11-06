@@ -1,8 +1,11 @@
 """App-scoped native Supervisor backups. Passwords live only in queued callbacks."""
 
+import hashlib
+import json
 import math
 import re
 from datetime import UTC, datetime
+from urllib.parse import urlencode
 
 from .application import Applications
 from .core import SupervisorUncertain
@@ -35,6 +38,27 @@ def metadata(backup):
     }
 
 
+def locations(backup):
+    result = []
+    for value in backup.get("locations") or [backup.get("location")]:
+        if value == ".cloud_backup":
+            continue
+        value = None if value in {"", ".local"} else value
+        if value not in result:
+            result.append(value)
+    return result
+
+
+def shared(backup):
+    content = backup.get("content", backup)
+    return bool(
+        backup.get("type") == "full"
+        or len(content.get("addons", content.get("apps", []))) > 1
+        or content.get("homeassistant")
+        or content.get("folders")
+    )
+
+
 class Backups:
     def __init__(self, manager):
         self.manager = manager
@@ -49,7 +73,7 @@ class Backups:
                 continue
             if backup.get("location") == ".cloud_backup":
                 continue  # Supervisor restricts this location to Home Assistant Core.
-            result.append(metadata(backup))
+            result.append({**metadata(backup), "other_content": shared(backup)})
         result.sort(key=lambda item: item["date"], reverse=True)
         return {"backups": result, "installed": bool(self.manager.installed_info(slug))}
 
@@ -68,7 +92,14 @@ class Backups:
             raise Problem(
                 "La copia no contiene esta aplicación o no es accesible.", "backup_app_missing"
             )
-        return {**metadata(backup), "version": str(app.get("version", ""))[:100]}
+        result = {
+            **metadata(backup),
+            "version": str(app.get("version", ""))[:100],
+            "other_content": shared(backup),
+            "locations": locations(backup),
+        }
+        result["revision"] = hashlib.sha256(json.dumps(result, sort_keys=True).encode()).hexdigest()
+        return result
 
     def create(self, repo_id, slug, name="", password=None):
         self.apps.info(repo_id, slug, mutate=True)
@@ -128,6 +159,58 @@ class Backups:
             self.uncertain(exc)
         self.manager.event("app_backup_restored", slug=slug, backup=selected)
         return {"ok": True, "backup": selected}
+
+    def reviewed(self, repo_id, slug, selected, expected_revision):
+        backup = self.details(repo_id, slug, selected)
+        if backup["revision"] != expected_revision:
+            raise Problem(
+                "La copia cambió. Actualiza el listado y revisa la operación de nuevo.",
+                "backup_changed",
+            )
+        return backup
+
+    def download(self, repo_id, slug, selected, expected_revision):
+        backup = self.reviewed(repo_id, slug, selected, expected_revision)
+        query = urlencode({"location": backup["location"] or ""})
+        stream = self.manager.supervisor.backup_download(
+            f"/backups/{backup_id(selected)}/download?{query}"
+        )
+        try:
+            self.manager.event("app_backup_download_started", slug=slug, backup=selected)
+        except Exception:
+            stream.close()
+            raise
+        return stream
+
+    def delete(self, repo_id, slug, selected, expected_revision):
+        self.apps.target(repo_id, slug, mutate=True)
+        backup = self.reviewed(repo_id, slug, selected, expected_revision)
+        self.manager.progress("backupDeleting")
+        self.manager.event("app_backup_delete_started", slug=slug, backup=selected)
+        try:
+            self.manager.supervisor.call(
+                "DELETE", f"/backups/{backup_id(selected)}", {"location": backup["locations"]}
+            )
+        except SupervisorUncertain as exc:
+            self.delete_uncertain(exc)
+        try:
+            remaining = self.manager.supervisor.call("GET", "/backups").get("backups", [])
+            for item in remaining:
+                if item.get("slug") == selected and any(
+                    value in backup["locations"] for value in locations(item)
+                ):
+                    raise ValueError("Backup still present")
+        except (Problem, ValueError) as exc:
+            self.delete_uncertain(exc)
+        self.manager.event("app_backup_deleted", slug=slug, backup=selected)
+        return {"ok": True, "backup": selected}
+
+    @staticmethod
+    def delete_uncertain(exc):
+        raise Problem(
+            "No se pudo confirmar el borrado. Puede seguir en curso o haber sido parcial. Actualiza las copias y revisa el Supervisor antes de repetir.",
+            "backup_delete_uncertain",
+        ) from exc
 
     @staticmethod
     def uncertain(exc):
