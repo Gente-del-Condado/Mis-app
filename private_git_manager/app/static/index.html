@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>HA Private Git Manager</title>
+    <link rel="icon" href="static/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="static/style.css" />
+    <script src="static/app.js" type="module"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#content" data-t="skipContent"
+      >Saltar al contenido / Skip to content</a
+    >
+    <aside>
+      <a class="brand" href="./"
+        ><img src="static/mark.svg" alt="" width="42" height="42" /><span
+          >Private Git<small>HOME ASSISTANT</small></span
+        ></a
+      >
+      <p class="nav-label" data-t="workspace"></p>
+      <nav aria-label="Private Git">
+        <button class="nav active" data-view="repos">
+          <span aria-hidden="true">⑂</span><span data-t="repos"></span>
+        </button>
+        <button class="nav" data-view="keys">
+          <span aria-hidden="true">⚿</span><span data-t="keys"></span>
+        </button>
+        <button class="nav" data-view="hosts">
+          <span aria-hidden="true">◇</span><span data-t="hosts"></span>
+        </button>
+        <button class="nav" data-view="activity">
+          <span aria-hidden="true">≡</span><span data-t="activity"></span
+          ><span id="active-count" class="nav-count" hidden></span>
+        </button>
+        <button class="nav" data-view="settings">
+          <span aria-hidden="true">⚙</span><span data-t="settings"></span>
+        </button>
+      </nav>
+      <div class="sidebar-bottom">
+        <span class="dot"></span><span data-t="localStorage"></span
+        ><small>HA Private Git Manager <span id="app-version"></span></small>
+      </div>
+    </aside>
+    <main id="content">
+      <header>
+        <div class="breadcrumb">
+          Home Assistant <span>/</span> Private Git Manager
+        </div>
+        <div class="header-actions">
+          <span id="connection" class="pill"></span
+          ><label
+            class="sr-only"
+            for="header-language"
+            data-t="language"
+          ></label
+          ><select id="header-language" aria-label="Idioma / Language">
+            <option value="es">ES</option>
+            <option value="en">EN</option>
+          </select>
+        </div>
+      </header>
+      <div id="notice" role="status" aria-live="polite" hidden>
+        <span id="notice-message"></span
+        ><button id="notice-close" aria-label="Cerrar / Close">×</button>
+      </div>
+      <section class="intro">
+        <div>
+          <div class="eyebrow" data-t="tagline"></div>
+          <h1 id="title"></h1>
+          <p id="subtitle"></p>
+        </div>
+        <button id="primary" class="primary" hidden></button>
+      </section>
+      <div class="stats">
+        <div>
+          <span data-t="repoCount"></span><strong id="repo-count">—</strong
+          ><small data-t="repoHelp"></small>
+        </div>
+        <div>
+          <span data-t="keyCount"></span><strong id="key-count">—</strong
+          ><small data-t="keyHelp"></small>
+        </div>
+        <div>
+          <span data-t="appCount"></span><strong id="app-count">—</strong
+          ><small data-t="appHelp"></small>
+        </div>
+      </div>
+      <section id="active-jobs" hidden aria-live="polite"></section>
+      <section id="view-content" aria-labelledby="title">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </section>
+      <footer>
+        <span>Private Git · <span data-t="localStorage"></span></span
+        ><span id="environment"></span>
+      </footer>
+    </main>
+    <dialog id="modal" aria-labelledby="modal-title">
+      <div class="dialog-heading">
+        <h2 id="modal-title"></h2>
+        <button
+          type="button"
+          class="close"
+          data-action="close-modal"
+          aria-label="Cerrar / Close"
+        >
+          ×
+        </button>
+      </div>
+      <div id="modal-notice" role="alert" hidden></div>
+      <form id="modal-form">
+        <div id="modal-body"></div>
+        <div id="modal-actions" class="dialog-actions"></div>
+      </form>
+    </dialog>
+  </body>
+</html>
