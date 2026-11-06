@@ -31,6 +31,7 @@ let dictionary,
   view = "repos",
   modalContext = {},
   loadingModal = false;
+let checkingDeployment = false;
 let repoSearch = "",
   logSearch = "",
   logLevel = "",
@@ -452,12 +453,16 @@ function modal(type, title, body, footer = actions(), context = {}) {
   $("#modal-body").innerHTML = body;
   $("#modal-actions").innerHTML = footer;
   $("#modal-notice").hidden = true;
+  if (context.safeFocus) {
+    $("#modal-actions [data-action=close-modal]").autofocus = true;
+  }
   if (!$("#modal").open) $("#modal").showModal();
-  requestAnimationFrame(() =>
-    $(
-      "#modal-form input:not([type=hidden]), #modal-form select, #modal-actions button",
-    )?.focus(),
-  );
+  if (!context.safeFocus)
+    requestAnimationFrame(() =>
+      $(
+        "#modal-form input:not([type=hidden]), #modal-form select, #modal-actions button",
+      )?.focus(),
+    );
 }
 function keyOptions(selected) {
   return (
@@ -574,6 +579,19 @@ async function submitModal(event) {
     if (context.type === "edit") {
       data.sync_interval = Number(data.sync_interval) * 60;
       await api(`repos/${context.repo}`, "PATCH", data);
+    }
+    if (context.type === "deploy") {
+      await queue(`repos/${context.repo}/deploy`, {
+        slug: context.slug,
+        update: context.update,
+        confirmed: true,
+        expected_commit: context.commit,
+        adopt_existing: data.adopt_existing === "true",
+        expected_local_digest:
+          context.inspection.exists && !context.inspection.managed
+            ? context.inspection.local_digest
+            : null,
+      });
     }
     if (context.type === "confirm") await context.callback();
     if (context.type === "recover")
@@ -707,27 +725,45 @@ document.addEventListener("click", async (event) => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   if (action === "deploy") {
-    const repo = state.repos[id],
-      app = repo.apps.find((a) => a.slug === slug),
-      update = Boolean(state.deployments[slug]);
-    confirm(
-      t("deployTitle"),
-      t("deployText", {
-        name: app.name,
-        version: app.version,
-        commit: short(repo.commit),
-      }) +
-        " " +
-        t("longOperation"),
-      () =>
-        queue(`repos/${id}/deploy`, {
+    if (checkingDeployment) return;
+    checkingDeployment = true;
+    node.setAttribute("aria-busy", "true");
+    try {
+      const repo = state.repos[id],
+        app = repo.apps.find((a) => a.slug === slug);
+      const inspection = await api(`repos/${id}/preflight`, "POST", { slug });
+      let body = `<p>${esc(t("deployText", { name: app.name, version: app.version, commit: short(inspection.commit) }))}</p>`;
+      if (inspection.exists && !inspection.managed) {
+        body += `<fieldset><legend>${esc(t("existingFolderTitle"))}</legend><p><code>${esc(inspection.path)}</code></p><p>${esc(t(inspection.installed ? "existingInstalled" : "existingNotInstalled"))}</p>`;
+        if (inspection.local_version)
+          body += `<p>${esc(t("existingVersion"))}: ${esc(inspection.local_version)}</p>`;
+        body += `<p id="adoption-help">${esc(t(inspection.empty ? "existingEmptyHelp" : "existingFolderHelp"))}</p>`;
+        if (inspection.requires_adoption)
+          body += `<label class="radio" for="adoption-consent"><input id="adoption-consent" type="checkbox" name="adopt_existing" value="true" required aria-describedby="adoption-help">${esc(t("adoptionConsent"))}</label>`;
+        body += "</fieldset>";
+      }
+      body += `<p>${esc(t("longOperation"))}</p>`;
+      modal(
+        "deploy",
+        t(inspection.requires_adoption ? "adoptAndInstall" : "deployTitle"),
+        body,
+        actions(inspection.requires_adoption ? "adoptAndInstall" : "confirm"),
+        {
+          repo: id,
           slug,
-          update,
-          confirmed: true,
-          expected_commit: repo.commit,
-        }),
-      true,
-    );
+          commit: inspection.commit,
+          update: Boolean(state.deployments[slug]),
+          inspection,
+          queued: true,
+          safeFocus: true,
+        },
+      );
+    } catch (error) {
+      notice(errorText(error), true);
+    } finally {
+      checkingDeployment = false;
+      node.removeAttribute("aria-busy");
+    }
   }
   if (action === "runtime")
     confirm(

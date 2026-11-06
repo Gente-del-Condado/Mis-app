@@ -225,7 +225,8 @@
     "runtime_action": "Acción enviada al Supervisor.",
     "recovered": "Código recuperado. Revisa el estado de ejecución.",
     "released": "Aplicación desvinculada del gestor.",
-    "startup": "Gestor preparado."
+    "startup": "Gestor preparado.",
+    "local_adopted": "Carpeta local adoptada por el gestor."
   },
   "invalid_identifier": "Identificador no válido.",
   "invalid_url": "URL no válida.",
@@ -283,5 +284,17 @@
   "nested_apps": "El paquete contiene aplicaciones anidadas. Separa sus carpetas antes de instalar.",
   "missing_dockerfile": "La aplicación necesita un Dockerfile o una imagen precompilada.",
   "backup_missing": "No se ha podido verificar el código anterior. Conserva las copias y revisa la recuperación manual.",
-  "source_changed": "La copia descargada no coincide con el commit registrado. Sincroniza de nuevo."
+  "source_changed": "La copia descargada no coincide con el commit registrado. Sincroniza de nuevo.",
+  "existingFolderTitle": "Ya existe una carpeta local",
+  "existingInstalled": "Esta aplicación ya está instalada en Home Assistant. Se gestionará como una actualización.",
+  "existingNotInstalled": "Hay archivos locales, pero la aplicación no figura como instalada en el Supervisor.",
+  "existingVersion": "Versión del código local",
+  "existingEmptyHelp": "La carpeta está vacía. El gestor la reutilizará para instalar esta aplicación.",
+  "existingFolderHelp": "La carpeta contiene una aplicación con el mismo identificador. Se conservará una copia del código anterior durante la operación. Esto no es una copia de seguridad de sus datos ni de su imagen.",
+  "adoptionConsent": "Autorizo al gestor a adoptar esta carpeta y reemplazar su código por el commit indicado.",
+  "adoptAndInstall": "Adoptar y aplicar",
+  "unsafe_local_folder": "La ruta local no es una carpeta segura. No se modificará.",
+  "local_manifest_mismatch": "La carpeta existente no contiene una única aplicación con el mismo identificador. No se sobrescribirá.",
+  "adoption_confirmation_required": "Revisa la carpeta local y confirma explícitamente su adopción.",
+  "local_folder_changed": "La carpeta local ha cambiado desde la revisión. Revísala y confirma de nuevo."
 }

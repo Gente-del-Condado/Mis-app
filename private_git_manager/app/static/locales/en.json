@@ -225,7 +225,8 @@
     "runtime_action": "Action sent to Supervisor.",
     "recovered": "Source recovered. Review runtime state.",
     "released": "App released from this manager.",
-    "startup": "Manager ready."
+    "startup": "Manager ready.",
+    "local_adopted": "Local folder adopted by the manager."
   },
   "invalid_identifier": "Invalid identifier.",
   "invalid_url": "Invalid URL.",
@@ -283,5 +284,17 @@
   "nested_apps": "The package contains nested apps. Separate their folders before installation.",
   "missing_dockerfile": "The app needs a Dockerfile or a prebuilt image.",
   "backup_missing": "Could not verify the previous source. Preserve backups and review manual recovery.",
-  "source_changed": "The checkout does not match the recorded commit. Sync again."
+  "source_changed": "The checkout does not match the recorded commit. Sync again.",
+  "existingFolderTitle": "An existing local folder was found",
+  "existingInstalled": "This app is already installed in Home Assistant. It will be managed as an update.",
+  "existingNotInstalled": "Local files exist, but Supervisor does not list the app as installed.",
+  "existingVersion": "Local source version",
+  "existingEmptyHelp": "The folder is empty. The manager will reuse it to install this app.",
+  "existingFolderHelp": "The folder contains an app with the same slug. A copy of its previous source will be kept during the operation. This is not a backup of its data or image.",
+  "adoptionConsent": "I authorize the manager to adopt this folder and replace its source with the specified commit.",
+  "adoptAndInstall": "Adopt and apply",
+  "unsafe_local_folder": "The local path is not a safe directory. It will not be modified.",
+  "local_manifest_mismatch": "The existing folder does not contain exactly one app with the same slug. It will not be overwritten.",
+  "adoption_confirmation_required": "Review the local folder and explicitly confirm adoption.",
+  "local_folder_changed": "The local folder has changed since review. Review it and confirm again."
 }

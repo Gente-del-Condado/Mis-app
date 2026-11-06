@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.2.0
+# HA Private Git Manager · 0.2.1
 
 ## Empezar
 
@@ -10,6 +10,12 @@
 6. Configura sus opciones desde Home Assistant. La primera instalación queda detenida; iníciala cuando esté configurada.
 
 Para HTTPS, utiliza una URL sin credenciales y completa usuario/token si es privado. Dejar el token vacío al cambiar credenciales elimina la credencial guardada.
+
+## Si la carpeta local ya existe
+
+El gestor ocupa `/addons/private_git_manager`; cada aplicación privada se coloca en `/addons/<slug>`. En **0.2.1**, el botón **Instalar** revisa primero esa carpeta. Si está vacía se reutiliza. Si contiene una aplicación con el mismo identificador, revisa su ruta y versión, marca la autorización y pulsa **Adoptar y aplicar**.
+
+La adopción guarda una copia del código anterior durante la operación. Si la aplicación ya estaba instalada, se actualiza/reconstruye en lugar de instalarla dos veces. Una carpeta que contiene otra aplicación o que cambia tras la revisión no se sobrescribe. No necesitas borrarla para resolver una colisión legítima.
 
 ## Trabajos y actualizaciones
 

@@ -1,6 +1,10 @@
 """Stable event identifiers, translated for the UI; container logs default to Spanish."""
 
 EVENTS = {
+    "local_adopted": (
+        "Carpeta local adoptada por el gestor.",
+        "Local folder adopted by the manager.",
+    ),
     "key_created": ("Clave SSH creada.", "SSH key created."),
     "key_deleted": ("Clave SSH eliminada.", "SSH key deleted."),
     "host_trusted": ("Identidad SSH verificada.", "SSH server identity verified."),

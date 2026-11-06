@@ -24,7 +24,7 @@ from .errors import ERRORS
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 
 
 class Problem(Exception):
@@ -660,7 +660,64 @@ class Manager:
         installed = self.supervisor.call("GET", "/addons").get("addons", [])
         return next((item for item in installed if item["slug"] == "local_" + slug), None)
 
-    def deploy(self, repo_id, slug, update=False, expected_commit=None):
+    def inspect_deployment(self, repo_id, slug):
+        """Describe a local collision without taking ownership or replacing files."""
+        repo = self.repo(repo_id)
+        app = next((app for app in repo["apps"] if app["slug"] == slug), None)
+        if not app or not repo["commit"]:
+            raise Problem("Sincroniza el repositorio y selecciona una aplicación detectada.")
+        previous = self.state["deployments"].get(slug)
+        if previous and previous["repo_id"] != repo_id:
+            raise Problem("Otra fuente gestiona una aplicación con este slug.")
+        target = self.addons / slug
+        if target.is_symlink() or (target.exists() and not target.is_dir()):
+            raise Problem(
+                "La ruta local no es una carpeta segura y no se puede adoptar.",
+                "unsafe_local_folder",
+            )
+        exists = target.is_dir()
+        empty = exists and not any(target.iterdir())
+        local_version = None
+        local_digest = None
+        if exists:
+            if not previous and not empty:
+                manifests = self.discover(target, local=True)
+                if (
+                    len(manifests) != 1
+                    or manifests[0]["path"] != "."
+                    or manifests[0]["slug"] != slug
+                ):
+                    raise Problem(
+                        "La carpeta existente no contiene una aplicación con el mismo identificador. No se sobrescribirá.",
+                        "local_manifest_mismatch",
+                    )
+                local_version = manifests[0]["version"]
+            local_digest = self.tree_digest(target)
+        installed = self.installed_info(slug)
+        return {
+            "slug": slug,
+            "path": str(target),
+            "exists": exists,
+            "empty": bool(empty),
+            "managed": bool(previous),
+            "requires_adoption": bool(exists and not previous and not empty),
+            "local_digest": local_digest,
+            "local_version": local_version,
+            "installed": bool(installed),
+            "running": bool(installed and installed.get("state") == "started"),
+            "installed_version": installed.get("version") if installed else None,
+            "commit": repo["commit"],
+        }
+
+    def deploy(
+        self,
+        repo_id,
+        slug,
+        update=False,
+        expected_commit=None,
+        adopt_existing=False,
+        expected_local_digest=None,
+    ):
         repo = self.repo(repo_id)
         if expected_commit and repo["commit"] != expected_commit:
             raise Problem(
@@ -680,14 +737,26 @@ class Manager:
         target = self.addons / slug
         if previous and previous["repo_id"] != repo_id:
             raise Problem("Otra fuente gestiona una aplicación con este slug.")
-        if target.is_symlink() or (target.exists() and not previous):
+        inspection = self.inspect_deployment(repo_id, slug)
+        unmanaged_existing = bool(inspection["exists"] and not previous)
+        if inspection["requires_adoption"] and not adopt_existing:
             raise Problem("La carpeta local ya existe y no pertenece a este gestor.")
+        if adopt_existing and (not unmanaged_existing or not expected_local_digest):
+            raise Problem(
+                "Revisa la carpeta existente antes de confirmar su adopción.",
+                "adoption_confirmation_required",
+            )
+        if expected_local_digest and inspection["local_digest"] != expected_local_digest:
+            raise Problem(
+                "La carpeta local ha cambiado desde la revisión. Compruébala y confirma de nuevo.",
+                "local_folder_changed",
+            )
         if update != bool(previous):
             raise Problem(
                 "Utiliza Actualizar para aplicaciones ya gestionadas; Instalar para nuevas."
             )
         info = self.installed_info(slug)
-        if previous and previous.get("status") in {"error", "interrupted"}:
+        if unmanaged_existing or (previous and previous.get("status") in {"error", "interrupted"}):
             update = bool(info)
         if bool(info) != update:
             raise Problem(
@@ -736,6 +805,8 @@ class Manager:
             "record": record,
             "was_running": was_running,
             "phase": "prepared",
+            "unmanaged_existing": unmanaged_existing,
+            "original_digest": inspection["local_digest"] if unmanaged_existing else None,
         }
         moved = False
         committed = False
@@ -744,10 +815,25 @@ class Manager:
             self.progress("staging")
             self.safe_copy(source, stage)
             record["source_digest"] = self.tree_digest(stage)
+            if unmanaged_existing and (
+                not target.is_dir()
+                or target.is_symlink()
+                or self.tree_digest(target) != inspection["local_digest"]
+            ):
+                raise Problem(
+                    "La carpeta local ha cambiado desde la revisión. Compruébala y confirma de nuevo.",
+                    "local_folder_changed",
+                )
+            identical_adoption = (
+                unmanaged_existing
+                and bool(info)
+                and str(info.get("version")) == app["version"]
+                and inspection["local_digest"] == record["source_digest"]
+            )
             self.state["transactions"][slug] = journal
             self.state["deployments"][slug] = record
             self.save()  # Durable before the first destructive operation.
-            if was_running:
+            if was_running and not identical_adoption:
                 self.progress("stopping")
                 self.supervisor.call("POST", f"/addons/{local}/stop")
             journal["phase"] = "swapping"
@@ -761,7 +847,9 @@ class Manager:
             self.progress("reloading")
             self.supervisor.call("POST", "/store/reload")
             self.progress("installing" if not update else "rebuilding")
-            if not update:
+            if identical_adoption:
+                pass  # Register identical, already-installed source without rebuilding it.
+            elif not update:
                 self.supervisor.call("POST", f"/store/addons/{local}/install")
             elif app.get("image"):
                 self.supervisor.call("POST", f"/store/addons/{local}/update")
@@ -788,6 +876,8 @@ class Manager:
             self.state["transactions"].pop(slug, None)
             self.save()
             committed = True
+            if unmanaged_existing:
+                self.event("local_adopted", slug=slug, path=str(target))
             self.event("deploy_done", slug=slug, commit=repo["commit"])
         except SupervisorUncertain:
             # A disconnected request may still be building. Preserve both source trees.
@@ -847,6 +937,16 @@ class Manager:
                 if target.exists():
                     shutil.rmtree(target)
                 backup.rename(target)
+            elif transaction.get("unmanaged_existing"):
+                if (
+                    not target.is_dir()
+                    or target.is_symlink()
+                    or self.tree_digest(target) != transaction["original_digest"]
+                ):
+                    raise Problem(
+                        "No se ha podido verificar la carpeta local anterior. Conserva los archivos y revisa la recuperación.",
+                        "backup_missing",
+                    )
             elif not transaction["previous"] and transaction["phase"] not in {
                 "prepared",
                 "restored",
@@ -858,6 +958,14 @@ class Manager:
                         "app_still_installed",
                     )
                 shutil.rmtree(target, ignore_errors=True)
+            if (
+                transaction.get("unmanaged_existing")
+                and self.tree_digest(target) != transaction["original_digest"]
+            ):
+                raise Problem(
+                    "No se ha podido verificar la carpeta local anterior. Conserva los archivos y revisa la recuperación.",
+                    "backup_missing",
+                )
             if transaction["previous"]:
                 previous = transaction["previous"]
                 expected = previous.get("source_digest")

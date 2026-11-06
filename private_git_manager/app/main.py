@@ -150,10 +150,16 @@ class ConfirmInput(Input):
     confirmed: bool = False
 
 
+class PreflightInput(Input):
+    slug: str = Field(min_length=1, max_length=80)
+
+
 class DeployInput(ConfirmInput):
     slug: str = Field(max_length=80)
     update: bool = False
     expected_commit: str = Field(min_length=40, max_length=64)
+    adopt_existing: bool = False
+    expected_local_digest: str | None = Field(default=None, min_length=64, max_length=64)
 
 
 class RecoveryInput(ConfirmInput):
@@ -305,6 +311,12 @@ def repo_delete(repo_id: str):
         return {"ok": True}
 
 
+@app.post("/api/repos/{repo_id}/preflight")
+def preflight(repo_id: str, body: PreflightInput):
+    with mutation():
+        return manager.inspect_deployment(repo_id, body.slug)
+
+
 @app.post("/api/repos/{repo_id}/deploy")
 def deploy(repo_id: str, body: DeployInput, request: Request):
     confirmed(body)
@@ -312,7 +324,14 @@ def deploy(repo_id: str, body: DeployInput, request: Request):
         request,
         "deploy",
         "repo:" + repo_id,
-        lambda: manager.deploy(repo_id, body.slug, body.update, body.expected_commit),
+        lambda: manager.deploy(
+            repo_id,
+            body.slug,
+            body.update,
+            body.expected_commit,
+            body.adopt_existing,
+            body.expected_local_digest,
+        ),
     )
 
 

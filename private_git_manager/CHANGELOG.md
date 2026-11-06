@@ -1,3 +1,12 @@
+# 0.2.1
+
+- Corrección de instalaciones bloqueadas por una carpeta local preexistente: revisión previa con ruta, versión y estado.
+- Reutilización de carpetas vacías y adopción explícita de aplicaciones con el mismo slug, sin eliminar la protección de archivos ajenos.
+- Verificación de huella de la carpeta tras la revisión y durante la preparación para impedir sobrescribir cambios no confirmados.
+- Copia del código anterior durante la operación y recuperación que conserva la carpeta original si falla la adopción.
+- Adopción de aplicaciones ya instaladas mediante actualización/reconstrucción; registro de instalaciones idénticas sin reconstrucción innecesaria.
+- Diálogo de consentimiento en español e inglés, validación en servidor, foco inicial en Cancelar y pruebas de navegador aisladas.
+
 # 0.2.0
 
 - Interfaz completamente traducida al español y al inglés, tema claro/oscuro/sistema y mejor accesibilidad.

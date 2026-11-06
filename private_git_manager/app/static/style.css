@@ -1274,3 +1274,12 @@ html[data-theme="dark"] .warning-box {
     font-size: 11px;
   }
 }
+
+/* Native modal scroll containment; unsupported engines retain normal modal behavior. */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
