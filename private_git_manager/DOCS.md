@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.7.0
+# HA Private Git Manager · 0.8.0
 
 ## Empezar
 
@@ -45,6 +45,14 @@ Las opciones no se guardan en el historial, estado ni trabajos del gestor. El en
 
 **Logs de la aplicación** permite buscar, actualizar cada cinco segundos, pausar, refrescar manualmente y descargar. La salida se muestra como texto, con límite de 512 KiB por lectura; el refresco se pausa al ocultar la página y termina al cerrar. Se ocultan valores sensibles conocidos, aunque no se pueden detectar todos los secretos que una aplicación imprima. Los logs no se almacenan en el gestor y siguen disponibles durante una recuperación pendiente.
 
+## Abrir interfaz web
+
+Las aplicaciones instaladas que declaran `ingress: true` tienen el botón **Abrir interfaz web**. Primero inicia la aplicación; el botón se desactiva mientras esté detenida o tenga una operación pendiente.
+
+El gestor comprueba su estado con el Supervisor y abre el panel de Ingress de Home Assistant fuera del marco del gestor. Home Assistant crea y mantiene la sesión de tu usuario; el gestor no devuelve ni guarda tokens de Ingress y no utiliza puertos directos ni URLs externas de `webui`.
+
+No es necesario fijar la aplicación a la barra lateral. La ruta se adapta a la versión de Core: `/app/<slug>` desde 2026.2 y `/hassio/ingress/<slug>` en las anteriores. Vuelve al gestor con Atrás o la navegación de Home Assistant.
+
 ## Recuperación
 
 Una desconexión no demuestra que el Supervisor haya dejado de construir. Si aparece **Recuperación pendiente**, revisa primero sus registros y comprueba que no hay una operación activa.
@@ -82,3 +90,5 @@ Select **EN** in the web UI. Generate an SSH key, register the public key as a r
 Jobs continue after closing the UI. Scheduled sync only downloads changes. A recovery warning means Supervisor state needs checking before restoring source or accepting a verified current version. Source recovery does not roll back images or app data. Protect app backups: they include credentials.
 
 Use **Install** and **Uninstall** directly in this manager. **Uninstall** keeps source for reinstallation. **Delete app** also offers **Uninstall and delete** when needed. Internal app data/options are deleted on uninstall; public `app_config` is kept unless you explicitly choose to remove it. Other catalog apps and the remote repository are preserved. Optionally hide its listing and restore it later from **Hidden apps → Show again**. **Release** keeps its source folder. Interrupted deletion can be completed through **Review recovery → Finish deletion**.
+
+**Open web interface** opens an installed, running Ingress app through Home Assistant’s native app panel, outside the manager iframe. Home Assistant maintains the user session. No direct ports, external URLs or session tokens are exposed by the manager. Sidebar pinning is not required.

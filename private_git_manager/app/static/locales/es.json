@@ -396,5 +396,11 @@
   "audioOutputSetting": "Dispositivo de salida de audio",
   "networkSettings": "Puertos de red",
   "portBinding": "Puerto del host o dirección:puerto",
-  "disabledPort": "Desactivado (vacío)"
+  "disabledPort": "Desactivado (vacío)",
+  "openWebInterface": "Abrir interfaz web",
+  "app_no_ingress": "Esta aplicación no ofrece interfaz web mediante Ingress.",
+  "app_not_running": "Inicia la aplicación antes de abrir su interfaz web.",
+  "webInterfaceBusy": "Espera a que termine la operación o resuelve su recuperación antes de abrir la interfaz.",
+  "ha_version_unavailable": "No se pudo identificar la versión de Home Assistant. Vuelve a intentarlo.",
+  "invalid_ingress_path": "No se pudo verificar la ruta de Ingress de esta aplicación."
 }

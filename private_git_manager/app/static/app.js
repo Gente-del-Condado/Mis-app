@@ -334,6 +334,7 @@ function renderRepos() {
             slug: d.slug,
             name: d.slug,
             version: d.version,
+            ingress: d.ingress,
             arch: [],
             path: "",
             description: "",
@@ -408,6 +409,19 @@ function appRow(repo, app, busy = false) {
       );
   }
   if (repo && runtime && !app.blocked_reason && (!deployment || managed)) {
+    if (managed ? (deployment.ingress ?? app.ingress) : app.ingress) {
+      const ready =
+        ["started", "startup"].includes(runtime.state) && !busy && !transaction;
+      buttons += button(
+        "open-web-interface",
+        t("openWebInterface"),
+        data +
+          ` aria-label="${esc(t("openWebInterface") + ": " + app.name)}"` +
+          (ready
+            ? ""
+            : ` disabled title="${esc(t(busy || transaction ? "webInterfaceBusy" : "app_not_running"))}"`),
+      );
+    }
     buttons += button("app-logs", t("appLogs"), data);
     if (!transaction)
       buttons += button(
@@ -1193,6 +1207,31 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "refresh-app-logs") {
     await refreshApplicationLogs();
+    return;
+  }
+  if (action === "open-web-interface") {
+    node.disabled = true;
+    node.setAttribute("aria-busy", "true");
+    try {
+      const result = await api(`${applicationPath(id, slug)}/web-interface`);
+      const allowed = ["/app/local_" + slug, "/hassio/ingress/local_" + slug];
+      if (!allowed.includes(result.path))
+        throw Object.assign(new Error(t("invalid_ingress_path")), {
+          code: "invalid_ingress_path",
+        });
+      const target = new URL(result.path, location.origin);
+      if (target.origin !== location.origin)
+        throw Object.assign(new Error(t("invalid_ingress_path")), {
+          code: "invalid_ingress_path",
+        });
+      // Leave the manager iframe; Home Assistant creates/renews the app's own session.
+      window.top.location.href = target.href;
+    } catch (error) {
+      notice(errorText(error), true);
+    } finally {
+      node.disabled = false;
+      node.removeAttribute("aria-busy");
+    }
     return;
   }
   if (action === "app-configuration" || action === "app-logs") {

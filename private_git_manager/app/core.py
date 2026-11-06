@@ -25,7 +25,7 @@ from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 
 
 class SupervisorUncertain(Problem):
@@ -646,6 +646,7 @@ class Manager:
                     "machine": config.get("machine"),
                     "path": str(Path(folder).relative_to(root)),
                     "image": config.get("image"),
+                    "ingress": config.get("ingress") is True,
                     "blocked_reason": "manager_self"
                     if slug == "private_git_manager" and not local
                     else None,
@@ -884,6 +885,7 @@ class Manager:
             "slug": slug,
             "commit": repo["commit"],
             "version": app["version"],
+            "ingress": app.get("ingress", False),
             "status": "pending",
             "time": time.time(),
             "previous_commit": previous.get("commit") if previous else None,

@@ -1,3 +1,12 @@
+# 0.8.0
+
+- Botón Abrir interfaz web para aplicaciones instaladas que declaran Ingress; estado desactivado cuando están detenidas o tienen una operación pendiente.
+- Comprobación de disponibilidad, estado y propiedad antes de abrir la aplicación, con mensajes en español e inglés.
+- Apertura del panel nativo de Home Assistant fuera del marco del gestor, con autenticación y renovación de sesión gestionadas por Home Assistant.
+- Ruta /app/<slug> desde Core 2026.2 y compatibilidad /hassio/ingress/<slug> para versiones anteriores. Funciona sin fijar la aplicación a la barra lateral.
+- Sin exponer tokens de Ingress ni abrir puertos directos o destinos externos de webui.
+- Pruebas de API y navegador con prefijo Ingress, iframe, ambos idiomas y rutas actuales/anteriores.
+
 # 0.7.0
 
 - Formulario como vista principal de configuración, generado con el esquema UI nativo y las traducciones de cada aplicación que devuelve el Supervisor.

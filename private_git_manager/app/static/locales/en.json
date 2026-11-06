@@ -396,5 +396,11 @@
   "audioOutputSetting": "Audio output device",
   "networkSettings": "Network ports",
   "portBinding": "Host port or address:port",
-  "disabledPort": "Disabled (empty)"
+  "disabledPort": "Disabled (empty)",
+  "openWebInterface": "Open web interface",
+  "app_no_ingress": "This app does not offer a web interface through Ingress.",
+  "app_not_running": "Start the app before opening its web interface.",
+  "webInterfaceBusy": "Wait for the operation to finish or resolve recovery before opening the interface.",
+  "ha_version_unavailable": "Could not identify the Home Assistant version. Try again.",
+  "invalid_ingress_path": "Could not verify this app’s Ingress path."
 }

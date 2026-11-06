@@ -17,6 +17,7 @@ el botón anterior y selecciona **HA Private Git Manager**.
 - Borrado individual de copias locales y ocultación reversible de aplicaciones del catálogo maestro.
 - Formulario generado desde el esquema nativo de Home Assistant, traducciones de cada aplicación y YAML avanzado opcional.
 - Logs de cada aplicación con búsqueda, refresco automático y descarga.
+- Botón para abrir las aplicaciones mediante Ingress y la sesión de Home Assistant.
 - Trabajos en segundo plano, recuperación explícita y registros filtrables/exportables.
 
 Abre la pestaña **Documentación** para comenzar. Compatible con aarch64 y amd64. Requiere Supervisor.

@@ -426,6 +426,11 @@ def restore_app(repo_id: str, body: PreflightInput):
         return {"ok": True}
 
 
+@app.get("/api/repos/{repo_id}/apps/{slug}/web-interface")
+def app_web_interface(repo_id: str, slug: str):
+    return Applications(manager).web_interface(repo_id, slug)
+
+
 @app.get("/api/repos/{repo_id}/apps/{slug}/configuration")
 def app_configuration(repo_id: str, slug: str):
     return Applications(manager).configuration(repo_id, slug)

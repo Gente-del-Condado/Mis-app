@@ -150,6 +150,26 @@ class Applications:
             raise Problem("Instala primero esta aplicación.", "app_not_installed")
         return self.manager.supervisor.call("GET", f"/addons/local_{slug}/info")
 
+    def web_interface(self, repo_id, slug):
+        info = self.info(repo_id, slug, mutate=True)
+        if info.get("ingress") is not True:
+            raise Problem(
+                "Esta aplicación no ofrece interfaz web mediante Ingress.", "app_no_ingress"
+            )
+        if info.get("state") not in {"started", "startup"}:
+            raise Problem("Inicia la aplicación antes de abrir su interfaz web.", "app_not_running")
+        core = self.manager.supervisor.call("GET", "/core/info")
+        version = re.match(r"^(\d{4})\.(\d{1,2})\.", str(core.get("version", "")))
+        if not version:
+            raise Problem(
+                "No se pudo identificar la versión de Home Assistant.", "ha_version_unavailable"
+            )
+        # Core 2026.2 introduced the built-in app panel. Older frontends use hassio.
+        modern = tuple(map(int, version.groups())) >= (2026, 2)
+        prefix = "/app/" if modern else "/hassio/ingress/"
+        # Never expose ingress_url/session tokens or provider-supplied webui URLs.
+        return {"path": prefix + "local_" + slug}
+
     def configuration(self, repo_id, slug):
         info = self.info(repo_id, slug)
         return {
