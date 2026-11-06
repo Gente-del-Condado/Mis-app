@@ -307,7 +307,13 @@ function renderRepos() {
         const busy = Object.values(state.jobs).some(
           (j) => j.resource === "repo:" + r.id && !terminal.has(j.status),
         );
-        return `<article class="card"><div class="repo-head"><div class="repo-icon" aria-hidden="true">${r.catalog?.icon_path ? `<img src="${esc(repositoryAsset(r.id, r.catalog.icon_path))}" alt="" loading="lazy">` : "⑂"}</div><div class="repo-main"><h3 class="repo-name">${esc(r.name)}</h3>${r.catalog ? `<div class="catalog-meta">${badge(t(r.catalog.kind === "collection" ? "masterRepository" : r.catalog.kind === "single" ? "singleRepository" : "gitRepository"))} <span>${esc(t("catalogAppCount", { count: visibleApps(r).length }))}</span>${r.catalog.name ? `<strong>${esc(r.catalog.name)}</strong>` : ""}${r.catalog.maintainer ? `<span>${esc(r.catalog.maintainer)}</span>` : ""}</div>${r.catalog.description ? `<p class="catalog-summary">${esc(r.catalog.description)}</p>` : ""}` : ""}<div class="repo-url">${esc(r.url)}</div><div class="repo-meta"><span>⑂ ${esc(r.ref)}</span><span>${r.url.startsWith("https:") ? "HTTPS" : "SSH"}</span><span>${esc(short(r.commit))}</span><span>${esc(r.sync_interval ? t("every", { minutes: r.sync_interval / 60 }) : t("manual"))}</span></div></div>${badge(busy ? t("running") : managed ? t("changes") : r.commit ? t("synced") : t("pending"), busy || managed ? "pending" : "")}<div class="repo-actions">${r.commit ? button("readme", t(r.catalog?.kind === "collection" ? "viewCatalog" : "viewReadme"), controls(r.id)) : ""}${button("sync", "↻ " + t("sync"), controls(r.id) + (busy ? " disabled" : ""))}${button("edit-repo", t("edit"), controls(r.id))}${button("credentials", t("credentials"), controls(r.id))}${button("delete-repo", t("remove"), controls(r.id), "subtle danger")}</div></div><div class="sync-time">${esc(t("lastSync"))}: ${esc(date(r.synced_at))}</div>${visibleApps(r).map((a) => appRow(r, a, busy)).join("")}${hiddenApps(r)}${r.commit && !r.apps.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
+        return `<article class="card"><div class="repo-head"><div class="repo-icon" aria-hidden="true">${r.catalog?.icon_path ? `<img src="${esc(repositoryAsset(r.id, r.catalog.icon_path))}" alt="" loading="lazy">` : "⑂"}</div><div class="repo-main"><h3 class="repo-name">${esc(r.name)}</h3>${r.catalog ? `<div class="catalog-meta">${badge(t(r.catalog.kind === "collection" ? "masterRepository" : r.catalog.kind === "single" ? "singleRepository" : "gitRepository"))} <span>${esc(t("catalogAppCount", { count: visibleApps(r).length }))}</span>${r.catalog.name ? `<strong>${esc(r.catalog.name)}</strong>` : ""}${r.catalog.maintainer ? `<span>${esc(r.catalog.maintainer)}</span>` : ""}</div>${r.catalog.description ? `<p class="catalog-summary">${esc(r.catalog.description)}</p>` : ""}` : ""}<div class="repo-url">${esc(r.url)}</div><div class="repo-meta"><span>⑂ ${esc(r.ref)}</span><span>${r.url.startsWith("https:") ? "HTTPS" : "SSH"}</span><span>${esc(short(r.commit))}</span><span>${esc(r.sync_interval ? t("every", { minutes: r.sync_interval / 60 }) : t("manual"))}</span></div></div>${badge(busy ? t("running") : managed ? t("changes") : r.commit ? t("synced") : t("pending"), busy || managed ? "pending" : "")}<div class="repo-actions">${r.commit ? button("readme", t(r.catalog?.kind === "collection" ? "viewCatalog" : "viewReadme"), controls(r.id)) : ""}${button("sync", "↻ " + t("sync"), controls(r.id) + (busy ? " disabled" : ""))}${button("edit-repo", t("edit"), controls(r.id))}${button("credentials", t("credentials"), controls(r.id))}${button("delete-repo", t("remove"), controls(r.id), "subtle danger")}</div></div><div class="sync-time">${esc(t("lastSync"))}: ${esc(date(r.synced_at))}</div>${visibleApps(
+          r,
+        )
+          .map((a) => appRow(r, a, busy))
+          .join(
+            "",
+          )}${hiddenApps(r)}${r.commit && !r.apps.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
       })
       .join("");
   const detached = Object.values(state.deployments).filter(
@@ -357,10 +363,10 @@ function appRow(repo, app, busy = false) {
         ? supervisor?.connected && !runtime && !transaction
           ? t("notInstalled")
           : deployment.status === "installed"
-          ? changed
-            ? t("changes")
-            : t("installed")
-          : t(deployment.status)
+            ? changed
+              ? t("changes")
+              : t("installed")
+            : t(deployment.status)
         : deployment
           ? t("otherSource")
           : t("available");
@@ -380,7 +386,9 @@ function appRow(repo, app, busy = false) {
       )
     : button(
         "deploy",
-        managed && (!supervisor?.connected || runtime) ? t("update") : t("install"),
+        managed && (!supervisor?.connected || runtime)
+          ? t("update")
+          : t("install"),
         data + (disabled ? " disabled" : ""),
         managed ? "" : "primary",
       );
@@ -414,8 +422,26 @@ function appRow(repo, app, busy = false) {
       "subtle",
     );
   }
+  if (
+    !transaction &&
+    repo &&
+    runtime &&
+    !app.blocked_reason &&
+    (!deployment || managed)
+  )
+    buttons += button(
+      "uninstall-app",
+      t("uninstall"),
+      data + (disabled ? " disabled" : ""),
+      "subtle danger",
+    );
   if (!transaction && repo && !app.blocked_reason)
-    buttons += button("remove-app", t("removeApp"), data + (disabled ? " disabled" : ""), "subtle danger");
+    buttons += button(
+      "remove-app",
+      t("removeApp"),
+      data + (disabled ? " disabled" : ""),
+      "subtle danger",
+    );
   return `<div class="app-row"><div class="app-description">${app.icon_path && repo ? `<img class="app-logo" src="${esc(repositoryAsset(repo.id, app.icon_path))}" alt="" loading="lazy">` : ""}<strong>${esc(app.name)}</strong> ${badge(label, transaction || deployment?.status === "error" ? "error" : changed ? "pending" : "")}<p>${metadata}</p><p>${esc(app.description)}</p>${managed ? `<p>${esc(t("appliedCommit"))}: <code>${esc(short(deployment.commit))}</code> · ${esc(t(runtime?.state || "unknown"))}</p>` : ""}</div><div class="app-actions">${buttons}</div></div>`;
 }
 function renderKeys() {
@@ -606,7 +632,17 @@ async function openDocumentation(
     if (!$("#modal").open || modalContext.request !== request) return;
     const catalog =
       !app && !path && repo.catalog?.kind === "collection"
-        ? `<section class="catalog-apps"><h3>${esc(t("catalogApplications"))}</h3>${visibleApps(repo).map((a) => button("readme", a.name, controls(repoId) + ` data-slug="${esc(a.slug)}"`)).join("")}</section>`
+        ? `<section class="catalog-apps"><h3>${esc(t("catalogApplications"))}</h3>${visibleApps(
+            repo,
+          )
+            .map((a) =>
+              button(
+                "readme",
+                a.name,
+                controls(repoId) + ` data-slug="${esc(a.slug)}"`,
+              ),
+            )
+            .join("")}</section>`
         : "";
     $("#modal-body").innerHTML =
       `${catalog}<div class="document-toolbar"><span>${esc(doc.path || "README.md")}</span><small>${esc(t("privateDocument"))}</small></div><article id="document-content" class="markdown-viewer"></article>`;
@@ -772,9 +808,24 @@ async function submitModal(event) {
     }
     if (context.type === "remove-app")
       await queue(`repos/${context.repo}/remove-app`, {
-        confirmed: true, slug: context.slug,
+        confirmed: true,
+        slug: context.slug,
         expected_local_digest: context.inspection.local_digest,
         hide: data.hide === "true",
+        uninstall: data.uninstall === "true",
+        remove_config: data.remove_config === "true",
+      });
+    if (context.type === "uninstall-app")
+      await queue(`repos/${context.repo}/uninstall-app`, {
+        confirmed: true,
+        slug: context.slug,
+        expected_local_digest: context.inspection.local_digest,
+        remove_config: data.remove_config === "true",
+      });
+    if (context.type === "lifecycle-recovery")
+      await queue(`apps/${context.slug}/recover`, {
+        confirmed: true,
+        retry_uninstall: data.retry_uninstall === "true",
       });
     if (context.type === "confirm") await context.callback();
     if (context.type === "recover")
@@ -965,23 +1016,60 @@ document.addEventListener("click", async (event) => {
     try {
       await api(`repos/${id}/restore-app`, "POST", { slug });
       await refresh();
-    } catch (error) { notice(errorText(error), true); }
+    } catch (error) {
+      notice(errorText(error), true);
+    }
   }
-  if (action === "remove-app") {
+  if (action === "remove-app" || action === "uninstall-app") {
     try {
-      const inspection = await api(`repos/${id}/remove-preflight`, "POST", { slug });
-      modal("remove-app", t("removeApp"),
-        `<p id="removal-help">${esc(t("removeAppText"))}</p><p><code>${esc(inspection.path)}</code></p><label class="radio" for="removal-hide"><input id="removal-hide" type="checkbox" name="hide" value="true" checked>${esc(t("hideApp"))}</label><label class="radio" for="removal-consent"><input id="removal-consent" type="checkbox" required aria-describedby="removal-help">${esc(t("removeAppConsent"))}</label>`,
-        actions("removeApp"), { repo: id, slug, inspection, queued: true, safeFocus: true });
-    } catch (error) { notice(errorText(error), true); }
+      const inspection = await api(`repos/${id}/remove-preflight`, "POST", {
+        slug,
+      });
+      const removing = action === "remove-app";
+      const label = removing
+        ? inspection.installed
+          ? "uninstallAndDelete"
+          : "removeApp"
+        : "uninstall";
+      let body = `<p id="removal-help">${esc(t(removing ? "removeAppText" : "uninstallText"))}</p><p><code>${esc(inspection.path)}</code></p>`;
+      if (inspection.installed || !removing) {
+        body += `<div class="warning-box" id="uninstall-warning">${esc(t("uninstallWarning"))}</div><label class="radio" for="uninstall-consent"><input id="uninstall-consent" type="checkbox" name="uninstall" value="true" required aria-describedby="uninstall-warning">${esc(t("uninstallConsent"))}</label><label class="radio" for="remove-config"><input id="remove-config" type="checkbox" name="remove_config" value="true">${esc(t("removeConfig"))}</label>`;
+      }
+      if (removing)
+        body += `<label class="radio" for="removal-hide"><input id="removal-hide" type="checkbox" name="hide" value="true" checked>${esc(t("hideApp"))}</label><label class="radio" for="removal-consent"><input id="removal-consent" type="checkbox" required aria-describedby="removal-help">${esc(t("removeAppConsent"))}</label>`;
+      modal(action, t(label), body, actions(label), {
+        repo: id,
+        slug,
+        inspection,
+        queued: true,
+        safeFocus: true,
+      });
+    } catch (error) {
+      notice(errorText(error), true);
+    }
   }
   if (action === "release")
     confirm(t("release"), t("releaseText"), () =>
       api(`apps/${slug}/release`, "POST", { confirmed: true }),
     );
-  if (action === "recover" && state.transactions[slug]?.kind === "remove") {
-    confirm(t("finishRemoval"), t("finishRemovalText"), () =>
-      queue(`apps/${slug}/recover`, { confirmed: true }), true);
+  if (action === "recover" && state.transactions[slug]?.uninstall) {
+    modal(
+      "lifecycle-recovery",
+      t("reviewRecovery"),
+      `<p>${esc(t("uninstallRecoveryText"))}</p><p>${esc(t(state.transactions[slug].remove_config ? "removeConfigChosen" : "keepConfigChosen"))}</p><label class="radio" for="retry-uninstall"><input id="retry-uninstall" type="checkbox" name="retry_uninstall" value="true">${esc(t("retryUninstall"))}</label><label class="radio" for="uninstall-reviewed"><input id="uninstall-reviewed" type="checkbox" required>${esc(t("uninstallReviewed"))}</label>`,
+      actions("confirm"),
+      { slug, safeFocus: true, queued: true },
+    );
+  } else if (
+    action === "recover" &&
+    state.transactions[slug]?.kind === "remove"
+  ) {
+    confirm(
+      t("finishRemoval"),
+      t("finishRemovalText"),
+      () => queue(`apps/${slug}/recover`, { confirmed: true }),
+      true,
+    );
   } else if (action === "recover")
     modal(
       "recover",

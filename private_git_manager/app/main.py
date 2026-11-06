@@ -163,20 +163,26 @@ class DeployInput(ConfirmInput):
     expected_local_digest: str | None = Field(default=None, min_length=64, max_length=64)
 
 
-class RemoveInput(ConfirmInput):
+class UninstallInput(ConfirmInput):
     slug: str = Field(min_length=1, max_length=80)
     expected_local_digest: str | None = Field(default=None, min_length=64, max_length=64)
+    remove_config: bool = False
+
+
+class RemoveInput(UninstallInput):
     hide: bool = True
+    uninstall: bool = False
 
 
 class RecoveryInput(ConfirmInput):
     accept_current: bool = False
+    retry_uninstall: bool = False
 
 
 def confirmed(body):
     if not body.confirmed:
         raise Problem(
-            "Confirma la instalación o actualización de código de este repositorio.",
+            "Confirma la operación solicitada sobre esta aplicación o repositorio.",
             "confirmation_required",
         )
 
@@ -368,7 +374,7 @@ def deploy(repo_id: str, body: DeployInput, request: Request):
 @app.post("/api/repos/{repo_id}/remove-preflight")
 def remove_preflight(repo_id: str, body: PreflightInput):
     with mutation():
-        return manager.inspect_removal(repo_id, body.slug)
+        return manager.inspect_removal(repo_id, body.slug, allow_installed=True)
 
 
 @app.post("/api/repos/{repo_id}/remove-app")
@@ -378,7 +384,27 @@ def remove_app(repo_id: str, body: RemoveInput, request: Request):
         request,
         "remove",
         "repo:" + repo_id,
-        lambda: manager.remove_app(repo_id, body.slug, body.expected_local_digest, body.hide),
+        lambda: manager.remove_app(
+            repo_id,
+            body.slug,
+            body.expected_local_digest,
+            body.hide,
+            body.uninstall,
+            body.remove_config,
+        ),
+    )
+
+
+@app.post("/api/repos/{repo_id}/uninstall-app")
+def uninstall_app(repo_id: str, body: UninstallInput, request: Request):
+    confirmed(body)
+    return queued(
+        request,
+        "uninstall",
+        "repo:" + repo_id,
+        lambda: manager.uninstall_app(
+            repo_id, body.slug, body.expected_local_digest, body.remove_config
+        ),
     )
 
 
@@ -393,7 +419,10 @@ def restore_app(repo_id: str, body: PreflightInput):
 def recover(slug: str, body: RecoveryInput, request: Request):
     confirmed(body)
     return queued(
-        request, "recover", "app:" + slug, lambda: manager.recover(slug, body.accept_current)
+        request,
+        "recover",
+        "app:" + slug,
+        lambda: manager.recover(slug, body.accept_current, body.retry_uninstall),
     )
 
 

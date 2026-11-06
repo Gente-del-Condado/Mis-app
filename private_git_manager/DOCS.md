@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.4.0
+# HA Private Git Manager · 0.5.0
 
 ## Empezar
 
@@ -43,11 +43,13 @@ No borres las carpetas ocultas `.pgm-stage-*` o `.pgm-backup-*` mientras haya re
 
 Para rotar una clave, crea otra, registra la pública, cambia las credenciales y sincroniza antes de revocar la anterior. Las claves y servidores en uso no se pueden eliminar.
 
-Desinstala primero la aplicación desde Home Assistant. **Borrar aplicación** elimina únicamente su carpeta local `/addons/<slug>` y su registro, después de revisar la ruta y confirmar. También permite borrar copias ya desvinculadas. Las demás aplicaciones del maestro y el repositorio Git se conservan.
+**Instalar** y **Desinstalar** funcionan desde este gestor mediante el Supervisor. Desinstalar conserva el código local para instalarlo de nuevo. **Borrar aplicación** elimina únicamente `/addons/<slug>` y su registro; si está instalada, ofrece **Desinstalar y borrar** y exige autorización. También permite borrar copias ya desvinculadas. Las demás aplicaciones del maestro y el repositorio Git se conservan.
+
+Home Assistant elimina los datos internos y las opciones al desinstalar. La carpeta pública `app_config` se conserva por defecto; su borrado requiere marcar una casilla independiente. Revisa el aviso de pérdida de datos antes de confirmar.
 
 La casilla **Ocultar también esta aplicación** evita que siga apareciendo como disponible; la preferencia sobrevive a sincronizaciones y reinicios. **Aplicaciones ocultas → Volver a mostrar** restaura su ficha sin instalarla. Desmarca la casilla al borrar si quieres mantenerla visible.
 
-**Desvincular** solo retira el registro y conserva sus archivos. Solo se pueden eliminar repositorios sin aplicaciones gestionadas. Si un borrado falla, utiliza **Revisar recuperación → Terminar borrado**; conserva las carpetas `.pgm-remove-*` hasta completarlo. Se comprueba el Supervisor antes de borrar, y no se borran aplicaciones instaladas.
+**Desvincular** solo retira el registro y conserva sus archivos. Solo se pueden eliminar repositorios sin aplicaciones gestionadas. Si un borrado falla, utiliza **Revisar recuperación → Terminar borrado**; conserva las carpetas `.pgm-remove-*` hasta completarlo. Se verifica que el Supervisor haya desinstalado la aplicación antes de borrar sus archivos. Si el resultado es incierto, la recuperación solo comprueba su estado; reintentar exige una autorización adicional y verificar que no hay una operación activa. Un reinicio no repite desinstalaciones.
 
 ## Registros y privacidad
 
@@ -65,4 +67,4 @@ Select **EN** in the web UI. Generate an SSH key, register the public key as a r
 
 Jobs continue after closing the UI. Scheduled sync only downloads changes. A recovery warning means Supervisor state needs checking before restoring source or accepting a verified current version. Source recovery does not roll back images or app data. Protect app backups: they include credentials.
 
-To remove one app: uninstall it in Home Assistant, then use **Delete app**. Other catalog apps and the remote repository are preserved. Optionally hide its listing and restore it later from **Hidden apps → Show again**. **Release** keeps its source folder. Interrupted deletion can be completed through **Review recovery → Finish deletion**.
+Use **Install** and **Uninstall** directly in this manager. **Uninstall** keeps source for reinstallation. **Delete app** also offers **Uninstall and delete** when needed. Internal app data/options are deleted on uninstall; public `app_config` is kept unless you explicitly choose to remove it. Other catalog apps and the remote repository are preserved. Optionally hide its listing and restore it later from **Hidden apps → Show again**. **Release** keeps its source folder. Interrupted deletion can be completed through **Review recovery → Finish deletion**.

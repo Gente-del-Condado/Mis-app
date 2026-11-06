@@ -1,3 +1,12 @@
+# 0.5.0
+
+- Selección del endpoint oficial: actualizar cuando cambia la versión y reconstruir código local cuando mantiene su versión.
+- Desinstalación de aplicaciones desde el gestor mediante la API del Supervisor, conservando el código para volver a instalar.
+- Borrado combinado: desinstalar y retirar únicamente la copia local de la aplicación seleccionada, sin afectar al resto del catálogo maestro.
+- Consentimiento explícito para la pérdida de datos internos; configuración pública `app_config` conservada por defecto y borrado opcional separado.
+- Diario persistente de desinstalación, comprobación del resultado real y recuperación tras cortes o reinicios. No hay reintentos destructivos automáticos; un reintento necesita autorización adicional.
+- Verificación del ciclo instalar/desinstalar/reinstalar/borrar en español e inglés, del contrato HTTP del Supervisor y de la conservación de otras aplicaciones.
+
 # 0.4.0
 
 - Borrado individual de la copia local de una aplicación, incluida una copia ya desvinculada, sin borrar las demás aplicaciones de un catálogo maestro ni el repositorio Git.

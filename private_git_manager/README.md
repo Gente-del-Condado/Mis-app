@@ -13,7 +13,7 @@ el botón anterior y selecciona **HA Private Git Manager**.
 - Interfaz en español e inglés, temas claro/oscuro y diseño adaptable.
 - Presentaciones README/DOCS, iconos y catálogos maestros privados con `repository.yaml`.
 - Claves SSH Ed25519, identidades de servidor verificadas y HTTPS con token.
-- Instalación y actualización manual, control de ejecución y sincronización programada.
+- Instalación, desinstalación y actualización desde el gestor, control de ejecución y sincronización programada.
 - Borrado individual de copias locales y ocultación reversible de aplicaciones del catálogo maestro.
 - Trabajos en segundo plano, recuperación explícita y registros filtrables/exportables.
 

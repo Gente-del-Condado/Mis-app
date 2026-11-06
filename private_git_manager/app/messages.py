@@ -1,6 +1,10 @@
 """Stable event identifiers, translated for the UI; container logs default to Spanish."""
 
 EVENTS = {
+    "app_uninstalled": (
+        "Aplicación desinstalada; código local conservado.",
+        "App uninstalled; local source kept.",
+    ),
     "app_removed": ("Copia local eliminada.", "Local copy deleted."),
     "app_restored": ("Aplicación visible de nuevo en el catálogo.", "App restored to the catalog."),
     "local_adopted": (
