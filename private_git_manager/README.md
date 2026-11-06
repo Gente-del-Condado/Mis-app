@@ -11,6 +11,7 @@ el repositorio oficial de aplicaciones de Gente del Condado. Añade la tienda co
 el botón anterior y selecciona **HA Private Git Manager**.
 
 - Interfaz en español e inglés, temas claro/oscuro y diseño adaptable.
+- Presentaciones README/DOCS, iconos y catálogos maestros privados con `repository.yaml`.
 - Claves SSH Ed25519, identidades de servidor verificadas y HTTPS con token.
 - Instalación y actualización manual, control de ejecución y sincronización programada.
 - Trabajos en segundo plano, recuperación explícita y registros filtrables/exportables.

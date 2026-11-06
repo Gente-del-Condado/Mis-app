@@ -1283,3 +1283,161 @@ dialog::backdrop {
   overflow: hidden;
   overscroll-behavior: contain;
 }
+
+/* Private repository and app documentation, contained within the native dialog. */
+.catalog-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 8px 0;
+}
+.catalog-meta strong {
+  color: var(--text);
+  font-weight: 550;
+}
+.catalog-summary {
+  margin: 5px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  max-width: 68ch;
+}
+.repo-icon img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+.app-logo {
+  float: left;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  margin: 0 12px 6px 0;
+}
+.documentation-dialog {
+  width: calc(100% - 32px);
+  max-width: 960px;
+}
+.catalog-apps {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+  margin-bottom: 16px;
+}
+.catalog-apps h3 {
+  font-size: 14px;
+}
+.catalog-apps button {
+  margin: 4px;
+}
+.document-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 14px 0 25px;
+}
+.markdown-viewer {
+  font-size: 14px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.markdown-viewer h1 {
+  font-size: 26px;
+  letter-spacing: -0.5px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+.markdown-viewer h2 {
+  font-size: 20px;
+  margin: 28px 0 14px;
+}
+.markdown-viewer h3 {
+  font-size: 16px;
+  margin: 22px 0 12px;
+}
+.markdown-viewer a {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.markdown-viewer p {
+  color: var(--text);
+  font-size: 14px;
+}
+.markdown-viewer img {
+  max-width: 100%;
+  height: auto;
+  max-height: 460px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.markdown-viewer code {
+  font-size: 12px;
+  background: var(--code);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+.markdown-viewer pre {
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--code);
+  border-radius: 8px;
+  overflow: auto;
+  white-space: pre;
+}
+.markdown-viewer pre code {
+  padding: 0;
+  background: none;
+  white-space: pre;
+}
+.markdown-viewer blockquote {
+  margin: 18px 0;
+  padding: 4px 18px;
+  border-inline-start: 3px solid var(--green);
+  background: var(--accent-soft);
+}
+.markdown-viewer table {
+  display: block;
+  overflow: auto;
+  border-collapse: collapse;
+  max-width: 100%;
+  margin: 16px 0;
+}
+.markdown-viewer td,
+.markdown-viewer th {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  text-align: start;
+}
+.markdown-viewer th {
+  background: var(--code);
+}
+.markdown-viewer hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+@media (max-width: 680px) {
+  .markdown-viewer h1 {
+    font-size: 22px;
+  }
+  .markdown-viewer {
+    font-size: 13px;
+  }
+}
+
+.catalog-meta strong,
+.catalog-meta span,
+.catalog-summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.catalog-apps button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}

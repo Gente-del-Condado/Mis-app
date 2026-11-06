@@ -257,10 +257,31 @@ function render() {
       node.setSelectionRange(focus.start, focus.end);
   }
 }
+function appHasChanges(repo, app, deployment) {
+  if (!deployment || deployment.repo_id !== repo?.id) return false;
+  const source = repo.app_digests?.[app.slug];
+  return source && deployment.source_digest
+    ? source !== deployment.source_digest
+    : deployment.commit !== repo.commit;
+}
 function renderRepos() {
   const repos = Object.values(state.repos),
     filtered = repos.filter((r) =>
-      (r.name + " " + r.url + " " + r.ref)
+      (
+        r.name +
+        " " +
+        r.url +
+        " " +
+        r.ref +
+        " " +
+        (r.catalog?.name || "") +
+        " " +
+        (r.catalog?.description || "") +
+        " " +
+        (r.catalog?.maintainer || "") +
+        " " +
+        r.apps.map((a) => a.name + " " + a.description).join(" ")
+      )
         .toLowerCase()
         .includes(repoSearch.toLowerCase()),
     );
@@ -278,12 +299,12 @@ function renderRepos() {
         const managed = r.apps.some(
           (a) =>
             state.deployments[a.slug]?.repo_id === r.id &&
-            state.deployments[a.slug].commit !== r.commit,
+            appHasChanges(r, a, state.deployments[a.slug]),
         );
         const busy = Object.values(state.jobs).some(
           (j) => j.resource === "repo:" + r.id && !terminal.has(j.status),
         );
-        return `<article class="card"><div class="repo-head"><div class="repo-icon" aria-hidden="true">⑂</div><div class="repo-main"><h3 class="repo-name">${esc(r.name)}</h3><div class="repo-url">${esc(r.url)}</div><div class="repo-meta"><span>⑂ ${esc(r.ref)}</span><span>${r.url.startsWith("https:") ? "HTTPS" : "SSH"}</span><span>${esc(short(r.commit))}</span><span>${esc(r.sync_interval ? t("every", { minutes: r.sync_interval / 60 }) : t("manual"))}</span></div></div>${badge(busy ? t("running") : managed ? t("changes") : r.commit ? t("synced") : t("pending"), busy || managed ? "pending" : "")}<div class="repo-actions">${button("sync", "↻ " + t("sync"), controls(r.id) + (busy ? " disabled" : ""))}${button("edit-repo", t("edit"), controls(r.id))}${button("credentials", t("credentials"), controls(r.id))}${button("delete-repo", t("remove"), controls(r.id), "subtle danger")}</div></div><div class="sync-time">${esc(t("lastSync"))}: ${esc(date(r.synced_at))}</div>${r.apps.map((a) => appRow(r, a, busy)).join("")}${r.commit && !r.apps.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
+        return `<article class="card"><div class="repo-head"><div class="repo-icon" aria-hidden="true">${r.catalog?.icon_path ? `<img src="${esc(repositoryAsset(r.id, r.catalog.icon_path))}" alt="" loading="lazy">` : "⑂"}</div><div class="repo-main"><h3 class="repo-name">${esc(r.name)}</h3>${r.catalog ? `<div class="catalog-meta">${badge(t(r.catalog.kind === "collection" ? "masterRepository" : r.catalog.kind === "single" ? "singleRepository" : "gitRepository"))} <span>${esc(t("catalogAppCount", { count: r.apps.length }))}</span>${r.catalog.name ? `<strong>${esc(r.catalog.name)}</strong>` : ""}${r.catalog.maintainer ? `<span>${esc(r.catalog.maintainer)}</span>` : ""}</div>${r.catalog.description ? `<p class="catalog-summary">${esc(r.catalog.description)}</p>` : ""}` : ""}<div class="repo-url">${esc(r.url)}</div><div class="repo-meta"><span>⑂ ${esc(r.ref)}</span><span>${r.url.startsWith("https:") ? "HTTPS" : "SSH"}</span><span>${esc(short(r.commit))}</span><span>${esc(r.sync_interval ? t("every", { minutes: r.sync_interval / 60 }) : t("manual"))}</span></div></div>${badge(busy ? t("running") : managed ? t("changes") : r.commit ? t("synced") : t("pending"), busy || managed ? "pending" : "")}<div class="repo-actions">${r.commit ? button("readme", t(r.catalog?.kind === "collection" ? "viewCatalog" : "viewReadme"), controls(r.id)) : ""}${button("sync", "↻ " + t("sync"), controls(r.id) + (busy ? " disabled" : ""))}${button("edit-repo", t("edit"), controls(r.id))}${button("credentials", t("credentials"), controls(r.id))}${button("delete-repo", t("remove"), controls(r.id), "subtle danger")}</div></div><div class="sync-time">${esc(t("lastSync"))}: ${esc(date(r.synced_at))}</div>${r.apps.map((a) => appRow(r, a, busy)).join("")}${r.commit && !r.apps.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
       })
       .join("");
   const detached = Object.values(state.deployments).filter(
@@ -313,23 +334,29 @@ function appRow(repo, app, busy = false) {
   const deployment = state.deployments[app.slug],
     managed = deployment?.repo_id === repo?.id,
     transaction = state.transactions[app.slug];
-  const changed = managed && deployment.commit !== repo.commit;
+  const changed = managed && appHasChanges(repo, app, deployment);
   const runtime = supervisor?.addons?.find(
     (a) => a.slug === "local_" + app.slug,
   );
-  let label = transaction
-    ? t("recovery")
-    : managed
-      ? deployment.status === "installed"
-        ? changed
-          ? t("changes")
-          : t("installed")
-        : t(deployment.status)
-      : deployment
-        ? t("otherSource")
-        : t("available");
+  let label = app.blocked_reason
+    ? t(app.blocked_reason)
+    : transaction
+      ? t("recovery")
+      : managed
+        ? deployment.status === "installed"
+          ? changed
+            ? t("changes")
+            : t("installed")
+          : t(deployment.status)
+        : deployment
+          ? t("otherSource")
+          : t("available");
   const metadata = `${esc(t("version"))} ${esc(app.version)}${app.arch.length ? " · " + esc(app.arch.join(", ")) : ""}${app.path ? " · " + esc(app.path) : ""}`;
-  const disabled = busy || !state.supervisor || Boolean(deployment && !managed);
+  const disabled =
+    busy ||
+    !state.supervisor ||
+    Boolean(deployment && !managed) ||
+    Boolean(app.blocked_reason);
   const data = controls(repo?.id || "") + ` data-slug="${esc(app.slug)}"`;
   let buttons = transaction
     ? button(
@@ -344,6 +371,15 @@ function appRow(repo, app, busy = false) {
         data + (disabled ? " disabled" : ""),
         managed ? "" : "primary",
       );
+  if (repo?.commit) {
+    buttons += button("readme", t("viewReadme"), data);
+    if (app.docs_path)
+      buttons += button(
+        "readme",
+        t("viewDocs"),
+        data + ' data-document="docs"',
+      );
+  }
   if (managed && !transaction) {
     if (state.supervisor) {
       buttons += button(
@@ -365,7 +401,7 @@ function appRow(repo, app, busy = false) {
       "subtle",
     );
   }
-  return `<div class="app-row"><div class="app-description"><strong>${esc(app.name)}</strong> ${badge(label, transaction || deployment?.status === "error" ? "error" : changed ? "pending" : "")}<p>${metadata}</p><p>${esc(app.description)}</p>${managed ? `<p>${esc(t("appliedCommit"))}: <code>${esc(short(deployment.commit))}</code> · ${esc(t(runtime?.state || "unknown"))}</p>` : ""}</div><div class="app-actions">${buttons}</div></div>`;
+  return `<div class="app-row"><div class="app-description">${app.icon_path && repo ? `<img class="app-logo" src="${esc(repositoryAsset(repo.id, app.icon_path))}" alt="" loading="lazy">` : ""}<strong>${esc(app.name)}</strong> ${badge(label, transaction || deployment?.status === "error" ? "error" : changed ? "pending" : "")}<p>${metadata}</p><p>${esc(app.description)}</p>${managed ? `<p>${esc(t("appliedCommit"))}: <code>${esc(short(deployment.commit))}</code> · ${esc(t(runtime?.state || "unknown"))}</p>` : ""}</div><div class="app-actions">${buttons}</div></div>`;
 }
 function renderKeys() {
   const keys = Object.values(state.keys);
@@ -449,6 +485,10 @@ function showView(next) {
 }
 function modal(type, title, body, footer = actions(), context = {}) {
   modalContext = { type, ...context };
+  $("#modal").classList.toggle(
+    "documentation-dialog",
+    type === "documentation",
+  );
   $("#modal-title").textContent = title;
   $("#modal-body").innerHTML = body;
   $("#modal-actions").innerHTML = footer;
@@ -464,6 +504,125 @@ function modal(type, title, body, footer = actions(), context = {}) {
       )?.focus(),
     );
 }
+function repositoryAsset(repo, path) {
+  return `api/repos/${encodeURIComponent(repo)}/asset?${new URLSearchParams({ path })}`;
+}
+let sanitizerFallback;
+async function setDocumentationHTML(element, html) {
+  const elements = [
+    "p",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "ul",
+    "ol",
+    "li",
+    "strong",
+    "em",
+    "s",
+    "a",
+    "img",
+    "pre",
+    "code",
+    "blockquote",
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "td",
+    "th",
+    "hr",
+    "br",
+  ];
+  const attributes = [
+    "href",
+    "src",
+    "alt",
+    "title",
+    "id",
+    "class",
+    "target",
+    "rel",
+    "loading",
+    "decoding",
+    "start",
+  ];
+  if ("setHTML" in Element.prototype) {
+    element.setHTML(html, { sanitizer: { elements, attributes } });
+  } else {
+    sanitizerFallback ??= import("./vendor/purify.es.mjs").then(
+      (module) => module.default,
+    );
+    const purify = await sanitizerFallback;
+    element.innerHTML = purify.sanitize(html, {
+      ALLOWED_TAGS: [...elements, "#text"],
+      ALLOWED_ATTR: attributes,
+      ALLOW_ARIA_ATTR: false,
+      ALLOW_DATA_ATTR: false,
+      KEEP_CONTENT: false,
+    });
+  }
+}
+async function openDocumentation(
+  repoId,
+  appSlug = null,
+  kind = "readme",
+  path = null,
+) {
+  const repo = state.repos[repoId];
+  if (!repo) return;
+  const app = appSlug ? repo.apps.find((a) => a.slug === appSlug) : null;
+  const request = {}; // Identity token prevents a late fetch replacing another open dialog.
+  modal(
+    "documentation",
+    app?.name || repo.catalog?.name || repo.name,
+    `<p>${esc(t("processing"))}</p>`,
+    button("close-modal", t("close")),
+    { repo: repoId, request },
+  );
+  try {
+    const params = new URLSearchParams({ kind });
+    if (appSlug) params.set("app_slug", appSlug);
+    if (path) params.set("path", path);
+    const doc = await api(`repos/${repoId}/document?${params}`);
+    if (!$("#modal").open || modalContext.request !== request) return;
+    const catalog =
+      !app && !path && repo.catalog?.kind === "collection"
+        ? `<section class="catalog-apps"><h3>${esc(t("catalogApplications"))}</h3>${repo.apps.map((a) => button("readme", a.name, controls(repoId) + ` data-slug="${esc(a.slug)}"`)).join("")}</section>`
+        : "";
+    $("#modal-body").innerHTML =
+      `${catalog}<div class="document-toolbar"><span>${esc(doc.path || "README.md")}</span><small>${esc(t("privateDocument"))}</small></div><article id="document-content" class="markdown-viewer"></article>`;
+    const container = $("#document-content");
+    if (doc.available) await setDocumentationHTML(container, doc.html);
+    else container.textContent = t("noReadme");
+  } catch (error) {
+    if (modalContext.request !== request || !$("#modal").open) return;
+    $("#modal-notice").textContent = errorText(error);
+    $("#modal-notice").hidden = false;
+    $("#modal-body").textContent = "";
+  }
+}
+$("#modal-body").addEventListener("click", (event) => {
+  const anchor = event.target.closest("#document-content a");
+  if (!anchor || modalContext.type !== "documentation") return;
+  const url = new URL(anchor.href, location.href);
+  const expected = new URL(
+    `api/repos/${modalContext.repo}/document`,
+    location.href,
+  );
+  if (url.origin === expected.origin && url.pathname === expected.pathname) {
+    event.preventDefault();
+    openDocumentation(
+      modalContext.repo,
+      null,
+      "readme",
+      url.searchParams.get("path"),
+    );
+  }
+});
 function keyOptions(selected) {
   return (
     `<option value="">${esc(t("selectKey"))}</option>` +
@@ -642,6 +801,12 @@ document.addEventListener("click", async (event) => {
     showView("activity");
     return;
   }
+  if (action === "readme")
+    await openDocumentation(
+      id,
+      slug || null,
+      node.dataset.document || "readme",
+    );
   if (action === "add-repo") openRepo();
   if (action === "new-key") openKey();
   if (action === "verify-host") openTrust();

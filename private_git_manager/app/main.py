@@ -4,13 +4,14 @@ import shutil
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from .core import VERSION, Manager, Problem, endpoint
+from .documentation import RepositoryDocs
 from .jobs import Jobs, Scheduler
 from .messages import event_text
 
@@ -309,6 +310,29 @@ def repo_delete(repo_id: str):
     with mutation():
         manager.repo_delete(repo_id)
         return {"ok": True}
+
+
+@app.get("/api/repos/{repo_id}/document")
+def document(
+    repo_id: str,
+    app_slug: str | None = Query(None, max_length=80),
+    kind: str = Query("readme", pattern="^(readme|docs)$"),
+    path: str | None = Query(None, max_length=2048),
+):
+    with mutation():
+        return manager.read_document(repo_id, app_slug, kind, path)
+
+
+@app.get("/api/repos/{repo_id}/asset")
+def document_asset(repo_id: str, path: str = Query(min_length=1, max_length=2048)):
+    with mutation():
+        repo = manager.repo(repo_id)
+        if not repo["commit"]:
+            raise Problem("Sincroniza primero el repositorio.", "sync_required")
+        data, media_type = RepositoryDocs(manager.data / "repos" / repo_id, repo_id).image(path)
+        return Response(
+            data, media_type=media_type, headers={"Cross-Origin-Resource-Policy": "same-origin"}
+        )
 
 
 @app.post("/api/repos/{repo_id}/preflight")

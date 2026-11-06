@@ -296,5 +296,21 @@
   "unsafe_local_folder": "La ruta local no es una carpeta segura. No se modificará.",
   "local_manifest_mismatch": "La carpeta existente no contiene una única aplicación con el mismo identificador. No se sobrescribirá.",
   "adoption_confirmation_required": "Revisa la carpeta local y confirma explícitamente su adopción.",
-  "local_folder_changed": "La carpeta local ha cambiado desde la revisión. Revísala y confirma de nuevo."
+  "local_folder_changed": "La carpeta local ha cambiado desde la revisión. Revísala y confirma de nuevo.",
+  "viewReadme": "Ver README",
+  "viewDocs": "Documentación",
+  "viewCatalog": "Ver catálogo",
+  "masterRepository": "Repositorio maestro",
+  "singleRepository": "Aplicación individual",
+  "catalogAppCount": "{count} aplicaciones",
+  "catalogApplications": "Aplicaciones del catálogo",
+  "privateDocument": "Documentación privada · lectura local",
+  "noReadme": "Esta carpeta no contiene un README. Puedes consultar la documentación de cada aplicación si está disponible.",
+  "documentation_unsafe": "La ruta o el tipo de documento no están permitidos.",
+  "documentation_missing": "El documento no existe o supera el tamaño permitido.",
+  "documentation_unreadable": "No se pudo leer la documentación como texto UTF-8.",
+  "documentation_image": "La imagen del repositorio no es válida o no tiene un formato admitido.",
+  "catalog_invalid": "El archivo de metadatos repository.yaml no es válido.",
+  "gitRepository": "Repositorio Git",
+  "manager_self": "Actualizar desde Home Assistant"
 }

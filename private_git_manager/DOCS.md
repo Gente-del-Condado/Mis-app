@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.2.1
+# HA Private Git Manager · 0.3.0
 
 ## Empezar
 
@@ -10,6 +10,14 @@
 6. Configura sus opciones desde Home Assistant. La primera instalación queda detenida; iníciala cuando esté configurada.
 
 Para HTTPS, utiliza una URL sin credenciales y completa usuario/token si es privado. Dejar el token vacío al cambiar credenciales elimina la credencial guardada.
+
+## Leer presentaciones y catálogos privados
+
+Se admiten aplicaciones sueltas y repositorios maestros con `README.md`, `repository.yaml` y varias carpetas de aplicaciones. Verás el tipo, nombre del catálogo, mantenedor, resumen y número de aplicaciones. Puedes buscar por esos datos.
+
+**Ver catálogo** abre la presentación general. **Ver README** muestra la de cada aplicación y **Documentación** abre `DOCS.md`, si existe. Los enlaces Markdown locales y las imágenes PNG/JPEG/GIF/WebP permanecen dentro de Ingress. No hace falta hacer público el repositorio.
+
+El lector formatea Markdown, tablas y bloques de código. El HTML se muestra como texto; las imágenes externas y SVG no se cargan automáticamente. Se bloquean rutas fuera del repositorio, claves, `.git` y enlaces simbólicos. Sincroniza para descargar cambios de documentación.
 
 ## Si la carpeta local ya existe
 

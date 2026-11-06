@@ -296,5 +296,21 @@
   "unsafe_local_folder": "The local path is not a safe directory. It will not be modified.",
   "local_manifest_mismatch": "The existing folder does not contain exactly one app with the same slug. It will not be overwritten.",
   "adoption_confirmation_required": "Review the local folder and explicitly confirm adoption.",
-  "local_folder_changed": "The local folder has changed since review. Review it and confirm again."
+  "local_folder_changed": "The local folder has changed since review. Review it and confirm again.",
+  "viewReadme": "View README",
+  "viewDocs": "Documentation",
+  "viewCatalog": "View catalog",
+  "masterRepository": "App collection",
+  "singleRepository": "Single app",
+  "catalogAppCount": "{count} apps",
+  "catalogApplications": "Apps in this collection",
+  "privateDocument": "Private documentation · local reading",
+  "noReadme": "This folder has no README. App documentation can be viewed separately when available.",
+  "documentation_unsafe": "The document path or type is not allowed.",
+  "documentation_missing": "The document does not exist or exceeds the size limit.",
+  "documentation_unreadable": "Could not read the documentation as UTF-8 text.",
+  "documentation_image": "The repository image is invalid or uses an unsupported format.",
+  "catalog_invalid": "The repository.yaml metadata file is invalid.",
+  "gitRepository": "Git repository",
+  "manager_self": "Update through Home Assistant"
 }

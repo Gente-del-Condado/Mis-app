@@ -1,3 +1,14 @@
+# 0.3.0
+
+- Fichas para repositorios individuales y catálogos maestros privados con `repository.yaml`, `.yml` o `.json`.
+- Presentaciones README generales y por aplicación, documentación DOCS, tablas, código e iconos locales.
+- Búsqueda por nombre de catálogo, mantenedor, resumen y aplicaciones incluidas.
+- Navegación entre documentos Markdown e imágenes raster locales mediante Ingress; sin exponer credenciales.
+- HTML de origen desactivado, sanitización nativa con alternativa DOMPurify local, sin imágenes externas automáticas ni lectura de rutas privadas.
+- Comparación de cambios por aplicación en catálogos: un cambio del README general no marca todas las aplicaciones como actualizables.
+- Recuperación de metadatos de presentación en repositorios ya descargados.
+- Conserva la corrección 0.2.1 de revisión y adopción de carpetas locales existentes.
+
 # 0.2.1
 
 - Corrección de instalaciones bloqueadas por una carpeta local preexistente: revisión previa con ruta, versión y estado.

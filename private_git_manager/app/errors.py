@@ -154,3 +154,9 @@ ERRORS = {
         "The package contains symlinks or special files and will not be copied.",
     ),
 }
+
+
+class Problem(Exception):
+    def __init__(self, message, code=None):
+        super().__init__(message)
+        self.code = code or ERRORS.get(message, ("operation_failed", ""))[0]

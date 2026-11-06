@@ -20,17 +20,12 @@ from urllib.parse import urlsplit
 import httpx
 import yaml
 
-from .errors import ERRORS
+from .documentation import RepositoryDocs
+from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.2.1"
-
-
-class Problem(Exception):
-    def __init__(self, message, code=None):
-        super().__init__(message)
-        self.code = code or ERRORS.get(message, ("operation_failed", ""))[0]
+VERSION = "0.3.0"
 
 
 class SupervisorUncertain(Problem):
@@ -251,6 +246,16 @@ class Manager:
         for record in self.state["deployments"].values():
             if record.get("status") == "pending":
                 record["status"] = "interrupted"
+        for repo in self.state["repos"].values():
+            checkout = self.data / "repos" / repo["id"]
+            if repo.get("commit") and checkout.is_dir():
+                try:
+                    docs = RepositoryDocs(checkout, repo["id"])
+                    repo["apps"] = self.discover(checkout)
+                    repo["catalog"] = docs.catalog(repo["apps"])
+                    repo["app_digests"] = self.app_digests(checkout, repo["apps"])
+                except Problem:
+                    pass  # Old checkouts remain usable; a new sync will report invalid metadata.
         self.save()
         self.askpass = self.data / "askpass.sh"
         self.askpass.write_text(
@@ -283,13 +288,13 @@ class Manager:
                         shutil.rmtree(target)
                         old.rename(target)
                     else:
-                        repo.update(commit=None, apps=[])
+                        repo.update(commit=None, apps=[], catalog=None, app_digests={})
                         continue  # Preserve both trees when neither matches known state.
                 else:
                     shutil.rmtree(old)
             except Problem:
                 if repo:
-                    repo.update(commit=None, apps=[])
+                    repo.update(commit=None, apps=[], catalog=None, app_digests={})
 
     def verify_checkout(self, repo, root):
         try:
@@ -522,6 +527,8 @@ class Manager:
             run(["git", "-C", str(work), "checkout", "--detach", "--force", "FETCH_HEAD"], env=env)
             commit = run(["git", "-C", str(work), "rev-parse", "HEAD"], env=env)
             apps = self.discover(work)
+            catalog = RepositoryDocs(work, repo_id).catalog(apps)
+            app_digests = self.app_digests(work, apps)
             self.progress("validating")
             old = self.data / "repos" / (repo_id + "-old")
             shutil.rmtree(old, ignore_errors=True)
@@ -533,7 +540,13 @@ class Manager:
                 if old.exists():
                     old.rename(target)
                 raise
-            repo.update(commit=commit, apps=apps, synced_at=time.time())
+            repo.update(
+                commit=commit,
+                apps=apps,
+                catalog=catalog,
+                app_digests=app_digests,
+                synced_at=time.time(),
+            )
             self.event("sync_done", repo_id=repo_id, commit=commit)
             shutil.rmtree(old, ignore_errors=True)
         finally:
@@ -580,9 +593,7 @@ class Manager:
             ):
                 raise Problem("La lista de máquinas no es válida.", "manifest_invalid")
             slug = config["slug"]
-            if not re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,79}", slug) or (
-                slug == "private_git_manager" and not local
-            ):
+            if not re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,79}", slug):
                 raise Problem("Slug no válido o reservado para este gestor.")
             if slug in slugs:
                 raise Problem("Hay aplicaciones con el mismo slug dentro del repositorio.")
@@ -606,6 +617,10 @@ class Manager:
                     "machine": config.get("machine"),
                     "path": str(Path(folder).relative_to(root)),
                     "image": config.get("image"),
+                    "blocked_reason": "manager_self"
+                    if slug == "private_git_manager" and not local
+                    else None,
+                    **RepositoryDocs(root).app_files(str(Path(folder).relative_to(root))),
                 }
             )
         return apps
@@ -660,12 +675,53 @@ class Manager:
         installed = self.supervisor.call("GET", "/addons").get("addons", [])
         return next((item for item in installed if item["slug"] == "local_" + slug), None)
 
+    def app_digests(self, root, apps):
+        result = {}
+        for app in apps:
+            try:
+                result[app["slug"]] = (
+                    None
+                    if app.get("blocked_reason")
+                    else self.tree_digest(Path(root) / app["path"])
+                )
+            except (Problem, OSError):
+                result[app["slug"]] = (
+                    None  # Installation still validates unsupported packages explicitly.
+                )
+        return result
+
+    def read_document(self, repo_id, app_slug=None, kind="readme", path=None):
+        repo = self.repo(repo_id)
+        if not repo["commit"]:
+            raise Problem("Sincroniza primero el repositorio.", "sync_required")
+        docs = RepositoryDocs(self.data / "repos" / repo_id, repo_id)
+        if path:
+            return docs.document(path)
+        folder = "."
+        if app_slug:
+            app = next((a for a in repo["apps"] if a["slug"] == app_slug), None)
+            if not app:
+                raise Problem("Aplicación no encontrada.", "documentation_missing")
+            folder = app["path"]
+        files = docs.app_files(folder)
+        selected = files["docs_path" if kind == "docs" else "readme_path"]
+        return (
+            docs.document(selected)
+            if selected
+            else {"available": False, "path": None, "html": "", "markdown": ""}
+        )
+
     def inspect_deployment(self, repo_id, slug):
         """Describe a local collision without taking ownership or replacing files."""
         repo = self.repo(repo_id)
         app = next((app for app in repo["apps"] if app["slug"] == slug), None)
         if not app or not repo["commit"]:
             raise Problem("Sincroniza el repositorio y selecciona una aplicación detectada.")
+        if app.get("blocked_reason"):
+            raise Problem(
+                "Actualiza este gestor desde Home Assistant; las demás aplicaciones del catálogo sí se pueden gestionar aquí.",
+                "manager_self",
+            )
         previous = self.state["deployments"].get(slug)
         if previous and previous["repo_id"] != repo_id:
             raise Problem("Otra fuente gestiona una aplicación con este slug.")
@@ -727,6 +783,11 @@ class Manager:
         app = next((a for a in repo["apps"] if a["slug"] == slug), None)
         if not app or not repo["commit"]:
             raise Problem("Sincroniza el repositorio y selecciona una aplicación detectada.")
+        if app.get("blocked_reason"):
+            raise Problem(
+                "Actualiza este gestor desde Home Assistant; las demás aplicaciones del catálogo sí se pueden gestionar aquí.",
+                "manager_self",
+            )
         if slug in self.state["transactions"]:
             raise Problem(
                 "Hay una operación pendiente de recuperar. Revisa la recuperación antes de continuar.",
@@ -1021,7 +1082,7 @@ class Manager:
             raise Problem("El intervalo debe ser 0 o estar entre 300 y 604800 segundos.")
         if repo["ref"] != ref:
             # Never install the old checkout while showing a newly selected branch.
-            repo.update(commit=None, apps=[])
+            repo.update(commit=None, apps=[], catalog=None, app_digests={})
         repo.setdefault("created_at", time.time())
         repo.update(name=name.strip(), ref=ref, sync_interval=sync_interval)
         self.event("repo_edited", repo_id=repo_id)
