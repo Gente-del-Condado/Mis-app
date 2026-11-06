@@ -1560,3 +1560,8 @@ dialog::backdrop {
 .schema-list-item {
   border-inline-start: 3px solid var(--border);
 }
+
+/* Native per-app backup catalogue: long names remain usable on narrow screens. */
+.backup-list { display: grid; gap: 12px; }
+.backup-card { border: 1px solid var(--border); border-radius: 12px; padding: 16px; overflow-wrap: anywhere; }
+.backup-card p { margin: 8px 0 12px; }

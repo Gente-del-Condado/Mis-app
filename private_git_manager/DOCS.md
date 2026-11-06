@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.8.0
+# HA Private Git Manager · 0.9.0
 
 ## Empezar
 
@@ -83,6 +83,20 @@ El gestor necesita el rol `manager` y escritura en `/addons`. Instala solo códi
 
 ---
 
+## Copias de seguridad de cada aplicación
+
+**Copias de seguridad** abre las copias nativas de Home Assistant que contienen esa aplicación: nombre, fecha, tamaño, ubicación y protección con contraseña. También aparecen copias generales o creadas fuera del gestor. La lista se filtra por el identificador exacto de la aplicación.
+
+**Crear copia** guarda los datos y la configuración de la aplicación instalada en el almacenamiento local de copias de Home Assistant. Puedes poner nombre y cifrar con una contraseña opcional, repetida para evitar errores. Sin contraseña se guarda sin cifrar. El Supervisor puede detener temporalmente aplicaciones que requieren copia en frío. Las copias son compatibles con Home Assistant y aparecen también en su listado de copias.
+
+**Restaurar copia** muestra la versión guardada y exige confirmar que se reemplazarán los datos actuales; el foco inicial está en **Cancelar**. Si está cifrada, introduce su contraseña. Se restaura únicamente esa aplicación, incluso al elegir una copia completa con otras aplicaciones y datos de Home Assistant. También puedes restaurar una aplicación desinstalada mientras siga vinculada al gestor y conserve su copia local. La creación de nuevas copias requiere que esté instalada.
+
+La restauración puede detener/reiniciar la aplicación y cambiar su versión instalada, visible en la ficha. Conserva el código Git local y su commit: revisa la versión antes de volver a actualizar o reconstruir. Las carpetas compartidas, Core y otras aplicaciones no se incluyen ni restauran desde estos botones. Las copias disponibles en una ubicación de red se restauran desde esa ubicación; Home Assistant Link (`.cloud_backup`) es exclusivo de Core y no está disponible para el gestor.
+
+Ambas operaciones son trabajos en segundo plano con progreso e historial en español e inglés. Puedes cerrar el gestor mientras terminan. Las contraseñas solo se mantienen en memoria durante la operación y no se guardan en estado, trabajos, logs o almacenamiento del navegador. Guárdalas de forma segura: el gestor no puede recuperarlas. Si se pierde la conexión con el Supervisor, el resultado se marca incierto y no se reintenta automáticamente; actualiza las copias y comprueba el estado antes de repetir. Tras reiniciar el gestor, los trabajos interrumpidos tampoco se repiten.
+
+Estas copias nativas de datos son distintas de las copias temporales de código `.pgm-backup-*` usadas para recuperar instalaciones fallidas.
+
 ## English quick start
 
 Select **EN** in the web UI. Generate an SSH key, register the public key as a read-only deploy key, verify the server fingerprint and add a repository. Sync to detect apps, then confirm the version/commit to install. Use **Configure** to edit options and **App logs** to inspect output before starting the app.
@@ -92,3 +106,17 @@ Jobs continue after closing the UI. Scheduled sync only downloads changes. A rec
 Use **Install** and **Uninstall** directly in this manager. **Uninstall** keeps source for reinstallation. **Delete app** also offers **Uninstall and delete** when needed. Internal app data/options are deleted on uninstall; public `app_config` is kept unless you explicitly choose to remove it. Other catalog apps and the remote repository are preserved. Optionally hide its listing and restore it later from **Hidden apps → Show again**. **Release** keeps its source folder. Interrupted deletion can be completed through **Review recovery → Finish deletion**.
 
 **Open web interface** opens an installed, running Ingress app through Home Assistant’s native app panel, outside the manager iframe. Home Assistant maintains the user session. No direct ports, external URLs or session tokens are exposed by the manager. Sidebar pinning is not required.
+
+### App backups / Copias de aplicaciones
+
+**Backups** lists native Home Assistant backups containing the exact app slug, including general backups and backups created outside the manager. It shows name, date, size, location and password protection.
+
+**Create backup** saves the installed app’s data and configuration to Home Assistant local backup storage. Name and encryption password are optional; passwords must be repeated to avoid typos. Without a password the backup is unencrypted. Supervisor may temporarily stop apps requiring cold backups. These native backups are also listed in Home Assistant.
+
+**Restore backup** shows the saved app version and requires explicit consent to replace current data, with initial focus on **Cancel**. Encrypted backups require their password. Only the chosen app is restored, even from a full backup containing Core, folders and other apps. Uninstalled apps can be restored while still linked to the manager with their local source retained; creating a backup requires an installed app.
+
+Restoring can stop/restart the app and change its installed version, shown on its card. Local Git source and commit are retained: review the version before updating or rebuilding again. Shared folders, Core and other apps are never included or restored by these controls. Existing backups on network storage restore from their location. Home Assistant Link (`.cloud_backup`) is exclusive to Core and unavailable here.
+
+Both operations use background jobs with translated progress and history and continue after closing the manager. Passwords are kept only in memory during the operation, never in state, jobs, logs or browser storage; retain them securely because the manager cannot recover them. A lost Supervisor connection produces an uncertain outcome with no automatic retry. Refresh backups and check the app before repeating. Interrupted jobs are never replayed on restart.
+
+These native data backups are separate from temporary `.pgm-backup-*` source trees used for deployment recovery.

@@ -408,6 +408,12 @@ function appRow(repo, app, busy = false) {
         data + ' data-document="docs"',
       );
   }
+  if (repo && (managed || runtime) && !app.blocked_reason && (!deployment || managed)) {
+    buttons += button(
+      "app-backups", t("appBackups"),
+      data + (disabled || transaction ? " disabled" : ""),
+    );
+  }
   if (repo && runtime && !app.blocked_reason && (!deployment || managed)) {
     if (managed ? (deployment.ingress ?? app.ingress) : app.ingress) {
       const ready =
@@ -471,7 +477,7 @@ function appRow(repo, app, busy = false) {
       data + (disabled ? " disabled" : ""),
       "subtle danger",
     );
-  return `<div class="app-row"><div class="app-description">${app.icon_path && repo ? `<img class="app-logo" src="${esc(repositoryAsset(repo.id, app.icon_path))}" alt="" loading="lazy">` : ""}<strong>${esc(app.name)}</strong> ${badge(label, transaction || deployment?.status === "error" ? "error" : changed ? "pending" : "")}<p>${metadata}</p><p>${esc(app.description)}</p>${managed ? `<p>${esc(t("appliedCommit"))}: <code>${esc(short(deployment.commit))}</code> · ${esc(t(runtime?.state || "unknown"))}</p>` : ""}</div><div class="app-actions">${buttons}</div></div>`;
+  return `<div class="app-row"><div class="app-description">${app.icon_path && repo ? `<img class="app-logo" src="${esc(repositoryAsset(repo.id, app.icon_path))}" alt="" loading="lazy">` : ""}<strong>${esc(app.name)}</strong> ${badge(label, transaction || deployment?.status === "error" ? "error" : changed ? "pending" : "")}<p>${metadata}</p><p>${esc(app.description)}</p>${managed ? `<p>${esc(t("appliedCommit"))}: <code>${esc(short(deployment.commit))}</code> · ${esc(t(runtime?.state || "unknown"))}${runtime?.version ? " · " + esc(t("installedVersion")) + ": " + esc(runtime.version) : ""}</p>` : ""}</div><div class="app-actions">${buttons}</div></div>`;
 }
 function renderKeys() {
   const keys = Object.values(state.keys);
@@ -558,7 +564,7 @@ function modal(type, title, body, footer = actions(), context = {}) {
   modalContext = { type, ...context };
   $("#modal").classList.toggle(
     "documentation-dialog",
-    ["documentation", "app-configuration", "app-logs"].includes(type),
+    ["documentation", "app-configuration", "app-logs", "app-backups"].includes(type),
   );
   $("#modal-title").textContent = title;
   $("#modal-body").innerHTML = body;
@@ -568,7 +574,9 @@ function modal(type, title, body, footer = actions(), context = {}) {
     $("#modal-actions [data-action=close-modal]").autofocus = true;
   }
   if (!$("#modal").open) $("#modal").showModal();
-  if (!context.safeFocus)
+  if (context.safeFocus)
+    $("#modal-actions [data-action=close-modal]").focus();
+  else
     requestAnimationFrame(() =>
       $(
         "#modal-form textarea, #modal-form input:not([type=hidden]), #modal-form select, #modal-actions button",
@@ -753,6 +761,41 @@ function applicationPath(repo, slug) {
 function modalMessage(message) {
   $("#modal-notice").textContent = message;
   $("#modal-notice").hidden = false;
+}
+function backupDate(value) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString(preferences.language);
+}
+function backupSummary(backup) {
+  return `${backupDate(backup.date)} · ${new Intl.NumberFormat(preferences.language, { maximumFractionDigits: 1 }).format(backup.size_bytes / 1024 ** 2)} MiB · ${backup.location || t("backupLocal")} · ${t(backup.protected ? "backupEncrypted" : "backupUnencrypted")}`;
+}
+async function openAppBackups(repo, slug) {
+  const context = { repo, slug };
+  modal("app-backups", t("appBackups") + ": " + slug,
+    `<p>${esc(t("loading"))}</p>`, button("close-modal", t("close")), context);
+  const current = modalContext;
+  try {
+    const result = await api(`${applicationPath(repo, slug)}/backups`);
+    if (modalContext !== current) return;
+    current.installed = result.installed;
+    $("#modal-body").innerHTML = `<p>${esc(t("backupsHelp"))}</p><div class="backup-list">${result.backups.length ? result.backups.map((backup) => `<article class="backup-card"><strong>${esc(backup.name || backup.slug)}</strong><p class="muted">${esc(backupSummary(backup))}</p>${button("restore-app-backup", t("restoreBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("restoreBackup") + ": " + (backup.name || backup.slug))}"`)}</article>`).join("") : `<p class="empty">${esc(t("emptyBackups"))}</p>`}</div>`;
+    $("#modal-actions").innerHTML = `${button("close-modal", t("close"))}${button("refresh-app-backups", t("refresh"))}${button("create-app-backup", t("createBackup"), result.installed ? "" : "disabled", "primary")}`;
+  } catch (error) {
+    if (modalContext === current) modalMessage(errorText(error));
+  }
+}
+function openCreateBackup(repo, slug) {
+  modal("create-app-backup", t("createBackup") + ": " + slug,
+    `<p>${esc(t("createBackupHelp"))}</p>${field("backupName", "name", "", 'maxlength="120" autocomplete="off"')}${field("backupPassword", "password", "", 'type="password" maxlength="1024" autocomplete="new-password"')}${field("backupPasswordRepeat", "password_repeat", "", 'type="password" maxlength="1024" autocomplete="new-password"')}<p class="muted">${esc(t("backupPasswordHelp"))}</p>`,
+    actions("createBackup"), { repo, slug, queued: true });
+}
+async function openRestoreBackup(repo, slug, selected) {
+  const previous = modalContext;
+  const backup = await api(`${applicationPath(repo, slug)}/backups/${encodeURIComponent(selected)}`);
+  if (modalContext !== previous) return;
+  modal("restore-app-backup", t("restoreBackup") + ": " + slug,
+    `<p><strong>${esc(backup.name || backup.slug)}</strong></p><p>${esc(backupSummary(backup))}</p><p>${esc(t("version"))}: ${esc(backup.version)}</p><p id="backup-restore-help">${esc(t("restoreBackupHelp"))}</p>${backup.protected ? field("backupRestorePassword", "password", "", 'type="password" required maxlength="1024" autocomplete="off"') : ""}<label class="radio"><input id="backup-restore-consent" type="checkbox" name="consent" required aria-describedby="backup-restore-help">${esc(t("restoreBackupConsent"))}</label>`,
+    actions("restoreBackup"), { repo, slug, selected, queued: true, safeFocus: true });
 }
 function configurationSignature(value) {
   if (Array.isArray(value))
@@ -1020,7 +1063,7 @@ async function waitConfigurationJob(id) {
 }
 async function submitModal(event) {
   event.preventDefault();
-  if (loadingModal || ["app-logs", "documentation"].includes(modalContext.type))
+  if (loadingModal || ["app-logs", "documentation", "app-backups"].includes(modalContext.type))
     return;
   loadingModal = true;
   const submits = $("#modal").querySelectorAll("button");
@@ -1101,6 +1144,18 @@ async function submitModal(event) {
         confirmed: true,
         retry_uninstall: data.retry_uninstall === "true",
       });
+    if (context.type === "create-app-backup") {
+      if (data.password !== data.password_repeat)
+        throw Object.assign(new Error(t("backupPasswordMismatch")), { code: "backupPasswordMismatch" });
+      await queue(`${applicationPath(context.repo, context.slug)}/backups`, {
+        name: data.name, password: data.password || null, confirmed: true,
+      });
+    }
+    if (context.type === "restore-app-backup") {
+      await queue(`${applicationPath(context.repo, context.slug)}/backups/${encodeURIComponent(context.selected)}/restore`, {
+        password: data.password || null, confirmed: true,
+      });
+    }
     if (context.type === "app-configuration") {
       data.yaml = configurationSource(context);
       $("#app-configuration-yaml").readOnly = true;
@@ -1207,6 +1262,16 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "refresh-app-logs") {
     await refreshApplicationLogs();
+    return;
+  }
+  if (["app-backups", "refresh-app-backups", "create-app-backup", "restore-app-backup"].includes(action)) {
+    const context = modalContext;
+    try {
+      if (action === "app-backups") await openAppBackups(id, slug);
+      if (action === "refresh-app-backups") await openAppBackups(context.repo, context.slug);
+      if (action === "create-app-backup") openCreateBackup(context.repo, context.slug);
+      if (action === "restore-app-backup") await openRestoreBackup(context.repo, context.slug, node.dataset.backup);
+    } catch (error) { modalMessage(errorText(error)); }
     return;
   }
   if (action === "open-web-interface") {

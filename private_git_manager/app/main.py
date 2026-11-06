@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from .application import Applications
+from .backups import Backups
 from .core import VERSION, Manager, Problem, endpoint
 from .documentation import RepositoryDocs
 from .jobs import Jobs, Scheduler
@@ -188,6 +189,15 @@ class ConfigurationSave(ConfigurationInput):
     expected_revision: str = Field(min_length=64, max_length=64)
     restart: bool = False
     confirmed: bool = False
+
+
+class BackupCreate(ConfirmInput):
+    name: str = Field(default="", max_length=120, pattern=r"^[^\x00-\x1f\x7f]*$")
+    password: str | None = Field(default=None, max_length=1024)
+
+
+class BackupRestore(ConfirmInput):
+    password: str | None = Field(default=None, max_length=1024)
 
 
 def confirmed(body):
@@ -424,6 +434,40 @@ def restore_app(repo_id: str, body: PreflightInput):
     with mutation():
         manager.restore_app(repo_id, body.slug)
         return {"ok": True}
+
+
+@app.get("/api/repos/{repo_id}/apps/{slug}/backups")
+def app_backups(repo_id: str, slug: str):
+    return Backups(manager).list(repo_id, slug)
+
+
+@app.get("/api/repos/{repo_id}/apps/{slug}/backups/{selected}")
+def app_backup_details(repo_id: str, slug: str, selected: str):
+    return Backups(manager).details(repo_id, slug, selected)
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/backups")
+def create_app_backup(repo_id: str, slug: str, body: BackupCreate, request: Request):
+    confirmed(body)
+    return queued(
+        request,
+        "backup_create",
+        "repo:" + repo_id,
+        lambda: Backups(manager).create(repo_id, slug, body.name, body.password),
+    )
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/backups/{selected}/restore")
+def restore_app_backup(
+    repo_id: str, slug: str, selected: str, body: BackupRestore, request: Request
+):
+    confirmed(body)
+    return queued(
+        request,
+        "backup_restore",
+        "repo:" + repo_id,
+        lambda: Backups(manager).restore(repo_id, slug, selected, body.password),
+    )
 
 
 @app.get("/api/repos/{repo_id}/apps/{slug}/web-interface")

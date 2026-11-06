@@ -1,6 +1,10 @@
 """Stable event identifiers, translated for the UI; container logs default to Spanish."""
 
 EVENTS = {
+    "app_backup_started": ("Creando copia de seguridad de la aplicación.", "Creating app backup."),
+    "app_backup_created": ("Copia de seguridad de la aplicación creada.", "App backup created."),
+    "app_backup_restore_started": ("Restaurando copia de la aplicación.", "Restoring app backup."),
+    "app_backup_restored": ("Copia de la aplicación restaurada.", "App backup restored."),
     "app_configured": ("Configuración de la aplicación guardada.", "App configuration saved."),
     "app_uninstalled": (
         "Aplicación desinstalada; código local conservado.",

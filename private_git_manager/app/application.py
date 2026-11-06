@@ -123,7 +123,7 @@ class Applications:
     def __init__(self, manager):
         self.manager = manager
 
-    def info(self, repo_id, slug, mutate=False):
+    def target(self, repo_id, slug, mutate=False):
         state = self.manager.snapshot()
         repo = state["repos"].get(repo_id)
         if (
@@ -146,6 +146,10 @@ class Applications:
                 raise Problem("No se puede verificar la carpeta local.", "local_manifest_mismatch")
         if mutate and slug in state["transactions"]:
             raise Problem("Revisa primero la recuperación pendiente.", "recovery_required")
+        return repo
+
+    def info(self, repo_id, slug, mutate=False):
+        self.target(repo_id, slug, mutate)
         if not self.manager.installed_info(slug):
             raise Problem("Instala primero esta aplicación.", "app_not_installed")
         return self.manager.supervisor.call("GET", f"/addons/local_{slug}/info")

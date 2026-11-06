@@ -1,3 +1,12 @@
+# 0.9.0
+
+- Nuevo panel Copias de seguridad por aplicación con nombre, fecha, tamaño, ubicación y cifrado, en español e inglés.
+- Creación de copias parciales nativas del Supervisor, locales, con nombre y contraseña opcionales; verificación de la copia creada.
+- Restauración exclusivamente de la aplicación seleccionada, incluso desde copias generales, con contraseña y consentimiento explícito antes de reemplazar datos.
+- Restauración de aplicaciones desinstaladas que conservan su vínculo y código local; versión instalada visible en cada ficha, sin cambiar el checkout Git.
+- Trabajos en segundo plano, progreso y eventos traducidos; sin contraseñas en estado, historial o registros, ni repetición automática de operaciones inciertas o interrumpidas.
+- Confirmación accesible con foco en Cancelar y pruebas de navegador en español/inglés, móvil, cifrado, contraseña incorrecta y restauración parcial.
+
 # 0.8.0
 
 - Botón Abrir interfaz web para aplicaciones instaladas que declaran Ingress; estado desactivado cuando están detenidas o tienen una operación pendiente.
