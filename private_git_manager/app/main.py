@@ -431,6 +431,12 @@ def app_configuration(repo_id: str, slug: str):
     return Applications(manager).configuration(repo_id, slug)
 
 
+@app.post("/api/repos/{repo_id}/apps/{slug}/configuration/convert")
+def convert_configuration(repo_id: str, slug: str, body: ConfigurationInput):
+    with mutation():
+        return Applications(manager).convert(repo_id, slug, body.yaml)
+
+
 @app.post("/api/repos/{repo_id}/apps/{slug}/configuration/validate")
 def validate_configuration(repo_id: str, slug: str, body: ConfigurationInput):
     with mutation():

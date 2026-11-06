@@ -1508,3 +1508,55 @@ dialog::backdrop {
 .documentation-dialog .radio {
   min-block-size: 48px;
 }
+
+.configuration-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 16px;
+}
+.configuration-mode [aria-pressed="true"] {
+  border-color: var(--green);
+  font-weight: 700;
+}
+.generated-configuration {
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+}
+.generated-configuration[hidden] {
+  display: none;
+}
+.generated-configuration fieldset {
+  min-inline-size: 0;
+  margin-block: 12px;
+}
+.generated-configuration legend,
+.generated-configuration label {
+  overflow-wrap: anywhere;
+}
+.schema-field {
+  margin-block: 16px;
+  min-inline-size: 0;
+}
+.schema-field input:not([type="checkbox"]),
+.schema-field select {
+  inline-size: 100%;
+  min-block-size: 48px;
+  font-size: max(1rem, 16px);
+}
+.schema-field .radio,
+.schema-field button {
+  min-block-size: 48px;
+}
+.field-help {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  margin-block: 6px 10px;
+}
+.password-toggle {
+  margin-block-start: 8px;
+}
+.schema-list-item {
+  border-inline-start: 3px solid var(--border);
+}

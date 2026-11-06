@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.6.0
+# HA Private Git Manager · 0.7.0
 
 ## Empezar
 
@@ -33,11 +33,15 @@ Sincronizar descarga cambios sin aplicarlos. **Actualizar / reconstruir** aplica
 
 ## Configuración y logs de aplicaciones
 
-**Configurar** abre un editor YAML para `options` y los ajustes disponibles del Supervisor: arranque (`boot`), watchdog, puertos (`network`), actualizaciones automáticas, panel Ingress y audio. Admite opciones anidadas y referencias `!secret nombre`. Usa claves únicas de texto; pon las fechas entre comillas si deben ser cadenas.
+**Configurar** abre un formulario generado con el `schema` nativo y las traducciones que entrega el Supervisor para esa aplicación: texto, contraseñas ocultas, casillas, números con límites, selectores/dispositivos y grupos o listas anidados. Reutiliza los nombres y ayudas de `translations/<idioma>.yaml`, con alternativa en inglés.
 
-Valida antes de guardar y consulta el esquema desplegable. El Supervisor comprueba todos los ajustes al guardar. Los cambios de opciones se aplican al próximo inicio; puedes elegir reiniciar una aplicación que ya esté en marcha. Una aplicación detenida no se inicia sola. Los conflictos y errores conservan el texto del editor, y cerrar con cambios requiere descartarlos explícitamente.
+Puedes añadir o quitar elementos y activar opciones opcionales, conservando la diferencia entre omitir un valor y guardar `false`. Los ajustes disponibles de arranque, watchdog, puertos, actualizaciones, panel Ingress y audio también tienen controles de formulario.
 
-Las opciones no se guardan en el historial, estado ni trabajos del gestor. El editor puede mostrar credenciales y admite hasta 24.000 caracteres, dentro del límite HTTP de 32 KiB.
+**YAML avanzado** es una opción adicional. Los cambios se conservan al alternar ambas vistas; si el YAML no es válido, permanece visible sin perder el texto. Los valores no representables y las referencias existentes `!secret nombre` se conservan. No necesitas añadir otro formato a tus aplicaciones.
+
+Valida antes de guardar. El Supervisor comprueba las opciones y los ajustes al guardar; los cambios se aplican al próximo inicio. Puedes reiniciar una aplicación que ya esté en marcha. Una aplicación detenida no se inicia sola. Los conflictos y errores conservan el editor, y cerrar con cambios requiere descartarlos explícitamente.
+
+Las opciones no se guardan en el historial, estado ni trabajos del gestor. El envío admite hasta 24.000 caracteres, dentro del límite HTTP de 32 KiB.
 
 **Logs de la aplicación** permite buscar, actualizar cada cinco segundos, pausar, refrescar manualmente y descargar. La salida se muestra como texto, con límite de 512 KiB por lectura; el refresco se pausa al ocultar la página y termina al cerrar. Se ocultan valores sensibles conocidos, aunque no se pueden detectar todos los secretos que una aplicación imprima. Los logs no se almacenan en el gestor y siguen disponibles durante una recuperación pendiente.
 

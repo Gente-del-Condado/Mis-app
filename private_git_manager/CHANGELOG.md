@@ -1,3 +1,13 @@
+# 0.7.0
+
+- Formulario como vista principal de configuración, generado con el esquema UI nativo y las traducciones de cada aplicación que devuelve el Supervisor.
+- Campos de texto, contraseñas ocultas, números con límites, casillas, selectores/dispositivos, campos opcionales, grupos y listas anidados con alta y baja de elementos.
+- Etiquetas y ayudas nativas con alternativa en inglés; controles de arranque, vigilancia, actualizaciones, puertos, panel y audio.
+- YAML como opción avanzada, con conversión segura en ambos sentidos y conservación de los valores no representables y referencias !secret.
+- Conservación de valores opcionales por objeto al editar listas; distinción entre valor false y opción ausente; validación nativa de navegador y comprobación final del Supervisor.
+- Corrección de valores nulos de audio e Ingress para evitar que bloqueen el guardado y de la selección de idioma durante la carga inicial.
+- Nuevas pruebas de navegador ES/EN y API para el formulario nativo, límites, traducciones, listas, opciones opcionales y cambios de vista.
+
 # 0.6.0
 
 - Editor YAML de configuración por aplicación instalada: opciones anidadas, referencias !secret y ajustes nativos de arranque, watchdog, puertos, actualizaciones, panel Ingress y audio.

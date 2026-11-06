@@ -103,6 +103,9 @@ def parse_configuration(source):
 def editable(info):
     result = {key: info[key] for key in FIELDS if key in info}
     result.setdefault("options", {})
+    for key in ("watchdog", "auto_update", "ingress_panel"):
+        if result.get(key) is None:
+            result.pop(key, None)
     if info.get("boot_config") == "manual_only":
         result.pop("boot", None)
     if info.get("host_network"):
@@ -151,10 +154,21 @@ class Applications:
         info = self.info(repo_id, slug)
         return {
             "yaml": yaml.safe_dump(editable(info), allow_unicode=True, sort_keys=True),
+            "values": editable(info),
+            "translations": info.get("translations", {}),
+            "network_description": info.get("network_description", {}),
             "revision": revision(info),
             "schema": info.get("schema"),
             "state": info.get("state"),
             "name": info.get("name", slug),
+        }
+
+    def convert(self, repo_id, slug, source):
+        self.info(repo_id, slug)
+        values = parse_configuration(source)
+        return {
+            "values": values,
+            "yaml": yaml.safe_dump(values, allow_unicode=True, sort_keys=True),
         }
 
     def validate(self, repo_id, slug, source):

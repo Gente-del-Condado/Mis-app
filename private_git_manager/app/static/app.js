@@ -1,3 +1,5 @@
+import { SchemaForm } from "./schema-form.js";
+
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) =>
   String(value ?? "").replace(
@@ -74,11 +76,15 @@ function setTheme(theme) {
   storage.set("pgm-theme", theme);
   document.documentElement.dataset.theme = theme;
 }
+let languageRequest = 0;
 async function setLanguage(language) {
+  const request = ++languageRequest;
   if (!["es", "en"].includes(language)) language = "es";
   const response = await fetch(`static/locales/${language}.json`);
   if (!response.ok) throw new Error("Unable to load language");
-  dictionary = await response.json();
+  const loaded = await response.json();
+  if (request !== languageRequest) return;
+  dictionary = loaded;
   preferences.language = language;
   storage.set("pgm-language", language);
   document.documentElement.lang = language;
@@ -734,12 +740,100 @@ function modalMessage(message) {
   $("#modal-notice").textContent = message;
   $("#modal-notice").hidden = false;
 }
+function configurationSignature(value) {
+  if (Array.isArray(value))
+    return "[" + value.map(configurationSignature).join(",") + "]";
+  if (value && typeof value === "object")
+    return (
+      "{" +
+      Object.keys(value)
+        .sort()
+        .map(
+          (key) =>
+            JSON.stringify(key) + ":" + configurationSignature(value[key]),
+        )
+        .join(",") +
+      "}"
+    );
+  return JSON.stringify(value);
+}
+function configurationSource(context = modalContext) {
+  return context.mode === "yaml"
+    ? $("#app-configuration-yaml").value
+    : JSON.stringify(context.schemaForm.data());
+}
+function buildConfigurationForm(context, values) {
+  context.schemaForm = new SchemaForm($("#app-configuration-fields"), {
+    values,
+    schema: context.config.schema,
+    translations: context.config.translations,
+    networkDescription: context.config.network_description,
+    language: preferences.language,
+    t,
+    onChange: () => {
+      context.dirty =
+        configurationSignature(context.schemaForm.data()) !== context.baseline;
+      $("#modal-notice").hidden = true;
+    },
+  });
+}
+function setConfigurationMode(context, mode) {
+  context.mode = mode;
+  const advanced = mode === "yaml";
+  $("#app-configuration-fields").hidden = advanced;
+  $("#app-configuration-fields").disabled = advanced;
+  $("#app-configuration-advanced").hidden = !advanced;
+  $("#app-configuration-yaml").disabled = !advanced;
+  for (const button of $("#configuration-mode").querySelectorAll("button"))
+    button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+}
+async function switchConfigurationMode(mode) {
+  const context = modalContext;
+  if (loadingModal || context.mode === mode) return;
+  loadingModal = true;
+  const source = configurationSource(context);
+  $("#app-configuration-fields").disabled = true;
+  $("#app-configuration-yaml").readOnly = true;
+  $("#modal")
+    .querySelectorAll("button")
+    .forEach((button) => (button.disabled = true));
+  try {
+    const converted = await api(
+      `${applicationPath(context.repo, context.slug)}/configuration/convert`,
+      "POST",
+      { yaml: source },
+    );
+    if (mode === "yaml") $("#app-configuration-yaml").value = converted.yaml;
+    else {
+      buildConfigurationForm(context, converted.values);
+      context.dirty =
+        configurationSignature(converted.values) !== context.baseline;
+    }
+    setConfigurationMode(context, mode);
+    $("#modal-notice").hidden = true;
+    (mode === "yaml"
+      ? $("#app-configuration-yaml")
+      : $(
+          "#app-configuration-fields input, #app-configuration-fields select, #configuration-mode button",
+        )
+    )?.focus();
+  } catch (error) {
+    modalMessage(errorText(error));
+  } finally {
+    loadingModal = false;
+    $("#app-configuration-yaml").readOnly = false;
+    setConfigurationMode(context, context.mode);
+    $("#modal")
+      .querySelectorAll("button")
+      .forEach((button) => (button.disabled = false));
+  }
+}
 async function openAppConfiguration(repo, slug) {
   const config = await api(`${applicationPath(repo, slug)}/configuration`);
   modal(
     "app-configuration",
     `${t("configureApp")}: ${config.name || slug}`,
-    `<p id="configuration-help">${esc(t("configurationHelp"))}</p><label for="app-configuration-yaml">${esc(t("configurationYaml"))}</label><textarea id="app-configuration-yaml" name="yaml" class="configuration-editor" required maxlength="24000" rows="17" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off" aria-describedby="configuration-help modal-notice"></textarea><div class="config-toolbar">${button("validate-configuration", t("validateConfiguration"))}</div><label class="radio" for="configuration-restart"><input id="configuration-restart" type="checkbox" name="restart" value="true">${esc(t("configurationRestart"))}</label><details><summary>${esc(t("configurationSchema"))}</summary><pre class="schema-view">${esc(JSON.stringify(config.schema, null, 2))}</pre></details>`,
+    `<p id="configuration-help">${esc(t("configurationFormHelp"))}</p><div id="configuration-mode" class="configuration-mode" role="group" aria-label="${esc(t("configurationView"))}">${button("configuration-mode", t("configurationForm"), 'data-mode="form" aria-pressed="true"')}${button("configuration-mode", t("configurationAdvanced"), 'data-mode="yaml" aria-pressed="false"')}</div><fieldset id="app-configuration-fields" class="generated-configuration"></fieldset><div id="app-configuration-advanced" hidden><p>${esc(t("configurationHelp"))}</p><label for="app-configuration-yaml">${esc(t("configurationYaml"))}</label><textarea id="app-configuration-yaml" name="yaml" class="configuration-editor" required maxlength="24000" rows="17" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off" aria-describedby="configuration-help modal-notice" disabled></textarea></div><div class="config-toolbar">${button("validate-configuration", t("validateConfiguration"))}</div><label class="radio" for="configuration-restart"><input id="configuration-restart" type="checkbox" name="restart" value="true">${esc(t("configurationRestart"))}</label><details><summary>${esc(t("configurationSchema"))}</summary><pre class="schema-view">${esc(JSON.stringify(config.schema, null, 2))}</pre></details>`,
     button(
       "discard-configuration",
       t("discardChanges"),
@@ -750,10 +844,15 @@ async function openAppConfiguration(repo, slug) {
       repo,
       slug,
       revision: config.revision,
-      original: config.yaml,
+      config,
       queued: true,
+      mode: "form",
+      dirty: false,
     },
   );
+  const context = modalContext;
+  buildConfigurationForm(context, config.values);
+  context.baseline = configurationSignature(context.schemaForm.data());
   $("#app-configuration-yaml").value = config.yaml;
 }
 async function validateAppConfiguration(node) {
@@ -764,14 +863,14 @@ async function validateAppConfiguration(node) {
     await api(
       `${applicationPath(context.repo, context.slug)}/configuration/validate`,
       "POST",
-      { yaml: $("#app-configuration-yaml").value },
+      { yaml: configurationSource(context) },
     );
     if (modalContext === context) modalMessage(t("configurationValid"));
   } catch (error) {
     if (modalContext === context) {
-      $("#app-configuration-yaml").setAttribute("aria-invalid", "true");
+      if (context.mode === "yaml")
+        $("#app-configuration-yaml").setAttribute("aria-invalid", "true");
       modalMessage(errorText(error));
-      $("#app-configuration-yaml").focus();
     }
   } finally {
     node.disabled = false;
@@ -852,7 +951,7 @@ function closeModal(discard = false) {
   if (
     !discard &&
     modalContext.type === "app-configuration" &&
-    $("#app-configuration-yaml")?.value !== modalContext.original
+    modalContext.dirty
   ) {
     modalMessage(t("unsavedConfiguration"));
     const button = $("#modal-actions [data-action=discard-configuration]");
@@ -989,7 +1088,9 @@ async function submitModal(event) {
         retry_uninstall: data.retry_uninstall === "true",
       });
     if (context.type === "app-configuration") {
+      data.yaml = configurationSource(context);
       $("#app-configuration-yaml").readOnly = true;
+      $("#app-configuration-fields").disabled = true;
       modalMessage(t("processing"));
       await api(
         `${applicationPath(context.repo, context.slug)}/configuration/validate`,
@@ -1023,8 +1124,10 @@ async function submitModal(event) {
     $("#modal-notice").hidden = false;
   } finally {
     loadingModal = false;
-    if ($("#app-configuration-yaml"))
+    if (modalContext === context && $("#app-configuration-yaml")) {
       $("#app-configuration-yaml").readOnly = false;
+      setConfigurationMode(context, context.mode);
+    }
     $("#modal")
       .querySelectorAll("button")
       .forEach((b) => (b.disabled = false));
@@ -1040,6 +1143,7 @@ $("#modal").addEventListener("close", () => {
 });
 $("#modal-body").addEventListener("input", (event) => {
   if (event.target.id === "app-configuration-yaml") {
+    modalContext.dirty = true;
     event.target.removeAttribute("aria-invalid");
     $("#modal-notice").hidden = true;
   }
@@ -1073,6 +1177,10 @@ document.addEventListener("click", async (event) => {
   if (!action) return;
   if (action === "close-modal") {
     closeModal();
+    return;
+  }
+  if (action === "configuration-mode") {
+    await switchConfigurationMode(node.dataset.mode);
     return;
   }
   if (action === "discard-configuration") {
@@ -1352,6 +1460,7 @@ document.addEventListener("visibilitychange", () => {
 });
 setTheme(preferences.theme);
 await setLanguage(preferences.language);
+$("#header-language").disabled = false;
 await poll();
 await checkSupervisor();
 setInterval(() => {
