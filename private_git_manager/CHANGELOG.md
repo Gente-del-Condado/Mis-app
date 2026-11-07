@@ -1,3 +1,9 @@
+# 0.14.0
+
+- Detecta paquetes nativos de YunoHost en repositorios Git privados.
+- Instala con las preguntas del paquete, actualiza desde el commit revisado y desinstala una instancia desde el portal de YunoHost.
+- Usa la sesión de administración de YunoHost en el navegador y conserva sus valores predeterminados de copia de seguridad y purga.
+
 # 0.13.0
 
 - Paquete YunoHost con acceso por el portal, servicio sin privilegios y almacenamiento separado.

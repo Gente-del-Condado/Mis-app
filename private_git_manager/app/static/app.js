@@ -278,6 +278,132 @@ function appHasChanges(repo, app, deployment) {
     ? source !== deployment.source_digest
     : deployment.commit !== repo.commit;
 }
+function yunohostRow(repo, busy) {
+  const pkg = repo.yunohost_package;
+  if (!pkg) return "";
+  const attrs = controls(repo.id) + (busy ? " disabled" : "");
+  const buttons = pkg.id === "privategit" ? `<p>${esc(t("yunohostSelf"))}</p>` :
+    ["install", "upgrade", "remove"].map((action) =>
+      button("ynh-" + action, t("ynh-" + action), attrs, action === "remove" ? "subtle danger" : "")
+    ).join("");
+  return `<div class="app-row"><div><strong>${esc(pkg.name)}</strong><p>${esc(pkg.id)} · ${esc(pkg.version)} · YunoHost</p></div><div class="app-actions">${buttons}</div></div>`;
+}
+
+const ynhError = (code, message = t(code)) => Object.assign(new Error(message), { code });
+async function nativeYunoHost(path, method = "GET", data) {
+  let response, result;
+  try {
+    response = await fetch("/yunohost/api/" + path, {
+      method, credentials: "same-origin", redirect: "error",
+      headers: { "X-Requested-With": "XMLHttpRequest", locale: preferences.language },
+      body: data === undefined ? undefined : new URLSearchParams(data),
+    });
+    if ([401, 403].includes(response.status)) throw ynhError("yunohost_session");
+    const body = await response.text();
+    result = body ? JSON.parse(body) : null;
+  } catch (error) {
+    if (error.code === "yunohost_session") throw error;
+    throw ynhError(method === "GET" ? "yunohost_unavailable" : "yunohost_unknown");
+  }
+  if (!response.ok) {
+    const message = typeof result?.error === "string" ? result.error.slice(0, 1200) : "";
+    // Server messages are shown as text; never render third-party markup.
+    throw Object.assign(ynhError("yunohost_native_error"), { nativeMessage: message });
+  }
+  return result;
+}
+function ynhErrorText(error) {
+  return error.nativeMessage ? `${t(error.code)} ${error.nativeMessage}` : errorText(error);
+}
+function ynhCleanup(staged) {
+  if (staged) void api(`yunohost-stages/${encodeURIComponent(staged.id)}`, "DELETE").catch(() => {});
+}
+function ynhLocale(value, fallback = "") {
+  if (typeof value === "string") return value;
+  return value?.[preferences.language] || value?.en || value?.fr || fallback;
+}
+function ynhQuestion(q) {
+  if (q.readonly || ["display_text", "markdown", "alert"].includes(q.type))
+    return `<p class="muted">${esc(ynhLocale(q.ask))}</p>`;
+  const title = esc(ynhLocale(q.ask, q.id)), name = `arg:${esc(q.id)}`;
+  const required = q.optional || q.visible !== true && q.visible !== undefined ? "" : " required";
+  const help = q.help ? `<small class="muted">${esc(ynhLocale(q.help))}</small>` : "";
+  const initial = q.type === "password" ? "" : q.default ?? "";
+  let choices = Array.isArray(q.choices) ? q.choices.map((value) => [value, value]) : Object.entries(q.choices || {});
+  if (q.type === "boolean") choices = [[1, t("yunohostYes")], [0, t("yunohostNo")]];
+  if (q.type === "file") throw ynhError("yunohost_file_unsupported");
+  const control = choices.length
+    ? `<select name="${name}"${required}><option value="">${esc(t("yunohostChoose"))}</option>${choices.map(([value, label]) => `<option value="${esc(value)}"${String(value) === String(initial === true ? 1 : initial === false ? 0 : initial) ? " selected" : ""}>${esc(ynhLocale(label, String(label)))}</option>`).join("")}</select>`
+    : q.type === "text"
+      ? `<textarea name="${name}"${required}>${esc(initial)}</textarea>`
+      : `<input name="${name}" type="${["password", "email", "url", "date", "time", "color"].includes(q.type) ? q.type : "text"}" value="${esc(initial)}"${required}${q.type === "password" ? ' autocomplete="new-password"' : ""}>`;
+  return `<label>${title}${control}${help}</label>`;
+}
+async function openYunoHostAction(repoId, action) {
+  if (loadingModal || state.platform !== "yunohost") return;
+  const repo = state.repos[repoId], pkg = repo?.yunohost_package;
+  if (!pkg || pkg.id === "privategit") return;
+  const title = `${t("ynh-" + action)} · ${pkg.name}`;
+  const admin = `<p><a href="/yunohost/admin/" target="_blank" rel="noopener">${esc(t("yunohostAdmin"))}</a></p>`;
+  const cancel = button("close-modal", t("close"));
+  let staged;
+  modal("ynh-loading", title, `<p>${esc(t("processing"))}</p>`, cancel);
+  loadingModal = true;
+  $("#modal-actions button").disabled = true;
+  try {
+    const current = await nativeYunoHost("apps");
+    if (!Array.isArray(current?.apps)) throw ynhError("yunohost_unavailable");
+    const instances = current.apps.filter(({ id }) => typeof id === "string" &&
+      (id === pkg.id || (id.startsWith(pkg.id + "__") && /^(?:[2-9]|[1-9][0-9]+)$/.test(id.slice(pkg.id.length + 2)))));
+    if (action !== "install" && !instances.length) throw ynhError("yunohost_not_installed");
+    const select = action === "install" ? "" : `<label>${esc(t("yunohostInstance"))}<select name="instance" required><option value="">${esc(t("yunohostChoose"))}</option>${instances.map((item) => `<option value="${esc(item.id)}"${instances.length === 1 ? " selected" : ""}>${esc(item.name || item.id)} · ${esc(item.id)} · ${esc(item.version)}</option>`).join("")}</select></label>`;
+    let questions = "", args = [];
+    if (action !== "remove") {
+      staged = await api(`repos/${encodeURIComponent(repoId)}/yunohost-stage`, "POST", { expected_commit: repo.commit });
+      if (staged.package?.id !== pkg.id || staged.package.version !== pkg.version) throw ynhError("yunohost_source_changed");
+    }
+    if (action === "install") {
+      const manifest = await nativeYunoHost("apps/manifest?" + new URLSearchParams({ app: staged.path }));
+      if (manifest?.id !== pkg.id || !Array.isArray(manifest.install)) throw ynhError("yunohost_package_invalid");
+      if (instances.length && manifest.integration?.multi_instance !== true) throw ynhError("yunohost_already_installed");
+      const fields = manifest.install.filter((q) => typeof q.id === "string" && /^[a-zA-Z_][a-zA-Z0-9_]{0,79}$/.test(q.id));
+      args = fields.filter((q) => !q.readonly && !["display_text", "markdown", "alert"].includes(q.type)).map((q) => q.id);
+      questions = field("yunohostLabel", "label", pkg.name, "required") + fields.map(ynhQuestion).join("");
+    }
+    const details = action === "remove" ? "yunohostRemoveInfo" : action === "upgrade" ? "yunohostUpgradeInfo" : "yunohostInstallInfo";
+    const danger = action === "remove" ? "danger" : "primary";
+    const footer = button("close-modal", t("cancel")) + `<button type="submit" class="${danger}">${esc(t("ynh-" + action))}</button>`;
+    modal("ynh-action", title, `<p>${esc(t(details))}</p>${action !== "remove" ? `<p><strong>${esc(pkg.version)}</strong> · <code>${esc(repo.commit)}</code></p>` : ""}${select}${questions}<label class="checkbox"><input type="checkbox" name="reviewed" required>${esc(t(action === "remove" ? "yunohostConfirmRemove" : "yunohostConfirmCode"))}</label>${admin}`, footer,
+      { safeFocus: true, action, staged, args, instances: instances.map((item) => item.id) });
+  } catch (error) {
+    ynhCleanup(staged);
+    modal("ynh-error", title, `<p>${esc(ynhErrorText(error))}</p>${admin}`, cancel);
+  } finally { loadingModal = false; }
+}
+async function submitYunoHost(context, data) {
+  if (context.uncertain || !data.reviewed) throw ynhError("yunohost_unknown");
+  modalMessage(t("yunohostWorking"));
+  try {
+    if (context.action === "install") {
+      const args = new URLSearchParams();
+      for (const id of context.args) {
+        const value = data["arg:" + id];
+        if (value !== undefined && value !== "") args.set(id, value);
+      }
+      await nativeYunoHost("apps", "POST", { app: context.staged.path, label: data.label, args });
+    } else {
+      if (!context.instances.includes(data.instance)) throw ynhError("yunohost_not_installed");
+      const path = "apps/" + encodeURIComponent(data.instance);
+      if (context.action === "upgrade") await nativeYunoHost(path + "/upgrade", "PUT", { file: context.staged.path });
+      else await nativeYunoHost(path, "DELETE");
+    }
+  } catch (error) {
+    if (error.code === "yunohost_unknown") context.uncertain = true;
+    throw error;
+  }
+  ynhCleanup(context.staged);
+}
+
 function renderRepos() {
   const repos = Object.values(state.repos),
     filtered = repos.filter((r) =>
@@ -294,7 +420,8 @@ function renderRepos() {
         " " +
         (r.catalog?.maintainer || "") +
         " " +
-        r.apps.map((a) => a.name + " " + a.description).join(" ")
+        r.apps.map((a) => a.name + " " + a.description).join(" ") + " " +
+        (r.yunohost_package?.name || "") + " " + (r.yunohost_package?.id || "")
       )
         .toLowerCase()
         .includes(repoSearch.toLowerCase()),
@@ -324,7 +451,7 @@ function renderRepos() {
           .map((a) => appRow(r, a, busy))
           .join(
             "",
-          )}${hiddenApps(r)}${r.commit && !r.apps.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
+          )}${hiddenApps(r)}${yunohostRow(r, busy)}${r.commit && !r.apps.length && !r.yunohost_package ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
       })
       .join("");
   const detached = Object.values(state.deployments).filter(
@@ -1079,6 +1206,7 @@ function closeModal(discard = false) {
     button.focus();
     return;
   }
+  if (modalContext.type === "ynh-action" && !modalContext.uncertain) ynhCleanup(modalContext.staged);
   if (modalContext.draft) {
     openRepo(modalContext.draft);
   } else {
@@ -1134,6 +1262,12 @@ async function submitModal(event) {
   const data = Object.fromEntries(new FormData(event.target)),
     context = modalContext;
   try {
+    if (context.type === "ynh-action") {
+      await submitYunoHost(context, data);
+      $("#modal").close();
+      notice(t("yunohostDone"));
+      return;
+    }
     if (context.type === "repo") {
       data.key_id = data.key_id || null;
       data.token = data.token || null;
@@ -1269,7 +1403,7 @@ async function submitModal(event) {
     );
     await refresh();
   } catch (error) {
-    $("#modal-notice").textContent = errorText(error);
+    $("#modal-notice").textContent = context.type === "ynh-action" ? ynhErrorText(error) : errorText(error);
     $("#modal-notice").hidden = false;
   } finally {
     loadingModal = false;
@@ -1279,7 +1413,7 @@ async function submitModal(event) {
     }
     $("#modal")
       .querySelectorAll("button")
-      .forEach((b) => (b.disabled = false));
+      .forEach((b) => (b.disabled = context.uncertain === true && b.type === "submit"));
   }
 }
 $("#modal-form").addEventListener("submit", submitModal);
@@ -1324,6 +1458,10 @@ document.addEventListener("click", async (event) => {
     slug = node.dataset.slug,
     key = node.dataset.key;
   if (!action) return;
+  if (["ynh-install", "ynh-upgrade", "ynh-remove"].includes(action)) {
+    await openYunoHostAction(id, action.slice(4));
+    return;
+  }
   if (action === "close-modal") {
     closeModal();
     return;

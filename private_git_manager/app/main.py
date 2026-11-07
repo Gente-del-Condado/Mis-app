@@ -21,6 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
 
+from . import yunohost
 from .application import Applications
 from .backups import Backups
 from .core import VERSION, Manager, Problem, endpoint
@@ -183,6 +184,10 @@ class ConfirmInput(Input):
     confirmed: bool = False
 
 
+class YunoHostStageInput(Input):
+    expected_commit: str = Field(pattern=r"^(?:[a-f0-9]{40}|[a-f0-9]{64})$")
+
+
 class PreflightInput(Input):
     slug: str = Field(min_length=1, max_length=80)
 
@@ -271,12 +276,32 @@ def state():
     result = manager.snapshot()
     if YUNOHOST:
         result["platform"] = "yunohost"
+        for repo_id, repo in result["repos"].items():
+            if repo.get("commit"):
+                repo["yunohost_package"] = yunohost.package(manager.data / "repos" / repo_id)
     result["jobs"] = jobs.snapshot()
     result["disk"] = {
         "data_free": shutil.disk_usage(manager.data).free,
         "addons_free": shutil.disk_usage(manager.addons).free,
     }
     return result
+
+
+@app.post("/api/repos/{repo_id}/yunohost-stage")
+def yunohost_stage(repo_id: str, body: YunoHostStageInput):
+    if not YUNOHOST:
+        return response_error("Solo disponible en YunoHost.", "yunohost_only", 404)
+    with mutation():
+        return yunohost.stage(manager, repo_id, body.expected_commit)
+
+
+@app.delete("/api/yunohost-stages/{stage_id}")
+def yunohost_discard(stage_id: str):
+    if not YUNOHOST:
+        return response_error("Solo disponible en YunoHost.", "yunohost_only", 404)
+    with mutation():
+        yunohost.discard(manager.data, stage_id)
+    return {"ok": True}
 
 
 @app.get("/api/logs")
