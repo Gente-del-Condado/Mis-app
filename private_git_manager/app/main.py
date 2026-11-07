@@ -1,8 +1,11 @@
 import json
 import os
+import re
 import shutil
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
+from tempfile import TemporaryFile
+from threading import Lock
 
 from anyio import CancelScope
 from fastapi import FastAPI, Query, Request
@@ -50,6 +53,9 @@ app = FastAPI(
     openapi_url=None,
 )
 static = Path(__file__).parent / "static"
+UPLOAD_LIMIT = 512 * 1024**2
+upload_lock = Lock()
+UPLOAD_PATH = re.compile(r"/api/repos/[^/]+/apps/[^/]+/backups/import$")
 
 
 def response_error(message, code, status=400):
@@ -72,11 +78,13 @@ async def access_control(request: Request, call_next):
         return response_error("Petición sin protección CSRF.", "csrf", 403)
     if request.headers.get("sec-fetch-site") == "cross-site":
         return response_error("Origen no autorizado.", "origin", 403)
+    upload = request.method == "POST" and UPLOAD_PATH.search(request.url.path)
+    limit = UPLOAD_LIMIT if upload else 32 * 1024
     length = request.headers.get("content-length")
-    if length and (not length.isdigit() or int(length) > 32 * 1024):
+    if length and (not length.isdigit() or int(length) > limit):
         return response_error("La petición es demasiado grande.", "body_limit", 413)
     # Enforce the actual byte count too, including chunked transfer encoding.
-    if request.method not in {"GET", "HEAD"}:
+    if request.method not in {"GET", "HEAD"} and not upload:
         body = bytearray()
         async for chunk in request.stream():
             body.extend(chunk)
@@ -168,6 +176,7 @@ class PreflightInput(Input):
 class DeployInput(ConfirmInput):
     slug: str = Field(max_length=80)
     update: bool = False
+    backup_first: bool = False
     expected_commit: str = Field(min_length=40, max_length=64)
     adopt_existing: bool = False
     expected_local_digest: str | None = Field(default=None, min_length=64, max_length=64)
@@ -206,6 +215,11 @@ class BackupCreate(ConfirmInput):
 
 class BackupRestore(ConfirmInput):
     password: str | None = Field(default=None, max_length=1024)
+
+
+class BackupSchedule(Input):
+    hours: int = Field(ge=0, le=720)
+    keep: int = Field(ge=1, le=30)
 
 
 class BackupDelete(ConfirmInput):
@@ -400,6 +414,9 @@ def deploy(repo_id: str, body: DeployInput, request: Request):
             body.expected_commit,
             body.adopt_existing,
             body.expected_local_digest,
+            before_update=(lambda: Backups(manager).create(repo_id, body.slug))
+            if body.backup_first
+            else None,
         ),
     )
 
@@ -451,6 +468,47 @@ def restore_app(repo_id: str, body: PreflightInput):
 @app.get("/api/repos/{repo_id}/apps/{slug}/backups")
 def app_backups(repo_id: str, slug: str):
     return Backups(manager).list(repo_id, slug)
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/backups/schedule")
+def set_backup_schedule(repo_id: str, slug: str, body: BackupSchedule):
+    with mutation():
+        Backups(manager).configure_schedule(repo_id, slug, body.hours, body.keep)
+    return {"ok": True}
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/backups/import")
+async def import_app_backup(repo_id: str, slug: str, request: Request):
+    if request.headers.get("content-type") != "application/x-tar":
+        raise Problem("Selecciona un archivo .tar de Home Assistant.", "backup_import_invalid")
+    if not upload_lock.acquire(blocking=False):
+        raise Problem("Ya hay una importación en curso.", "busy")
+    try:
+        await run_in_threadpool(Applications(manager).target, repo_id, slug, True)
+        budget = min(UPLOAD_LIMIT, shutil.disk_usage(manager.data).free - 128 * 1024**2)
+        total = 0
+        with TemporaryFile(dir=manager.data) as archive:
+            async for chunk in request.stream():
+                total += len(chunk)
+                if total > UPLOAD_LIMIT:
+                    return response_error("La copia supera 512 MiB.", "backup_import_size", 413)
+                if total > budget:
+                    raise Problem(
+                        "No hay espacio suficiente para importar la copia.", "backup_import_space"
+                    )
+                await run_in_threadpool(archive.write, chunk)
+
+            def import_file():
+                with mutation():
+                    archive.seek(0)
+                    return Backups(manager).import_archive(repo_id, slug, archive)
+
+            with CancelScope(shield=True):
+                return await run_in_threadpool(import_file)
+    except OSError as exc:
+        raise Problem("No se pudo escribir la copia temporal.", "backup_import_space") from exc
+    finally:
+        upload_lock.release()
 
 
 @app.get("/api/repos/{repo_id}/apps/{slug}/backups/{selected}")

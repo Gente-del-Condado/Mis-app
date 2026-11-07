@@ -4,6 +4,9 @@ import hashlib
 import json
 import math
 import re
+import tarfile
+import time
+import uuid
 from datetime import UTC, datetime
 from urllib.parse import urlencode
 
@@ -57,6 +60,17 @@ def shared(backup):
         or content.get("homeassistant")
         or content.get("folders")
     )
+
+
+class BackupTarMember(tarfile.TarInfo):
+    @classmethod
+    def frombuf(cls, buf, encoding, errors):
+        member = super().frombuf(buf, encoding, errors)
+        if member.type == tarfile.GNUTYPE_SPARSE or (
+            member.type not in tarfile.REGULAR_TYPES and member.size > 65536
+        ):
+            raise ValueError("Unsupported tar metadata")
+        return member
 
 
 class Backups:
@@ -160,6 +174,105 @@ class Backups:
         self.manager.event("app_backup_restored", slug=slug, backup=selected)
         return {"ok": True, "backup": selected}
 
+    def import_archive(self, repo_id, slug, archive):
+        self.apps.target(repo_id, slug, mutate=True)
+        members = set()
+        manifest = None
+        try:
+            size = archive.seek(0, 2)
+            archive.seek(0)
+            with tarfile.open(fileobj=archive, mode="r:", tarinfo=BackupTarMember) as tar:
+                for member in tar:
+                    name = member.name.removeprefix("./")
+                    if (
+                        member.type not in {tarfile.REGTYPE, tarfile.AREGTYPE}
+                        or member.offset_data + member.size > size
+                        or not name
+                        or "/" in name
+                        or name in {".", ".."}
+                        or name in members
+                        or len(members) >= 4096
+                    ):
+                        raise ValueError("Invalid archive member")
+                    members.add(name)
+                    if name in {"backup.json", "snapshot.json"}:
+                        if manifest is not None or member.size > 1024 * 1024:
+                            raise ValueError("Invalid backup metadata")
+                        manifest = json.load(tar.extractfile(member))
+            if not isinstance(manifest, dict):
+                raise ValueError("Missing backup metadata")
+            selected = backup_id(manifest.get("slug"))
+            apps = manifest.get("addons", manifest.get("apps", []))
+            if not isinstance(apps, list):
+                raise ValueError("Invalid app metadata")
+        except (OSError, ValueError, tarfile.TarError, RecursionError) as exc:
+            raise Problem(
+                "Selecciona una copia .tar válida de Home Assistant.", "backup_import_invalid"
+            ) from exc
+        local = "local_" + slug
+        if not any(isinstance(item, dict) and item.get("slug") == local for item in apps) or not (
+            {f"{local}.tar", f"{local}.tar.gz"} & members
+        ):
+            raise Problem("La copia no contiene esta aplicación.", "backup_app_missing")
+        existing = self.manager.supervisor.call("GET", "/backups").get("backups", [])
+        if any(item["slug"] == selected for item in existing):
+            raise Problem("Ya existe una copia con este identificador.", "backup_import_duplicate")
+        archive.seek(0)
+        result = self.manager.supervisor.backup_upload(archive)
+        if result.get("slug") != selected:
+            raise Problem(
+                "Actualiza el listado para comprobar la importación.", "backup_import_uncertain"
+            )
+        backup = self.details(repo_id, slug, selected)
+        schedule = self.manager.repo(repo_id).get("backup_schedules", {}).get(slug)
+        if schedule:
+            schedule["copies"] = [item for item in schedule["copies"] if item["slug"] != selected]
+        self.manager.event("app_backup_imported", slug=slug, backup=selected)
+        return backup
+
+    def configure_schedule(self, repo_id, slug, hours, keep):
+        self.apps.target(repo_id, slug, mutate=True)
+        schedules = self.manager.repo(repo_id).setdefault("backup_schedules", {})
+        schedule = schedules.setdefault(slug, {"copies": []})
+        if schedule.get("hours") != hours:
+            schedule["next_at"] = time.time() + hours * 3600 if hours else None
+        schedule.update(hours=hours, keep=keep)
+        self.manager.event("app_backup_schedule_saved", repo_id=repo_id, slug=slug)
+
+    def scheduled(self, repo_id, slug):
+        schedule = self.manager.repo(repo_id).get("backup_schedules", {}).get(slug, {})
+        now = time.time()
+        if not schedule.get("hours") or schedule["next_at"] > now:
+            return
+        schedule.update(next_at=now + schedule["hours"] * 3600, last_attempt=now)
+        self.manager.save()
+        name = f"PGM · local_{slug} · {uuid.uuid4().hex}"
+        result = self.create(repo_id, slug, name)
+        selected = result["backup"]
+        detail = self.details(repo_id, slug, selected)
+        if detail["name"] != name or detail["other_content"] or detail["type"] != "partial":
+            raise Problem("No se pudo verificar la copia programada.", "backup_uncertain")
+        schedule["copies"].append({"slug": selected, "name": name, "date": detail["date"]})
+        schedule["last_success"] = time.time()
+        self.manager.save()
+        listed = self.list(repo_id, slug)["backups"]
+        present = {item["slug"] for item in listed}
+        schedule["copies"] = [item for item in schedule["copies"] if item["slug"] in present]
+        self.manager.save()
+        for item in schedule["copies"][: -schedule["keep"]]:
+            detail = self.details(repo_id, slug, item["slug"])
+            if (
+                detail["name"] == item["name"]
+                and detail["date"] == item["date"]
+                and detail["type"] == "partial"
+                and not detail["other_content"]
+                and None in detail["locations"]
+            ):
+                self.delete(repo_id, slug, item["slug"], detail["revision"], local_only=True)
+            schedule["copies"].remove(item)
+            self.manager.save()
+        return result
+
     def reviewed(self, repo_id, slug, selected, expected_revision):
         backup = self.details(repo_id, slug, selected)
         if backup["revision"] != expected_revision:
@@ -182,14 +295,15 @@ class Backups:
             raise
         return stream
 
-    def delete(self, repo_id, slug, selected, expected_revision):
+    def delete(self, repo_id, slug, selected, expected_revision, *, local_only=False):
         self.apps.target(repo_id, slug, mutate=True)
         backup = self.reviewed(repo_id, slug, selected, expected_revision)
+        targets = [None] if local_only else backup["locations"]
         self.manager.progress("backupDeleting")
         self.manager.event("app_backup_delete_started", slug=slug, backup=selected)
         try:
             self.manager.supervisor.call(
-                "DELETE", f"/backups/{backup_id(selected)}", {"location": backup["locations"]}
+                "DELETE", f"/backups/{backup_id(selected)}", {"location": targets}
             )
         except SupervisorUncertain as exc:
             self.delete_uncertain(exc)
@@ -197,7 +311,7 @@ class Backups:
             remaining = self.manager.supervisor.call("GET", "/backups").get("backups", [])
             for item in remaining:
                 if item.get("slug") == selected and any(
-                    value in backup["locations"] for value in locations(item)
+                    value in targets for value in locations(item)
                 ):
                     raise ValueError("Backup still present")
         except (Problem, ValueError) as exc:

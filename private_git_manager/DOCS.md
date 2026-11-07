@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.10.0
+# HA Private Git Manager · 0.11.0
 
 ## Empezar
 
@@ -97,6 +97,14 @@ Ambas operaciones son trabajos en segundo plano con progreso e historial en espa
 
 Estas copias nativas de datos son distintas de las copias temporales de código `.pgm-backup-*` usadas para recuperar instalaciones fallidas.
 
+### Actualizaciones con copia, importación y programación
+
+En la revisión de una aplicación instalada verás la versión actual, la propuesta y el changelog disponible en el repositorio. **Crear copia y actualizar** guarda primero una copia local sin cifrar. Si no se confirma la copia, el gestor detiene la actualización. **Cambios de la última sincronización** agrupa aplicaciones nuevas, modificadas y retiradas del catálogo, incluso si el código cambió con la misma versión.
+
+En **Copias de seguridad → Importar copia** puedes subir un .tar nativo de hasta 512 MiB. El gestor comprueba que contiene la aplicación y lo incorpora al listado del Supervisor. Después se abre la revisión con la versión de la copia y la confirmación habitual de restauración.
+
+En **Programar copias** eliges un intervalo de 1 a 720 horas y cuántas copias conservar, entre 1 y 30. Usa 0 horas para desactivar la programación. La primera copia vence al cumplirse el intervalo y se muestran la próxima fecha y la última copia completada. Las copias automáticas se guardan localmente sin cifrar. Después de una copia correcta, la retención elimina solo copias locales creadas por esa programación.
+
 ### Descargar y borrar copias
 
 En **Copias de seguridad**, cada archivo ofrece **Descargar copia** y **Borrar copia**. Ambos permiten revisar nombre, fecha, tamaño, cifrado y si contiene otros datos. **La descarga y el borrado afectan al archivo completo**, también cuando la copia incluye Core, carpetas u otras aplicaciones; la restauración sigue siendo únicamente de la aplicación elegida.
@@ -130,6 +138,14 @@ Restoring can stop/restart the app and change its installed version, shown on it
 Both operations use background jobs with translated progress and history and continue after closing the manager. Passwords are kept only in memory during the operation, never in state, jobs, logs or browser storage; retain them securely because the manager cannot recover them. A lost Supervisor connection produces an uncertain outcome with no automatic retry. Refresh backups and check the app before repeating. Interrupted jobs are never replayed on restart.
 
 These native data backups are separate from temporary `.pgm-backup-*` source trees used for deployment recovery.
+
+### Backup before updating, import and schedules
+
+The update review shows the installed and proposed versions plus the repository changelog when available. **Back up and update** creates a local unencrypted backup first. The update stops if the backup cannot be confirmed. **Changes from the last sync** groups added, changed and removed apps, including source changes with the same version.
+
+Use **Backups → Import backup** to upload a native .tar archive up to 512 MiB. The manager checks that the archive contains the selected app and imports it into Supervisor. The restore review then shows its version and asks for the usual confirmation.
+
+In **Schedule backups**, choose a 1–720 hour interval and keep 1–30 backups. Enter 0 hours to disable the schedule. The first backup becomes due after the interval. The next due time and last successful backup appear in the form. Scheduled copies are stored locally without encryption. After a successful backup, retention removes only local copies created by that schedule.
 
 ### Download and delete backups
 

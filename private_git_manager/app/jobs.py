@@ -7,6 +7,7 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 
+from .backups import Backups
 from .core import Problem
 from .storage import atomic_json
 
@@ -148,6 +149,20 @@ class Scheduler:
                 except Problem:
                     pass
                 self.next_attempt[repo["id"]] = now + interval
+
+            for slug, schedule in repo.get("backup_schedules", {}).items():
+                if not schedule.get("hours") or now < schedule["next_at"]:
+                    continue
+                try:
+                    self.jobs.submit(
+                        "backup_scheduled",
+                        "repo:" + repo["id"],
+                        lambda repo_id=repo["id"], slug=slug: Backups(self.manager).scheduled(
+                            repo_id, slug
+                        ),
+                    )
+                except Problem:
+                    pass
 
     def loop(self):
         while not self.stop.wait(15):

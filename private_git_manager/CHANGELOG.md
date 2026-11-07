@@ -1,3 +1,11 @@
+# 0.11.0
+
+- Crear una copia local antes de aplicar una actualización. La copia fallida impide aplicar el código nuevo.
+- Vista de versión instalada, versión propuesta y changelog, si existe, al revisar una actualización.
+- Resumen de aplicaciones nuevas, modificadas y retiradas tras sincronizar.
+- Importación de copias .tar de hasta 512 MiB y revisión antes de restaurar.
+- Copias locales programadas por aplicación con retención limitada a las copias que creó esa programación.
+
 # 0.10.0
 
 - Descarga de copias desde el gestor: archivo .tar original por streaming, cifrado intacto y sin crear una segunda copia ni cargar el archivo completo en memoria.

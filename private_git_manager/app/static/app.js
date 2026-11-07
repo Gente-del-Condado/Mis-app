@@ -313,7 +313,7 @@ function renderRepos() {
         const busy = Object.values(state.jobs).some(
           (j) => j.resource === "repo:" + r.id && !terminal.has(j.status),
         );
-        return `<article class="card"><div class="repo-head"><div class="repo-icon" aria-hidden="true">${r.catalog?.icon_path ? `<img src="${esc(repositoryAsset(r.id, r.catalog.icon_path))}" alt="" loading="lazy">` : "⑂"}</div><div class="repo-main"><h3 class="repo-name">${esc(r.name)}</h3>${r.catalog ? `<div class="catalog-meta">${badge(t(r.catalog.kind === "collection" ? "masterRepository" : r.catalog.kind === "single" ? "singleRepository" : "gitRepository"))} <span>${esc(t("catalogAppCount", { count: visibleApps(r).length }))}</span>${r.catalog.name ? `<strong>${esc(r.catalog.name)}</strong>` : ""}${r.catalog.maintainer ? `<span>${esc(r.catalog.maintainer)}</span>` : ""}</div>${r.catalog.description ? `<p class="catalog-summary">${esc(r.catalog.description)}</p>` : ""}` : ""}<div class="repo-url">${esc(r.url)}</div><div class="repo-meta"><span>⑂ ${esc(r.ref)}</span><span>${r.url.startsWith("https:") ? "HTTPS" : "SSH"}</span><span>${esc(short(r.commit))}</span><span>${esc(r.sync_interval ? t("every", { minutes: r.sync_interval / 60 }) : t("manual"))}</span></div></div>${badge(busy ? t("running") : managed ? t("changes") : r.commit ? t("synced") : t("pending"), busy || managed ? "pending" : "")}<div class="repo-actions">${r.commit ? button("readme", t(r.catalog?.kind === "collection" ? "viewCatalog" : "viewReadme"), controls(r.id)) : ""}${button("sync", "↻ " + t("sync"), controls(r.id) + (busy ? " disabled" : ""))}${button("edit-repo", t("edit"), controls(r.id))}${button("credentials", t("credentials"), controls(r.id))}${button("delete-repo", t("remove"), controls(r.id), "subtle danger")}</div></div><div class="sync-time">${esc(t("lastSync"))}: ${esc(date(r.synced_at))}</div>${visibleApps(
+        return `<article class="card"><div class="repo-head"><div class="repo-icon" aria-hidden="true">${r.catalog?.icon_path ? `<img src="${esc(repositoryAsset(r.id, r.catalog.icon_path))}" alt="" loading="lazy">` : "⑂"}</div><div class="repo-main"><h3 class="repo-name">${esc(r.name)}</h3>${r.catalog ? `<div class="catalog-meta">${badge(t(r.catalog.kind === "collection" ? "masterRepository" : r.catalog.kind === "single" ? "singleRepository" : "gitRepository"))} <span>${esc(t("catalogAppCount", { count: visibleApps(r).length }))}</span>${r.catalog.name ? `<strong>${esc(r.catalog.name)}</strong>` : ""}${r.catalog.maintainer ? `<span>${esc(r.catalog.maintainer)}</span>` : ""}</div>${r.catalog.description ? `<p class="catalog-summary">${esc(r.catalog.description)}</p>` : ""}` : ""}<div class="repo-url">${esc(r.url)}</div><div class="repo-meta"><span>⑂ ${esc(r.ref)}</span><span>${r.url.startsWith("https:") ? "HTTPS" : "SSH"}</span><span>${esc(short(r.commit))}</span><span>${esc(r.sync_interval ? t("every", { minutes: r.sync_interval / 60 }) : t("manual"))}</span></div></div>${badge(busy ? t("running") : managed ? t("changes") : r.commit ? t("synced") : t("pending"), busy || managed ? "pending" : "")}<div class="repo-actions">${r.commit ? button("readme", t(r.catalog?.kind === "collection" ? "viewCatalog" : "viewReadme"), controls(r.id)) : ""}${button("sync", "↻ " + t("sync"), controls(r.id) + (busy ? " disabled" : ""))}${button("edit-repo", t("edit"), controls(r.id))}${button("credentials", t("credentials"), controls(r.id))}${button("delete-repo", t("remove"), controls(r.id), "subtle danger")}</div></div><div class="sync-time">${esc(t("lastSync"))}: ${esc(date(r.synced_at))}</div>${renderSyncChanges(r.sync_changes)}${visibleApps(
           r,
         )
           .map((a) => appRow(r, a, busy))
@@ -345,6 +345,14 @@ function renderRepos() {
     html +
     `<div class="info-box"><span aria-hidden="true">◇</span><div><strong>${esc(t("privateTitle"))}</strong><p>${esc(t("privateText"))}</p></div></div>`
   );
+}
+function renderSyncChanges(changes) {
+  if (!changes?.added) return "";
+  const groups = [["added", "syncAdded"], ["changed", "syncChanged"], ["removed", "syncRemoved"]];
+  const content = groups.filter(([key]) => changes[key].length).map(([key, label]) =>
+    `<p><strong>${esc(t(label))}</strong></p><ul>${changes[key].map((name) => `<li>${esc(name)}</li>`).join("")}</ul>`
+  ).join("");
+  return `<details><summary>${esc(t("syncSummary"))}</summary>${content || `<p>${esc(t("syncNoChanges"))}</p>`}</details>`;
 }
 function visibleApps(repo) {
   return repo.apps.filter((app) => !repo.hidden_apps?.includes(app.slug));
@@ -774,10 +782,42 @@ async function openAppBackups(repo, slug) {
     if (modalContext !== current) return;
     current.installed = result.installed;
     $("#modal-body").innerHTML = `<p>${esc(t("backupsHelp"))}</p><div class="backup-list">${result.backups.length ? result.backups.map((backup) => `<article class="backup-card"><strong>${esc(backup.name || backup.slug)}</strong><p class="muted">${esc(backupSummary(backup))}</p><div class="backup-actions">${button("restore-app-backup", t("restoreBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("restoreBackup") + ": " + (backup.name || backup.slug))}"`)}${button("download-app-backup", t("downloadBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("downloadBackup") + ": " + (backup.name || backup.slug))}"`)}${button("delete-app-backup", t("deleteBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("deleteBackup") + ": " + (backup.name || backup.slug))}"`, "subtle danger")}</div></article>`).join("") : `<p class="empty">${esc(t("emptyBackups"))}</p>`}</div>`;
-    $("#modal-actions").innerHTML = `${button("close-modal", t("close"))}${button("refresh-app-backups", t("refresh"))}${button("create-app-backup", t("createBackup"), result.installed ? "" : "disabled", "primary")}`;
+    $("#modal-actions").innerHTML = `${button("close-modal", t("close"))}${button("refresh-app-backups", t("refresh"))}${button("import-app-backup", t("importBackup"))}${button("schedule-app-backup", t("scheduleBackup"))}${button("create-app-backup", t("createBackup"), result.installed ? "" : "disabled", "primary")}`;
   } catch (error) {
     if (modalContext === current) modalMessage(errorText(error));
   }
+}
+function openBackupSchedule(repo, slug) {
+  const schedule = state.repos[repo]?.backup_schedules?.[slug] || {};
+  modal("schedule-app-backup", t("scheduleBackup"),
+    `<p id="backup-schedule-help">${esc(t("backupScheduleHelp"))}</p>
+    ${field("backupEveryHours", "hours", schedule.hours ?? 0, 'type="number" min="0" max="720" step="1" required aria-describedby="backup-schedule-help"')}
+    ${field("backupKeep", "keep", schedule.keep ?? 3, 'type="number" min="1" max="30" step="1" required')}
+    <p>${esc(t("backupNextRun"))} · ${esc(date(schedule.next_at))}</p>
+    <p>${esc(t("backupLastSuccess"))} · ${esc(date(schedule.last_success))}</p>`,
+    actions(), { repo, slug });
+}
+function openBackupImport(repo, slug) {
+  modal("import-app-backup", t("importBackup"),
+    `<p id="backup-import-help">${esc(t("backupImportHelp"))}</p><label for="backup-import-file">${esc(t("backupFile"))}</label><input id="backup-import-file" name="archive" type="file" accept=".tar,application/x-tar" required aria-describedby="backup-import-help">`,
+    actions("importBackup"), { repo, slug });
+}
+async function uploadBackup(repo, slug, archive) {
+  if (archive.size > 512 * 1024 ** 2) {
+    throw Object.assign(new Error(t("backup_import_size")), { code: "backup_import_size" });
+  }
+  modalMessage(t("backupImportRunning"));
+  const response = await fetch(`api/${applicationPath(repo, slug)}/backups/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-tar", "X-PGM-Request": "1" },
+    body: archive,
+  });
+  if (response.status === 413) {
+    throw Object.assign(new Error(t("backup_import_size")), { code: "backup_import_size" });
+  }
+  const result = await response.json();
+  if (!response.ok) throw Object.assign(new Error(result.detail), { code: result.code });
+  return result;
 }
 function openCreateBackup(repo, slug) {
   modal("create-app-backup", t("createBackup") + ": " + slug,
@@ -1125,6 +1165,7 @@ async function submitModal(event) {
       await queue(`repos/${context.repo}/deploy`, {
         slug: context.slug,
         update: context.update,
+        backup_first: event.submitter?.value === "backup-first",
         confirmed: true,
         expected_commit: context.commit,
         adopt_existing: data.adopt_existing === "true",
@@ -1155,6 +1196,17 @@ async function submitModal(event) {
         confirmed: true,
         retry_uninstall: data.retry_uninstall === "true",
       });
+    if (context.type === "schedule-app-backup") {
+      await api(`${applicationPath(context.repo, context.slug)}/backups/schedule`, "POST", {
+        hours: Number(data.hours), keep: Number(data.keep),
+      });
+    }
+    if (context.type === "import-app-backup") {
+      const imported = await uploadBackup(context.repo, context.slug, data.archive);
+      await openRestoreBackup(context.repo, context.slug, imported.slug);
+      notice(t("backupImported"));
+      return;
+    }
     if (context.type === "create-app-backup") {
       if (data.password !== data.password_repeat)
         throw Object.assign(new Error(t("backupPasswordMismatch")), { code: "backupPasswordMismatch" });
@@ -1280,12 +1332,14 @@ document.addEventListener("click", async (event) => {
     await refreshApplicationLogs();
     return;
   }
-  if (["app-backups", "refresh-app-backups", "create-app-backup", "restore-app-backup", "download-app-backup", "delete-app-backup"].includes(action)) {
+  if (["app-backups", "refresh-app-backups", "create-app-backup", "restore-app-backup", "download-app-backup", "delete-app-backup", "import-app-backup", "schedule-app-backup"].includes(action)) {
     const context = modalContext;
     try {
       if (action === "app-backups") await openAppBackups(id, slug);
       if (action === "refresh-app-backups") await openAppBackups(context.repo, context.slug);
       if (action === "create-app-backup") openCreateBackup(context.repo, context.slug);
+      if (action === "import-app-backup") openBackupImport(context.repo, context.slug);
+      if (action === "schedule-app-backup") openBackupSchedule(context.repo, context.slug);
       if (action === "restore-app-backup") await openRestoreBackup(context.repo, context.slug, node.dataset.backup);
       if (action === "download-app-backup" || action === "delete-app-backup")
         await openBackupTransfer(context.repo, context.slug, node.dataset.backup, action === "delete-app-backup");
@@ -1436,12 +1490,19 @@ document.addEventListener("click", async (event) => {
           body += `<label class="radio" for="adoption-consent"><input id="adoption-consent" type="checkbox" name="adopt_existing" value="true" required aria-describedby="adoption-help">${esc(t("adoptionConsent"))}</label>`;
         body += "</fieldset>";
       }
+      if (inspection.installed) {
+        body += `<p>${esc(t("installedVersion"))} · ${esc(inspection.installed_version || t("unknown"))}</p><p>${esc(t("backupBeforeHelp"))}</p>`;
+      }
+      if (inspection.changelog) {
+        body += `<details><summary>${esc(t("deployChangelog"))} · ${esc(inspection.changelog_path)}</summary><pre class="application-log-output">${esc(inspection.changelog)}</pre></details>`;
+      }
       body += `<p>${esc(t("longOperation"))}</p>`;
       modal(
         "deploy",
         t(inspection.requires_adoption ? "adoptAndInstall" : "deployTitle"),
         body,
-        actions(inspection.requires_adoption ? "adoptAndInstall" : "confirm"),
+        actions(inspection.requires_adoption ? "adoptAndInstall" : "confirm") +
+          (inspection.installed ? `<button type="submit" class="primary" value="backup-first">${esc(t("backupAndUpdate"))}</button>` : ""),
         {
           repo: id,
           slug,

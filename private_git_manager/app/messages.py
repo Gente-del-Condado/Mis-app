@@ -1,6 +1,8 @@
 """Stable event identifiers, translated for the UI; container logs default to Spanish."""
 
 EVENTS = {
+    "app_backup_imported": ("Copia de seguridad importada.", "Backup imported."),
+    "app_backup_schedule_saved": ("Programación de copias guardada.", "Backup schedule saved."),
     "app_backup_download_started": ("Descarga de copia iniciada.", "Backup download started."),
     "app_backup_delete_started": ("Borrando copia de seguridad.", "Deleting backup."),
     "app_backup_deleted": ("Copia de seguridad borrada.", "Backup deleted."),

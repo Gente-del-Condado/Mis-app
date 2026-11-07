@@ -25,7 +25,7 @@ from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.10.0"
+VERSION = "0.11.0"
 
 
 class SupervisorUncertain(Problem):
@@ -207,6 +207,38 @@ class Supervisor:
                 ) from exc
             raise Problem("No se pudo consultar el Supervisor.", "supervisor_unavailable") from exc
 
+    def backup_upload(self, archive):
+        if not self.token:
+            raise Problem("Supervisor no disponible.", "supervisor_missing")
+        filename = f"pgm-import-{uuid.uuid4().hex}.tar"
+        try:
+            with httpx.Client(
+                transport=self.transport, trust_env=False, timeout=httpx.Timeout(900, connect=15)
+            ) as client:
+                response = client.post(
+                    "http://supervisor/backups/new/upload",
+                    params={"location": ".local", "filename": filename},
+                    headers={"Authorization": f"Bearer {self.token}"},
+                    files={"file": (filename, archive, "application/x-tar")},
+                )
+            if response.status_code >= 500:
+                raise ValueError("Unconfirmed upload")
+            if response.status_code != 200:
+                raise SupervisorRejected(
+                    "Supervisor rechazó la copia importada.", "backup_import_failed"
+                )
+            result = response.json()
+            if result.get("result") != "ok" or not isinstance(result.get("data"), dict):
+                raise SupervisorRejected(
+                    "Supervisor rechazó la copia importada.", "backup_import_failed"
+                )
+            return result["data"]
+        except (httpx.HTTPError, ValueError) as exc:
+            raise SupervisorUncertain(
+                "No se pudo confirmar la importación. Actualiza el listado antes de repetir.",
+                "backup_import_uncertain",
+            ) from exc
+
     def backup_download(self, path):
         if not self.token:
             raise Problem("Supervisor no disponible.", "supervisor_missing")
@@ -375,13 +407,15 @@ class Manager:
                         shutil.rmtree(target)
                         old.rename(target)
                     else:
-                        repo.update(commit=None, apps=[], catalog=None, app_digests={})
+                        repo.update(
+                            commit=None, apps=[], catalog=None, app_digests={}, sync_changes={}
+                        )
                         continue  # Preserve both trees when neither matches known state.
                 else:
                     shutil.rmtree(old)
             except Problem:
                 if repo:
-                    repo.update(commit=None, apps=[], catalog=None, app_digests={})
+                    repo.update(commit=None, apps=[], catalog=None, app_digests={}, sync_changes={})
 
     def verify_checkout(self, repo, root):
         try:
@@ -616,6 +650,25 @@ class Manager:
             apps = self.discover(work)
             catalog = RepositoryDocs(work, repo_id).catalog(apps)
             app_digests = self.app_digests(work, apps)
+            previous_apps = {item["slug"]: item for item in repo["apps"]}
+            current_apps = {item["slug"]: item for item in apps}
+            previous_digests = repo.get("app_digests", {})
+            changes = {
+                "added": [
+                    current_apps[key]["name"] for key in current_apps.keys() - previous_apps.keys()
+                ],
+                "removed": [
+                    previous_apps[key]["name"] for key in previous_apps.keys() - current_apps.keys()
+                ],
+                "changed": [
+                    current_apps[key]["name"]
+                    for key in current_apps.keys() & previous_apps.keys()
+                    if current_apps[key] != previous_apps[key]
+                    or (key in previous_digests and previous_digests[key] != app_digests[key])
+                ],
+            }
+            for names in changes.values():
+                names.sort(key=str.casefold)
             self.progress("validating")
             old = self.data / "repos" / (repo_id + "-old")
             shutil.rmtree(old, ignore_errors=True)
@@ -632,6 +685,7 @@ class Manager:
                 apps=apps,
                 catalog=catalog,
                 app_digests=app_digests,
+                sync_changes=changes,
                 synced_at=time.time(),
             )
             self.event("sync_done", repo_id=repo_id, commit=commit)
@@ -838,6 +892,15 @@ class Manager:
                 local_version = manifests[0]["version"]
             local_digest = self.tree_digest(target)
         installed = self.installed_info(slug)
+        docs = RepositoryDocs(self.data / "repos" / repo_id, repo_id)
+        names = ("CHANGELOG.md", "CHANGELOG.txt", "CHANGELOG", "CHANGES.md", "changelog.md")
+        changelog = docs.find(app["path"], names) or docs.find(".", names)
+        notes = ""
+        if changelog:
+            try:
+                notes = docs.text(changelog)[:12000]
+            except Problem:
+                pass
         return {
             "slug": slug,
             "path": str(target),
@@ -850,6 +913,8 @@ class Manager:
             "installed": bool(installed),
             "running": bool(installed and installed.get("state") == "started"),
             "installed_version": installed.get("version") if installed else None,
+            "changelog": notes,
+            "changelog_path": changelog if notes else None,
             "commit": repo["commit"],
         }
 
@@ -861,6 +926,7 @@ class Manager:
         expected_commit=None,
         adopt_existing=False,
         expected_local_digest=None,
+        before_update=None,
     ):
         repo = self.repo(repo_id)
         if expected_commit and repo["commit"] != expected_commit:
@@ -935,6 +1001,12 @@ class Manager:
             raise Problem(
                 "El manifiesto descargado ha cambiado. Sincroniza de nuevo.", "manifest_changed"
             )
+        if before_update:
+            if not info:
+                raise Problem(
+                    "La copia previa requiere una aplicación instalada.", "app_not_installed"
+                )
+            before_update()
         stage = self.addons / (".pgm-stage-" + uuid.uuid4().hex)
         backup = self.addons / (".pgm-backup-" + uuid.uuid4().hex)
         was_running = bool(info and info.get("state") == "started")
@@ -1373,7 +1445,7 @@ class Manager:
             raise Problem("El intervalo debe ser 0 o estar entre 300 y 604800 segundos.")
         if repo["ref"] != ref:
             # Never install the old checkout while showing a newly selected branch.
-            repo.update(commit=None, apps=[], catalog=None, app_digests={})
+            repo.update(commit=None, apps=[], catalog=None, app_digests={}, sync_changes={})
         repo.setdefault("created_at", time.time())
         repo.update(name=name.strip(), ref=ref, sync_interval=sync_interval)
         self.event("repo_edited", repo_id=repo_id)
