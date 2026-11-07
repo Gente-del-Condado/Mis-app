@@ -1,4 +1,14 @@
-# HA Private Git Manager · 0.14.0
+# HA Private Git Manager
+
+[Manual web con capturas](https://gente-del-condado.github.io/HA-Private-Git-Manager/#home-assistant) · [English quick start](#english-quick-start)
+
+## Instalación y actualización del gestor
+
+Desde Mis-app, instala e inicia **HA Private Git Manager** y abre su interfaz web. Si lo instalas como aplicación local, copia la carpeta completa del paquete a `/addons/private_git_manager`, recarga la tienda con `ha addons reload` y busca el gestor en **Aplicaciones locales**.
+
+Para actualizar una instalación local, haz primero una copia, detén el gestor, reemplaza su carpeta de programa y recarga la tienda. Actualiza y vuelve a iniciar desde su ficha. Si usas la terminal, consulta el identificador con `ha addons list` y usa ese mismo identificador en `ha addons update` y `ha addons start`.
+
+Conserva los datos de configuración al reinstalar. Las versiones actuales usan `/config/private-git-manager` en la carpeta dedicada de la aplicación. Si vienes de una versión anterior a 0.12.0, actualiza antes de desinstalar para que el primer inicio pueda migrar los datos desde `/data`.
 
 ## Empezar
 
@@ -21,9 +31,13 @@ El lector formatea Markdown, tablas y bloques de código. El HTML se muestra com
 
 ## Si la carpeta local ya existe
 
-El gestor ocupa `/addons/private_git_manager`; cada aplicación privada se coloca en `/addons/<slug>`. En **0.2.1**, el botón **Instalar** revisa primero esa carpeta. Si está vacía se reutiliza. Si contiene una aplicación con el mismo identificador, revisa su ruta y versión, marca la autorización y pulsa **Adoptar y aplicar**.
+El gestor ocupa `/addons/private_git_manager`; cada aplicación privada se coloca en `/addons/<slug>`. El botón **Instalar** revisa primero esa carpeta. Si está vacía se reutiliza. Si contiene una aplicación con el mismo identificador, revisa su ruta y versión, marca la autorización y pulsa **Adoptar y aplicar**.
 
 La adopción guarda una copia del código anterior durante la operación. Si la aplicación ya estaba instalada, se actualiza/reconstruye en lugar de instalarla dos veces. Una carpeta que contiene otra aplicación o que cambia tras la revisión no se sobrescribe. No necesitas borrarla para resolver una colisión legítima.
+
+## Slug duplicado y sincronización
+
+El slug está en el campo `slug` de cada manifiesto. Si el error aparece al sincronizar, busca dos manifiestos con el mismo valor en la rama seleccionada. Si solo aparece al instalar, comprueba también las carpetas de `/addons`, incluidas copias antiguas. Conserva el slug de la aplicación instalada y distingue las plantillas de los manifiestos instalables, por ejemplo con `config.yaml.in`.
 
 ## Trabajos y actualizaciones
 

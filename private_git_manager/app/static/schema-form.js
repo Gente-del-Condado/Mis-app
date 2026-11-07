@@ -1,4 +1,4 @@
-// Home Assistant Supervisor schema_ui renderer. Option values stay in memory only.
+// Formulario de schema_ui del Supervisor. Las opciones se mantienen en memoria.
 const own = (object, key) => Object.hasOwn(object || {}, key);
 const put = (object, key, value) =>
   Object.defineProperty(object, key, {
@@ -271,7 +271,7 @@ export class SchemaForm {
       `${name}${schema.required && !schema.nullable ? " *" : ""}`,
     );
     let input;
-    // Compact selects keep repeated nested forms usable on narrow screens.
+    // Los selectores compactos facilitan usar grupos repetidos en pantallas estrechas.
     if (schema.type === "select" && !secret) {
       input = node("select");
       const items = [...(Array.isArray(schema.options) ? schema.options : [])];
@@ -390,7 +390,7 @@ export class SchemaForm {
             : "string",
         ...(key === "boot" ? { options: ["auto", "manual"] } : {}),
       };
-      // Native system settings use the manager's own translated labels.
+      // Los ajustes nativos usan las etiquetas traducidas del gestor.
       const labels = {
         boot: "bootSetting",
         watchdog: "watchdogSetting",

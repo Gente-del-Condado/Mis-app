@@ -1,3 +1,9 @@
+# 0.14.1
+
+- Manual web ilustrado y ayuda actualizada para Home Assistant.
+- Descripción y notas de administración integradas en YunoHost en español e inglés.
+- Guía de mantenimiento, validación y contribución para personas y agentes.
+
 # 0.14.0
 
 - Detecta paquetes nativos de YunoHost en repositorios Git privados.

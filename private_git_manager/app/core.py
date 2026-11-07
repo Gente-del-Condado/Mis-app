@@ -25,7 +25,7 @@ from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.14.0"
+VERSION = "0.14.1"
 
 
 class SupervisorUncertain(Problem):
@@ -85,7 +85,7 @@ def run(args, *, cwd=None, env=None, timeout=180):
         for patterns, message, code in classifications:
             if any(pattern in error for pattern in patterns):
                 raise Problem(message, code)
-        # Never return raw process output: servers may echo secrets.
+        # La salida de Git puede contener secretos devueltos por el servidor.
         raise Problem(f"{args[0]} falló. Revisa URL, referencia, permisos y confianza SSH.")
     return result.stdout.strip()
 
@@ -437,7 +437,7 @@ class Manager:
 
     def save(self):
         atomic_json(self.state_file, self.state)
-        # Immutable public snapshot: long Git/Supervisor jobs never block UI polling.
+        # La instantánea pública permite consultar el estado sin esperar a los trabajos de Git o Supervisor.
         public = json.loads(json.dumps(self.state))
         for repo in public["repos"].values():
             repo["has_token"] = bool(repo.pop("token", ""))
@@ -529,7 +529,7 @@ class Manager:
     def git_env(self, repo):
         scheme, host, port = endpoint(repo["url"])
         env = os.environ.copy()
-        # Isolate from global git config, system credential helpers and interactive prompts.
+        # Aísla Git de la configuración global, credenciales del sistema y avisos interactivos.
         for key in list(env):
             if key.startswith("GIT_") or key in {"SSH_AUTH_SOCK", "PGM_TOKEN", "PGM_USERNAME"}:
                 env.pop(key, None)
@@ -622,7 +622,7 @@ class Manager:
         self.event("sync_started", repo_id=repo_id)
         self.progress("fetching")
         env = self.git_env(repo)
-        # Fetch into a fresh checkout so failed synchronization cannot damage the last one.
+        # Descarga en otra carpeta para conservar el checkout anterior si falla la sincronización.
         work = self.data / "repos" / (repo_id + "-pending")
         target = self.data / "repos" / repo_id
         shutil.rmtree(work, ignore_errors=True)
@@ -769,7 +769,7 @@ class Manager:
 
     @staticmethod
     def safe_copy(source, target):
-        # Reject all symlinks and special files, even if pointing inside the repository.
+        # Rechaza enlaces simbólicos y archivos especiales incluso dentro del repositorio.
         for folder, dirs, files in os.walk(source, followlinks=False):
             dirs[:] = [d for d in dirs if d != ".git"]
             for name in dirs + files:
@@ -985,7 +985,7 @@ class Manager:
         source = (root / app["path"]).resolve()
         if not source.is_relative_to(root.resolve()):
             raise Problem("Ruta de aplicación fuera del repositorio.")
-        # Re-read the downloaded manifest immediately before installation.
+        # Vuelve a leer el manifiesto descargado justo antes de instalar.
         fresh = next((a for a in self.discover(root) if a["slug"] == slug), None)
         if len(self.discover(source)) != 1:
             raise Problem(
@@ -1079,7 +1079,7 @@ class Manager:
                 self.supervisor.call("POST", f"/store/addons/{local}/update")
             else:
                 self.supervisor.call("POST", f"/addons/{local}/rebuild")
-            # The operation must be visible as installed, not merely return HTTP 200.
+            # Comprueba que el Supervisor lista la app instalada después de responder.
             verified = self.installed_info(slug)
             if not verified or str(verified.get("version")) != app["version"]:
                 raise SupervisorUncertain(
@@ -1087,7 +1087,7 @@ class Manager:
                     "supervisor_uncertain",
                 )
             self.progress("restoring_state")
-            # Rebuild may start a previously stopped app: preserve its original state.
+            # La reconstrucción puede iniciar la app. Recupera su estado previo.
             if was_running and verified.get("state") != "started":
                 self.supervisor.call("POST", f"/addons/{local}/start")
             elif not was_running and verified.get("state") == "started":
@@ -1104,7 +1104,7 @@ class Manager:
                 self.event("local_adopted", slug=slug, path=str(target))
             self.event("deploy_done", slug=slug, commit=repo["commit"])
         except SupervisorUncertain:
-            # A disconnected request may still be building. Preserve both source trees.
+            # El Supervisor puede seguir construyendo tras una desconexión. Conserva ambas copias.
             record["status"] = "uncertain"
             self.event("deploy_failed", "error", slug=slug, recovery="required")
             raise
@@ -1121,7 +1121,7 @@ class Manager:
                     failed["commit"] = None
                 self.state["deployments"][slug] = failed
                 journal["phase"] = "restored"
-                # Source is restored; runtime may still need a rebuild/start.
+                # El código se ha restaurado. Puede faltar reconstruir o iniciar la aplicación.
                 self.save()
                 self.event("deploy_failed", "error", slug=slug, recovery="source_restored")
             raise
@@ -1180,7 +1180,7 @@ class Manager:
                 "prepared",
                 "restored",
             }:
-                # A first install may still exist in Supervisor. Keep its source for repair.
+                # La primera instalación puede seguir en Supervisor. Conserva el código para recuperarla.
                 if self.installed_info(slug):
                     raise Problem(
                         "La aplicación llegó a instalarse. Acepta la versión actual o desinstálala desde Home Assistant.",
@@ -1237,7 +1237,7 @@ class Manager:
             raise Problem(
                 "Desinstala primero la aplicación desde el gestor.", "app_still_installed"
             )
-        # Keep source deliberately: removing a repository must never delete local app data.
+        # Conserva el código local al retirar el repositorio para proteger los datos de la app.
         self.state["deployments"].pop(slug)
         self.event("released", slug=slug)
 
@@ -1296,7 +1296,7 @@ class Manager:
         inspection = self.inspect_removal(repo_id, slug, allow_installed=uninstall)
         if inspection["local_digest"] != expected_local_digest:
             raise Problem("La carpeta local ha cambiado desde la revisión.", "local_folder_changed")
-        # Persist intent before renaming. Recovery removes only this generated staging folder.
+        # Persiste la intención antes de renombrar. La recuperación borra solo esta carpeta temporal.
         self.state["transactions"][slug] = {
             "kind": "remove",
             "repo_id": repo_id,
@@ -1331,7 +1331,7 @@ class Manager:
         if stage.is_symlink() or target.is_symlink():
             raise Problem("La ruta local no es segura.", "unsafe_local_folder")
         if transaction["phase"] == "prepared":
-            # Recheck reviewed source before uninstalling; a stale confirmation cannot erase data.
+            # Verifica el código revisado antes de desinstalar para impedir una confirmación obsoleta.
             if target.exists() and self.tree_digest(target) != transaction["digest"]:
                 raise Problem(
                     "La carpeta local ha cambiado desde la revisión.", "local_folder_changed"
@@ -1350,7 +1350,7 @@ class Manager:
             self.save()
         if self.installed_info(slug):
             raise Problem("La aplicación sigue instalada.", "app_still_installed")
-        # A new folder at the original location is never part of this deletion.
+        # Excluye cualquier carpeta nueva que aparezca en la ruta original.
         self.supervisor.call("POST", "/store/reload")
         if stage.exists() and transaction["phase"] != "purging":
             if self.tree_digest(stage) != transaction["digest"]:
@@ -1444,7 +1444,7 @@ class Manager:
         if sync_interval != 0 and not 300 <= sync_interval <= 604800:
             raise Problem("El intervalo debe ser 0 o estar entre 300 y 604800 segundos.")
         if repo["ref"] != ref:
-            # Never install the old checkout while showing a newly selected branch.
+            # Invalida el checkout anterior cuando cambia la rama seleccionada.
             repo.update(commit=None, apps=[], catalog=None, app_digests={}, sync_changes={})
         repo.setdefault("created_at", time.time())
         repo.update(name=name.strip(), ref=ref, sync_interval=sync_interval)

@@ -21,6 +21,6 @@ el botón anterior y selecciona **HA Private Git Manager**.
 - Botón para abrir las aplicaciones mediante Ingress y la sesión de Home Assistant.
 - Trabajos en segundo plano, recuperación explícita y registros filtrables/exportables.
 
-Abre la pestaña **Documentación** para comenzar. Compatible con aarch64 y amd64. Requiere Supervisor.
+Abre la pestaña **Documentación** o el [manual web ilustrado](https://gente-del-condado.github.io/HA-Private-Git-Manager/#home-assistant) para comenzar. Compatible con aarch64 y amd64. Requiere Supervisor.
 
 Spanish/English UI, SSH keys, private Git repositories and local apps, with background jobs, recovery and logs. See **Documentation** for setup and recovery instructions.

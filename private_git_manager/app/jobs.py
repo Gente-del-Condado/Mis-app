@@ -96,7 +96,7 @@ class Jobs:
                 )
                 self.manager.event("job_done", job_id=job_id)
             except Exception as exc:
-                # Never expose arbitrary exception text or tracebacks: they may contain secrets.
+                # El texto de una excepción inesperada puede contener secretos.
                 message = (
                     self.manager.redact(str(exc))
                     if isinstance(exc, Problem)

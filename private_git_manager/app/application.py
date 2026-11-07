@@ -94,7 +94,7 @@ def parse_configuration(source):
         json.dumps(data, allow_nan=False)
         return data
     except (yaml.YAMLError, ValueError, TypeError, RecursionError, OverflowError) as exc:
-        # YAML parser diagnostics include source snippets and may echo passwords.
+        # Los errores del lector YAML pueden incluir contraseñas del texto original.
         raise Problem(
             "Revisa el YAML, sus tipos y las claves de configuración permitidas.", "config_yaml"
         ) from exc
@@ -168,10 +168,10 @@ class Applications:
             raise Problem(
                 "No se pudo identificar la versión de Home Assistant.", "ha_version_unavailable"
             )
-        # Core 2026.2 introduced the built-in app panel. Older frontends use hassio.
+        # Core 2026.2 incorporó el panel de aplicaciones. Versiones anteriores usan hassio.
         modern = tuple(map(int, version.groups())) >= (2026, 2)
         prefix = "/app/" if modern else "/hassio/ingress/"
-        # Never expose ingress_url/session tokens or provider-supplied webui URLs.
+        # Expón solo la ruta nativa. ingress_url y webui pueden incluir credenciales o URLs externas.
         return {"path": prefix + "local_" + slug}
 
     def configuration(self, repo_id, slug):
@@ -203,7 +203,7 @@ class Applications:
                 "POST", f"/addons/local_{slug}/options/validate", data["options"]
             )
             if not result.get("valid", False):
-                # Supervisor humanize_error can embed submitted secrets: expose no raw message.
+                # humanize_error del Supervisor puede incluir secretos enviados en el formulario.
                 raise Problem(
                     "Las opciones no cumplen el esquema o la comprobación de contraseñas del Supervisor.",
                     "config_invalid",
@@ -218,7 +218,7 @@ class Applications:
                 "La configuración ha cambiado. Vuelve a abrirla antes de guardar.", "config_changed"
             )
         data = self.validate(repo_id, slug, source)
-        # Validate may take time. Check again before applying changes from an old editor.
+        # La validación puede tardar. Comprueba de nuevo la revisión antes de aplicar.
         current = self.info(repo_id, slug, mutate=True)
         if revision(current) != expected_revision:
             raise Problem(
@@ -249,7 +249,7 @@ class Applications:
         text, truncated = self.manager.supervisor.logs(f"/addons/local_{slug}/logs")
         if truncated:
             text = text.rsplit("\n", 1)[0] if "\n" in text else ""
-        # Strip terminal escapes and control characters. Browser also uses textContent exclusively.
+        # Quita secuencias de terminal y caracteres de control. El navegador usa textContent.
         text = re.sub(r"\x1b\][^\x07]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]", "", text)
         text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
         secrets = []
@@ -279,7 +279,7 @@ class Applications:
         collect(info.get("options", {}))
         for secret in sorted(set(secrets), key=len, reverse=True):
             text = text.replace(secret, "[REDACTED]")
-        # Do not use Manager.redact: it truncates diagnostic messages to 4000 characters.
+        # La redacción de logs preserva las líneas. Manager.redact trunca a 4000 caracteres.
         for repo in list(self.manager.state["repos"].values()):
             if repo.get("token"):
                 text = text.replace(repo["token"], "[REDACTED]")

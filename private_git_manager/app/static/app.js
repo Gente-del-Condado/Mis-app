@@ -307,7 +307,7 @@ async function nativeYunoHost(path, method = "GET", data) {
   }
   if (!response.ok) {
     const message = typeof result?.error === "string" ? result.error.slice(0, 1200) : "";
-    // Server messages are shown as text; never render third-party markup.
+    // Muestra la respuesta como texto para evitar interpretar HTML de terceros.
     throw Object.assign(ynhError("yunohost_native_error"), { nativeMessage: message });
   }
   return result;
@@ -722,7 +722,7 @@ function modal(type, title, body, footer = actions(), context = {}) {
     : $("#modal-form textarea, #modal-form input:not([type=hidden]), #modal-form select, #modal-actions button");
   if (initialFocus) initialFocus.autofocus = true;
   if (!$("#modal").open) $("#modal").showModal();
-  // Focus before returning; a delayed callback can steal focus during fast typing.
+  // Enfoca en el mismo turno para evitar mover el foco mientras el usuario escribe.
   initialFocus?.focus();
 }
 function repositoryAsset(repo, path) {
@@ -1511,7 +1511,7 @@ document.addEventListener("click", async (event) => {
         throw Object.assign(new Error(t("invalid_ingress_path")), {
           code: "invalid_ingress_path",
         });
-      // Leave the manager iframe; Home Assistant creates/renews the app's own session.
+      // Abre el panel fuera del iframe. Home Assistant crea o renueva la sesión.
       window.top.location.href = target.href;
     } catch (error) {
       notice(errorText(error), true);

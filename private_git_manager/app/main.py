@@ -75,12 +75,12 @@ async def access_control(request: Request, call_next):
     peer = request.client.host if request.client else ""
     dev = os.environ.get("PGM_DEV") == "1" and not os.environ.get("SUPERVISOR_TOKEN")
     allowed = {"127.0.0.1", "::1", "testclient"} if dev else {"172.30.32.2"}
-    # Health check from inside the container exposes only a boolean, no state.
+    # La comprobación interna del contenedor devuelve únicamente un booleano.
     if request.url.path == "/health" and request.method == "GET" and peer in {"127.0.0.1", "::1"}:
         return JSONResponse({"ok": True})
     if YUNOHOST:
-        # Uvicorn leaves client unset for Unix sockets. Nginx sets the marker
-        # after the YunoHost access check and owns access to the socket.
+        # Uvicorn deja client vacío en sockets Unix. Nginx controla el acceso al socket
+        # y añade el marcador tras validar el permiso de YunoHost.
         if request.client is not None or request.headers.get("X-PGM-Proxy") != "yunohost":
             return response_error("Accede desde el portal de YunoHost.", "yunohost_required", 403)
     elif peer not in allowed:
@@ -96,7 +96,7 @@ async def access_control(request: Request, call_next):
     length = request.headers.get("content-length")
     if length and (not length.isdigit() or int(length) > limit):
         return response_error("La petición es demasiado grande.", "body_limit", 413)
-    # Enforce the actual byte count too, including chunked transfer encoding.
+    # Limita también el tamaño real del cuerpo cuando llega por fragmentos.
     if request.method not in {"GET", "HEAD"} and not upload:
         body = bytearray()
         async for chunk in request.stream():
@@ -123,7 +123,7 @@ async def problem_handler(request, exc):
 
 @app.exception_handler(RequestValidationError)
 async def validation_handler(request, exc):
-    # FastAPI's default response may echo a submitted secret in its input field.
+    # La respuesta de validación de FastAPI puede devolver un secreto en el campo input.
     return response_error("Revisa los campos introducidos.", "validation", 422)
 
 
@@ -329,7 +329,7 @@ def supervisor_status():
     if not manager.supervisor.token:
         reason = "yunohost" if YUNOHOST else "development"
         return {"connected": False, "addons": [], "reason": reason}
-    # Independent read; must not wait for the job's mutation lock.
+    # La lectura del estado del Supervisor debe responder mientras hay trabajos.
     data = manager.supervisor.call("GET", "/addons")
     return {
         "connected": True,
@@ -352,7 +352,7 @@ def key_delete(key_id: str):
 
 @app.post("/api/hosts/scan")
 def host_scan(body: HostInput):
-    # keyscan has no side effects and can run while a job is active.
+    # keyscan consulta la huella sin modificar el estado.
     return manager.scan(body.url)
 
 
@@ -575,7 +575,7 @@ class BackupStreamingResponse(StreamingResponse):
         try:
             await super().__call__(scope, receive, send)
         finally:
-            # Also close if cancellation happens before the first archive chunk is requested.
+            # Cierra el archivo incluso si se cancela antes de leer el primer bloque.
             with CancelScope(shield=True):
                 await run_in_threadpool(self.backup_stream.close)
 

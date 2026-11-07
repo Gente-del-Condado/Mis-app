@@ -55,7 +55,7 @@ def stage(manager, repo_id, expected_commit):
     source = manager.data / "repos" / repo_id
     manager.verify_checkout(repo, source)
     env = manager.local_git_env()
-    # Also reject ignored files and Git links; neither belongs in the staged tree.
+    # El paquete preparado contiene solo archivos del commit, sin ignorados ni submódulos.
     if run(["git", "-C", str(source), "ls-files", "--others", "-z"], env=env) or any(
         entry.startswith("160000 ")
         for entry in run(["git", "-C", str(source), "ls-files", "--stage", "-z"], env=env).split(
