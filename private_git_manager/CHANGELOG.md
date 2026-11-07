@@ -1,3 +1,9 @@
+# 0.12.0
+
+- Paleta compartida para botones, selectores, navegación, diálogos, estados y pantalla de carga en claro y oscuro.
+- Migración de claves, repositorios y estado al almacenamiento que Home Assistant conserva al desinstalar si se deja desmarcado el borrado de configuración.
+- Instrucciones para actualizar la instalación existente desde la ficha o la CLI del Supervisor.
+
 # 0.11.1
 
 - Corrige el fondo y el contraste de los avisos del portal y los diálogos en modo claro, oscuro y automático.

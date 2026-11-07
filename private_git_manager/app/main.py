@@ -27,10 +27,13 @@ from .core import VERSION, Manager, Problem, endpoint
 from .documentation import RepositoryDocs
 from .jobs import Jobs, Scheduler
 from .messages import event_text
+from .storage import migrate_app_data
 
-manager = Manager(
-    os.environ.get("PGM_DATA", ".dev-data"), os.environ.get("PGM_ADDONS", ".dev-addons")
-)
+data_path = Path(os.environ.get("PGM_DATA", ".dev-data"))
+legacy_path = os.environ.get("PGM_LEGACY_DATA")
+if legacy_path:
+    migrate_app_data(Path(legacy_path), data_path)
+manager = Manager(data_path, os.environ.get("PGM_ADDONS", ".dev-addons"))
 jobs = Jobs(manager)
 scheduler = Scheduler(manager, jobs)
 
