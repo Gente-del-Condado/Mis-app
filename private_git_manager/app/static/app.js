@@ -173,6 +173,7 @@ async function checkSupervisor() {
   render();
 }
 function environmentText() {
+  if (state?.platform === "yunohost") return t("yunohostCatalog");
   return !state?.supervisor
     ? t("development")
     : supervisor?.connected
@@ -252,6 +253,10 @@ function render() {
             end: focused.selectionEnd,
           }
         : null;
+  if (state.platform === "yunohost") {
+    $('[data-t="appHelp"]').textContent = t("yunohostAppHelp");
+    $('[data-t="localStorage"]').textContent = t("yunohostStorage");
+  }
   $("#view-content").innerHTML = {
     repos: renderRepos,
     keys: renderKeys,
@@ -343,7 +348,7 @@ function renderRepos() {
         .join("");
   return (
     html +
-    `<div class="info-box"><span aria-hidden="true">◇</span><div><strong>${esc(t("privateTitle"))}</strong><p>${esc(t("privateText"))}</p></div></div>`
+    `<div class="info-box"><span aria-hidden="true">◇</span><div><strong>${esc(t("privateTitle"))}</strong><p>${esc(t(state.platform === "yunohost" ? "yunohostScope" : "privateText"))}</p></div></div>`
   );
 }
 function renderSyncChanges(changes) {
@@ -363,14 +368,17 @@ function hiddenApps(repo) {
   return `<details class="hidden-apps"><summary>${esc(t("hiddenApps", { count: hidden.length }))}</summary><ul>${hidden.map((slug) => `<li><code>${esc(slug)}</code> ${button("restore-app", t("restoreApp"), controls(repo.id) + ` data-slug="${esc(slug)}"`)}</li>`).join("")}</ul></details>`;
 }
 function appRow(repo, app, busy = false) {
-  const deployment = state.deployments[app.slug],
+  const yunohost = state.platform === "yunohost";
+  const deployment = yunohost ? null : state.deployments[app.slug],
     managed = deployment?.repo_id === repo?.id,
-    transaction = state.transactions[app.slug];
+    transaction = yunohost ? null : state.transactions[app.slug];
   const changed = managed && appHasChanges(repo, app, deployment);
   const runtime = supervisor?.addons?.find(
     (a) => a.slug === "local_" + app.slug,
   );
-  let label = app.blocked_reason
+  let label = yunohost
+    ? t("catalogPreview")
+    : app.blocked_reason
     ? t(app.blocked_reason)
     : transaction
       ? t("recovery")
@@ -392,7 +400,7 @@ function appRow(repo, app, busy = false) {
     Boolean(deployment && !managed) ||
     Boolean(app.blocked_reason);
   const data = controls(repo?.id || "") + ` data-slug="${esc(app.slug)}"`;
-  let buttons = transaction
+  let buttons = yunohost ? "" : transaction
     ? button(
         "recover",
         t("reviewRecovery"),
@@ -478,7 +486,7 @@ function appRow(repo, app, busy = false) {
       data + (disabled ? " disabled" : ""),
       "subtle danger",
     );
-  if (!transaction && repo && !app.blocked_reason)
+  if (!yunohost && !transaction && repo && !app.blocked_reason)
     buttons += button(
       "remove-app",
       t("removeApp"),
@@ -560,7 +568,11 @@ function renderActivity() {
   }</div>`;
 }
 function renderSettings() {
-  return `<div class="settings-grid"><article class="card settings-card"><h2>${esc(t("settings"))}</h2><label>${esc(t("language"))}<select id="setting-language"><option value="es" ${preferences.language === "es" ? "selected" : ""}>Español</option><option value="en" ${preferences.language === "en" ? "selected" : ""}>English</option></select></label><label>${esc(t("appearance"))}<select id="setting-theme">${["system", "light", "dark"].map((theme) => `<option value="${theme}" ${preferences.theme === theme ? "selected" : ""}>${esc(t(theme))}</option>`).join("")}</select></label><p class="muted">${esc(t("preferencesHelp"))}</p></article><article class="card settings-card"><div class="section-title"><h2>${esc(t("environment"))}</h2>${button("refresh", t("refresh"))}</div><dl><dt>Supervisor</dt><dd>${esc(environmentText())}</dd><dt>${esc(t("version"))}</dt><dd>${esc(state.version)}</dd><dt>${esc(t("dataFree"))}</dt><dd>${bytes(state.disk.data_free)}</dd><dt>${esc(t("addonsFree"))}</dt><dd>${bytes(state.disk.addons_free)}</dd><dt>Ingress</dt><dd>172.30.32.2 · :8099</dd></dl></article></div><article class="card settings-card"><h2>${esc(t("securityTitle"))}</h2><p>${esc(t("securityText"))}</p><p class="muted">${esc(t("scopeText"))}</p></article>`;
+  const yunohost = state.platform === "yunohost";
+  const platformDetails = yunohost
+    ? `<dt>${esc(t("accessMethod"))}</dt><dd>${esc(t("yunohostAccess"))}</dd>`
+    : `<dt>${esc(t("addonsFree"))}</dt><dd>${bytes(state.disk.addons_free)}</dd><dt>Ingress</dt><dd>172.30.32.2 · :8099</dd>`;
+  return `<div class="settings-grid"><article class="card settings-card"><h2>${esc(t("settings"))}</h2><label>${esc(t("language"))}<select id="setting-language"><option value="es" ${preferences.language === "es" ? "selected" : ""}>Español</option><option value="en" ${preferences.language === "en" ? "selected" : ""}>English</option></select></label><label>${esc(t("appearance"))}<select id="setting-theme">${["system", "light", "dark"].map((theme) => `<option value="${theme}" ${preferences.theme === theme ? "selected" : ""}>${esc(t(theme))}</option>`).join("")}</select></label><p class="muted">${esc(t("preferencesHelp"))}</p></article><article class="card settings-card"><div class="section-title"><h2>${esc(t("environment"))}</h2>${button("refresh", t("refresh"))}</div><dl><dt>${yunohost ? esc(t("environment")) : "Supervisor"}</dt><dd>${esc(environmentText())}</dd><dt>${esc(t("version"))}</dt><dd>${esc(state.version)}</dd><dt>${esc(t("dataFree"))}</dt><dd>${bytes(state.disk.data_free)}</dd>${platformDetails}</dl></article></div><article class="card settings-card"><h2>${esc(t("securityTitle"))}</h2><p>${esc(t(yunohost ? "yunohostSecurity" : "securityText"))}</p><p class="muted">${esc(t(yunohost ? "yunohostScope" : "scopeText"))}</p></article>`;
 }
 function showView(next) {
   view = next;

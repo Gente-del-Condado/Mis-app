@@ -466,5 +466,14 @@
   "backupKeep": "Number of backups to keep",
   "backupNextRun": "Next scheduled backup",
   "backupLastSuccess": "Last successful backup",
-  "job_backup_scheduled": "Scheduled backup"
+  "job_backup_scheduled": "Scheduled backup",
+  "yunohostCatalog": "YunoHost · Git catalog",
+  "yunohost_required": "Open this app from the YunoHost portal.",
+  "catalogPreview": "Catalog preview",
+  "accessMethod": "Access",
+  "yunohostAccess": "YunoHost portal and permissions",
+  "yunohostAppHelp": "Manifests detected in Git",
+  "yunohostStorage": "Private data in YunoHost",
+  "yunohostScope": "Sync private repositories and review their manifests and documentation. Installing and backing up add-ons requires Home Assistant Supervisor.",
+  "yunohostSecurity": "The YunoHost portal controls access. Keys and tokens are kept in the app’s private data directory."
 }

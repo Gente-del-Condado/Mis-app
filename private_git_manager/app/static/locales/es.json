@@ -466,5 +466,14 @@
   "backupKeep": "Número de copias a conservar",
   "backupNextRun": "Próxima copia prevista",
   "backupLastSuccess": "Última copia completada",
-  "job_backup_scheduled": "Copia programada"
+  "job_backup_scheduled": "Copia programada",
+  "yunohostCatalog": "YunoHost · catálogo Git",
+  "yunohost_required": "Accede desde el portal de YunoHost.",
+  "catalogPreview": "Vista de catálogo",
+  "accessMethod": "Acceso",
+  "yunohostAccess": "Portal y permisos de YunoHost",
+  "yunohostAppHelp": "Manifiestos detectados en Git",
+  "yunohostStorage": "Datos privados en YunoHost",
+  "yunohostScope": "Sincroniza repositorios privados y revisa sus manifiestos y documentación. La instalación y las copias de add-ons requieren el Supervisor de Home Assistant.",
+  "yunohostSecurity": "El portal de YunoHost controla el acceso. Las claves y los tokens se guardan en la carpeta privada de la aplicación."
 }

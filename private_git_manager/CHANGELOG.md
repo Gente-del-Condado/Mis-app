@@ -1,3 +1,8 @@
+# 0.13.0
+
+- Paquete YunoHost con acceso por el portal, servicio sin privilegios y almacenamiento separado.
+- Modo catálogo para sincronizar repositorios privados, revisar cambios y consultar la documentación en YunoHost.
+
 # 0.12.0
 
 - Paleta compartida para botones, selectores, navegación, diálogos, estados y pantalla de carga en claro y oscuro.

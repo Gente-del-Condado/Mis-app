@@ -29,6 +29,10 @@ from .jobs import Jobs, Scheduler
 from .messages import event_text
 from .storage import migrate_app_data
 
+YUNOHOST = os.environ.get("PGM_PLATFORM") == "yunohost"
+if YUNOHOST and os.environ.get("SUPERVISOR_TOKEN"):
+    raise RuntimeError("El modo YunoHost requiere un entorno independiente del Supervisor.")
+
 data_path = Path(os.environ.get("PGM_DATA", ".dev-data"))
 legacy_path = os.environ.get("PGM_LEGACY_DATA")
 if legacy_path:
@@ -73,7 +77,12 @@ async def access_control(request: Request, call_next):
     # Health check from inside the container exposes only a boolean, no state.
     if request.url.path == "/health" and request.method == "GET" and peer in {"127.0.0.1", "::1"}:
         return JSONResponse({"ok": True})
-    if peer not in allowed:
+    if YUNOHOST:
+        # Uvicorn leaves client unset for Unix sockets. Nginx sets the marker
+        # after the YunoHost access check and owns access to the socket.
+        if request.client is not None or request.headers.get("X-PGM-Proxy") != "yunohost":
+            return response_error("Accede desde el portal de YunoHost.", "yunohost_required", 403)
+    elif peer not in allowed:
         return response_error(
             "Accede a través de Ingress de Home Assistant.", "ingress_required", 403
         )
@@ -100,6 +109,8 @@ async def access_control(request: Request, call_next):
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; object-src 'none'"
     )
+    if YUNOHOST:
+        response.headers["Content-Security-Policy"] += "; frame-ancestors 'self'"
     response.headers["Referrer-Policy"] = "no-referrer"
     return response
 
@@ -258,6 +269,8 @@ def index():
 @app.get("/api/state")
 def state():
     result = manager.snapshot()
+    if YUNOHOST:
+        result["platform"] = "yunohost"
     result["jobs"] = jobs.snapshot()
     result["disk"] = {
         "data_free": shutil.disk_usage(manager.data).free,
@@ -289,7 +302,8 @@ def logs(language: str = "es", level: str = "", query: str = "", download: bool 
 @app.get("/api/supervisor")
 def supervisor_status():
     if not manager.supervisor.token:
-        return {"connected": False, "addons": [], "reason": "development"}
+        reason = "yunohost" if YUNOHOST else "development"
+        return {"connected": False, "addons": [], "reason": reason}
     # Independent read; must not wait for the job's mutation lock.
     data = manager.supervisor.call("GET", "/addons")
     return {
