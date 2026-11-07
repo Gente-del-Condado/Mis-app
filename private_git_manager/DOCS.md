@@ -1,4 +1,4 @@
-# HA Private Git Manager · 0.11.0
+# HA Private Git Manager · 0.11.1
 
 ## Empezar
 

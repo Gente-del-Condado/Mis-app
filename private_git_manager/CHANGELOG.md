@@ -1,3 +1,7 @@
+# 0.11.1
+
+- Corrige el fondo y el contraste de los avisos del portal y los diálogos en modo claro, oscuro y automático.
+
 # 0.11.0
 
 - Crear una copia local antes de aplicar una actualización. La copia fallida impide aplicar el código nuevo.

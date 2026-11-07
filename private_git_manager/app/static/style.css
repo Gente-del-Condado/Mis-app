@@ -1,4 +1,11 @@
 :root {
+  color-scheme: light;
+  --notice-background: #edf6ef;
+  --notice-text: #24523b;
+  --notice-border: #b9dac5;
+  --notice-error-background: #fff1ee;
+  --notice-error-text: #96392e;
+  --notice-error-border: #ebc0b6;
   font-family:
     Inter,
     ui-sans-serif,
@@ -497,17 +504,18 @@ summary {
   position: sticky;
   top: 12px;
   z-index: 10;
-  background: #edf6ef;
-  border: 1px solid #b9dac5;
+  background: var(--notice-background);
+  color: var(--notice-text);
+  border: 1px solid var(--notice-border);
   border-radius: 8px;
   padding: 14px 18px;
   margin-top: 16px;
   font-size: 12px;
 }
 #notice.error {
-  background: #fff1ee;
-  color: #a13c30;
-  border-color: #ebc0b6;
+  background: var(--notice-error-background);
+  color: var(--notice-error-text);
+  border-color: var(--notice-error-border);
 }
 #busy {
   position: fixed;
@@ -1075,9 +1083,9 @@ dialog {
 }
 #modal-notice {
   padding: 12px;
-  background: #fff0ed;
-  color: #b04c3e;
-  border: 1px solid #edc6bf;
+  background: var(--notice-error-background);
+  color: var(--notice-error-text);
+  border: 1px solid var(--notice-error-border);
   border-radius: 7px;
   font-size: 12px;
   line-height: 1.65;
@@ -1128,6 +1136,12 @@ html[data-theme="dark"] {
   --background: #111a16;
   --accent-soft: #23392e;
   --code: #203128;
+  --notice-background: #243b2c;
+  --notice-text: #d0e9d8;
+  --notice-border: #3d6448;
+  --notice-error-background: #452b29;
+  --notice-error-text: #f2b1a6;
+  --notice-error-border: #70443d;
   color-scheme: dark;
 }
 html[data-theme="dark"] .primary {
@@ -1147,16 +1161,10 @@ html[data-theme="dark"] .pill.pending {
   background: #473c26;
   color: #e9ca8c;
 }
-html[data-theme="dark"] .badge.error,
-html[data-theme="dark"] #modal-notice,
-html[data-theme="dark"] #notice.error {
+html[data-theme="dark"] .badge.error {
   background: #452b29;
   color: #f2b1a6;
   border-color: #70443d;
-}
-html[data-theme="dark"] #notice {
-  background: #243b2c;
-  border-color: #3d6448;
 }
 html[data-theme="dark"] .warning-box {
   background: #423824;
@@ -1173,6 +1181,12 @@ html[data-theme="dark"] .warning-box {
     --background: #111a16;
     --accent-soft: #23392e;
     --code: #203128;
+    --notice-background: #243b2c;
+    --notice-text: #d0e9d8;
+    --notice-border: #3d6448;
+    --notice-error-background: #452b29;
+    --notice-error-text: #f2b1a6;
+    --notice-error-border: #70443d;
     color-scheme: dark;
   }
   html[data-theme="system"] .primary {
