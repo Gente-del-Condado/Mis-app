@@ -1,6 +1,10 @@
 # Aplicaciones de Gente del Condado
 
+![Icono del catálogo](icon.png)
+
 Catálogo de complementos de Home Assistant publicado en Forgejo.
+
+[Manual del gestor](https://gente-del-condado.github.io/HA-Private-Git-Manager/) · [Catálogo de integraciones y Forgejo Backup](https://gente-del-condado.github.io/HA-Private-Git-Manager/#componentes)
 
 ## Instalación con HA Private Git Manager
 
