@@ -324,12 +324,13 @@ def state():
                 repo["yunohost_package"] = yunohost.package(manager.data / "repos" / repo_id)
     elif manager.supervisor.token and os.environ.get("PGM_CORE_CONFIG"):
         installer = core_integrations()
-        if installer.available():
+        result["integrations_available"] = installer.available()
+        if result["integrations_available"]:
             for repo_id, repo in result["repos"].items():
                 if repo.get("commit"):
                     checkout = manager.data / "repos" / repo_id
                     repo["integrations"] = [
-                        {**item, **installer.summary(item["domain"])}
+                        {**item, **installer.summary(repo_id, item["domain"])}
                         for item in integrations.catalog(checkout)
                     ]
     result["jobs"] = jobs.snapshot()

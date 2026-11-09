@@ -35,6 +35,8 @@ let dictionary,
   loadingModal = false;
 let checkingDeployment = false;
 let repoSearch = "",
+  integrationSearch = "",
+  integrationFilter = "",
   logSearch = "",
   logLevel = "",
   pollTimer,
@@ -193,6 +195,7 @@ function render() {
   if (!dictionary) return;
   const titleKeys = {
     repos: ["reposTitle", "reposSubtitle", "addRepo"],
+    integrations: ["integrationsTitle", "integrationsSubtitle", "addRepo"],
     keys: ["keysTitle", "keysSubtitle", "createKey"],
     hosts: ["hostsTitle", "hostsSubtitle", "verifyHost"],
     activity: ["activityTitle", "activitySubtitle", null],
@@ -211,6 +214,7 @@ function render() {
     );
   });
   if (!state) return;
+  $('[data-view="integrations"]').hidden = !state.integrations_available && view !== "integrations";
   $("#repo-count").textContent = Object.keys(state.repos).length;
   $("#key-count").textContent = Object.keys(state.keys).length;
   $("#app-count").textContent = Object.keys(state.deployments).length;
@@ -235,10 +239,13 @@ function render() {
     state.deployments,
     state.transactions,
     state.events,
-    view === "activity" ? state.jobs : null,
+    view === "activity" ? state.jobs : pending.map((job) => job.resource),
     supervisor,
     preferences,
     repoSearch,
+    integrationSearch,
+    integrationFilter,
+    state.integrations_available,
     logSearch,
     logLevel,
   ]);
@@ -259,6 +266,7 @@ function render() {
   }
   $("#view-content").innerHTML = {
     repos: renderRepos,
+    integrations: renderIntegrations,
     keys: renderKeys,
     hosts: renderHosts,
     activity: renderActivity,
@@ -404,13 +412,64 @@ async function submitYunoHost(context, data) {
   ynhCleanup(context.staged);
 }
 
-function integrationRows(repo, busy) {
-  return (repo.integrations || []).map((item) => {
-    const label = item.installed_version ? "integrationUpdate" : "integrationInstall";
-    const attrs = controls(repo.id) + " " + controls(item.domain, "slug") + (busy || item.conflict ? " disabled" : "");
-    const installed = item.installed_version ? ` · ${esc(t("integrationOnDisk", { version: item.installed_version }))}` : "";
-    return `<div class="app-row"><div><strong>${esc(item.name)}</strong><p>${esc(t("integrationType"))} · ${esc(item.domain)} · ${esc(item.version)}${installed}</p>${item.conflict ? `<p>${esc(t("integration_conflict"))}</p>` : ""}</div><div class="app-actions">${button("integration-deploy", t(label), attrs)}</div></div>`;
-  }).join("");
+function integrationStatus(item) {
+  if (item.conflict) return "integrationBlockedStatus";
+  if (item.other_source) return "otherSource";
+  if (item.adoption) return "integrationLocal";
+  if (!item.installed_version) return "available";
+  return item.installed_version === item.version ? "integrationOnDiskStatus" : "integrationDifferentVersion";
+}
+
+function integrationCard(repo, item, busy) {
+  const status = integrationStatus(item);
+  const blocked = item.conflict || item.other_source;
+  const label = t(item.adoption ? "integrationAdoptAction"
+    : !item.installed_version ? "integrationInstall"
+    : item.installed_version === item.version ? "integrationReviewAction" : "integrationUpdate");
+  const attrs = controls(repo.id) + " " + controls(item.domain, "slug");
+  const contextual = (text) => ` aria-label="${esc(text + " · " + item.name)}"`;
+  const tone = blocked ? "error" : status === "integrationDifferentVersion" || item.adoption ? "pending" : "";
+  return `<article class="card integration-card app-row">
+    <div class="app-description">
+      <h2>${esc(item.name)}</h2>
+      <p><code>${esc(item.domain)}</code> · ${esc(repo.name)} · ${esc(repo.ref)}</p>
+      <p>${esc(t("integrationCatalogVersion", { version: item.version }))} · ${esc(item.installed_version ? t("integrationOnDisk", { version: item.installed_version }) : t("notInstalled"))}</p>
+      <p>${badge(t(status), tone)}</p>
+    </div>
+    <div class="app-actions">
+      ${button("readme", t("viewReadme"), controls(repo.id) + contextual(t("viewReadme")))}
+      ${button("sync", t("sync"), controls(repo.id) + contextual(t("sync")) + (busy ? " disabled" : ""))}
+      ${blocked ? "" : button("integration-deploy", label, attrs + contextual(label) + (busy ? " disabled" : ""), "primary")}
+    </div>
+  </article>`;
+}
+
+function renderIntegrations() {
+  if (!state.integrations_available) return empty(t("integration_unavailable"), "");
+  const entries = Object.values(state.repos).flatMap((repo) =>
+    (repo.integrations || []).map((item) => ({ repo, item })),
+  ).sort((a, b) => a.item.name.localeCompare(b.item.name, preferences.language));
+  if (!entries.length) return empty(
+    t("integrationsEmpty"), t("integrationsEmptyHelp"),
+    button("show-repos", t("repos")),
+  );
+  const query = integrationSearch.trim().toLowerCase();
+  const filtered = entries.filter(({ repo, item }) =>
+    [repo.name, item.name, item.domain].some((text) => text.toLowerCase().includes(query))
+    && (!integrationFilter || integrationStatus(item) === integrationFilter),
+  );
+  const statuses = ["available", "integrationOnDiskStatus", "integrationDifferentVersion",
+    "integrationLocal", "otherSource", "integrationBlockedStatus"];
+  const options = [["", "all"], ...statuses.map((status) => [status, status])].map(
+    ([value, label]) => `<option value="${value}" ${value === integrationFilter ? "selected" : ""}>${esc(t(label))}</option>`,
+  ).join("");
+  const busyRepos = new Set(Object.values(state.jobs).filter((job) => !terminal.has(job.status)).map((job) => job.resource));
+  return `<div class="section-title integration-toolbar">
+    <div><label for="integration-search">${esc(t("integrationSearch"))}</label><input id="integration-search" class="search" type="search" value="${esc(integrationSearch)}"></div>
+    <div><label for="integration-filter">${esc(t("integrationStatus"))}</label><select id="integration-filter">${options}</select></div>
+  </div>
+  <div class="info-box"><div><p>${esc(t("integrationRestartHelp"))}</p></div></div>
+  ${filtered.length ? filtered.map(({ repo, item }) => integrationCard(repo, item, busyRepos.has("repo:" + repo.id))).join("") : empty(t("emptySearch"), "")}`;
 }
 
 async function openIntegrationDeploy(node, id, domain) {
@@ -420,7 +479,7 @@ async function openIntegrationDeploy(node, id, domain) {
   try {
     const path = `repos/${encodeURIComponent(id)}/integrations`;
     const info = await api(`${path}/preflight`, "POST", { domain });
-    const label = info.installed_version ? "integrationUpdate" : "integrationInstall";
+    const label = info.adoption ? "integrationAdoptAction" : info.installed_version ? "integrationUpdate" : "integrationInstall";
     const body = t("integrationReview", { name: info.name, version: info.version, commit: info.commit });
     const previous = info.installed_version ? " " + t(info.adoption ? "integrationAdopt" : "integrationPrevious", { version: info.installed_version }) : "";
     confirm(t(label), body + previous, () => queue(`${path}/deploy`, {
@@ -483,7 +542,7 @@ function renderRepos() {
           .map((a) => appRow(r, a, busy))
           .join(
             "",
-          )}${hiddenApps(r)}${yunohostRow(r, busy)}${integrationRows(r, busy)}${r.commit && !r.apps.length && !r.yunohost_package && !r.integrations?.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
+          )}${hiddenApps(r)}${yunohostRow(r, busy)}${r.integrations?.length ? `<div class="app-row"><p>${esc(t("integrationCount", { count: r.integrations.length }))}</p>${button("show-integrations", t("integrationsTitle"), controls(r.id))}</div>` : ""}${r.commit && !r.apps.length && !r.yunohost_package && !r.integrations?.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
       })
       .join("");
   const detached = Object.values(state.deployments).filter(
@@ -737,6 +796,7 @@ function showView(next) {
   view = next;
   lastRender = "";
   render();
+  $("#title").focus();
 }
 function modal(type, title, body, footer = actions(), context = {}) {
   clearTimeout(modalContext.timer);
@@ -1477,7 +1537,7 @@ $("#modal").addEventListener("cancel", (event) => {
 });
 $("#notice-close").onclick = () => ($("#notice").hidden = true);
 $("#primary").onclick = () =>
-  view === "repos" ? openRepo() : view === "keys" ? openKey() : openTrust();
+  ["repos", "integrations"].includes(view) ? openRepo() : view === "keys" ? openKey() : openTrust();
 document.addEventListener("click", async (event) => {
   const node = event.target.closest("button");
   if (!node) return;
@@ -1560,6 +1620,16 @@ document.addEventListener("click", async (event) => {
     } catch (error) {
       notice(errorText(error), true);
     }
+    return;
+  }
+  if (action === "show-integrations") {
+    integrationSearch = state.repos[id].name;
+    integrationFilter = "";
+    showView("integrations");
+    return;
+  }
+  if (action === "show-repos") {
+    showView("repos");
     return;
   }
   if (action === "activity") {
@@ -1785,6 +1855,10 @@ document.addEventListener("input", (event) => {
     repoSearch = event.target.value;
     render();
   }
+  if (event.target.id === "integration-search") {
+    integrationSearch = event.target.value;
+    render();
+  }
   if (event.target.id === "log-search") {
     logSearch = event.target.value;
     render();
@@ -1798,6 +1872,10 @@ document.addEventListener("change", (event) => {
   if (event.target.id === "setting-theme") {
     setTheme(event.target.value);
     lastRender = "";
+    render();
+  }
+  if (event.target.id === "integration-filter") {
+    integrationFilter = event.target.value;
     render();
   }
   if (event.target.id === "log-level") {

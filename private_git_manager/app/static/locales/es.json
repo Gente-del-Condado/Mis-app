@@ -516,5 +516,20 @@
   "integration_conflict": "La integración local no se puede reemplazar desde este repositorio.",
   "integration_source": "La integración no pertenece al commit sincronizado o contiene archivos no válidos.",
   "integration_changed": "El código cambió después de la revisión. Revísalo de nuevo.",
-  "integration_swap": "No se pudo instalar la integración de forma atómica."
+  "integration_swap": "No se pudo instalar la integración de forma atómica.",
+  "integrationsTitle": "Componentes",
+  "integrationsSubtitle": "Instala y actualiza integraciones de Home Assistant Core desde tus repositorios.",
+  "integrationSearch": "Buscar componentes",
+  "integrationStatus": "Estado",
+  "integrationCatalogVersion": "Catálogo: {version}",
+  "integrationOnDiskStatus": "Misma versión en disco",
+  "integrationDifferentVersion": "Versión distinta en el catálogo",
+  "integrationLocal": "Instalación local sin vincular",
+  "integrationAdoptAction": "Vincular y actualizar",
+  "integrationReviewAction": "Revisar y reinstalar",
+  "integrationCount": "Componentes en el repositorio: {count}",
+  "integrationsEmpty": "Todavía no hay componentes",
+  "integrationsEmptyHelp": "Añade y sincroniza un repositorio como Mis-component que contenga integraciones en custom_components/.",
+  "integrationRestartHelp": "Después de instalar o actualizar un componente, reinicia Home Assistant Core para que cargue el código.",
+  "integrationBlockedStatus": "Carpeta local en conflicto"
 }

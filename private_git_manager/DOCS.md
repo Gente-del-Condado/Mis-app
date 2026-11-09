@@ -99,6 +99,8 @@ El gestor necesita el rol `manager` y escritura en `/addons`. Instala solo códi
 
 ## Instalar o actualizar integraciones de Core
 
+Abre **Componentes** en el menú del gestor para consultar los catálogos sincronizados, comparar las versiones y filtrar por estado. Desde la ficha de cada integración puedes abrir el README del repositorio, sincronizarlo y revisar el commit antes de instalar o actualizar.
+
 Añade y sincroniza un repositorio con `custom_components/<dominio>/manifest.json` y `__init__.py`. En la fila de la integración, pulsa **Instalar integración** o **Actualizar integración**, revisa el commit y confirma. Tras finalizar el trabajo, reinicia Home Assistant Core. Usa **Ajustes → Dispositivos y servicios** para configurar una integración nueva.
 
 Supervisor monta la configuración de Core con escritura para habilitar este flujo. Instala código Python solo de repositorios en los que confíes. Una copia existente se conserva antes de reemplazarla, incluso cuando proviene de una instalación manual. La copia queda bajo una carpeta oculta `.pgm-<dominio>-*` en `custom_components`. Para volver a esa versión, detén Core, mueve la carpeta activa aparte, coloca `previous` con el nombre del dominio y vuelve a iniciar Core.

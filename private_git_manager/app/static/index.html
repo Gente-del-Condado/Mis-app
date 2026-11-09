@@ -24,6 +24,9 @@
         <button class="nav active" data-view="repos">
           <span aria-hidden="true">⑂</span><span data-t="repos"></span>
         </button>
+        <button class="nav" data-view="integrations" hidden>
+          <span aria-hidden="true">⊞</span><span data-t="integrationsTitle"></span>
+        </button>
         <button class="nav" data-view="keys">
           <span aria-hidden="true">⚿</span><span data-t="keys"></span>
         </button>
@@ -68,7 +71,7 @@
       <section class="intro">
         <div>
           <div class="eyebrow" data-t="tagline"></div>
-          <h1 id="title"></h1>
+          <h1 id="title" tabindex="-1"></h1>
           <p id="subtitle"></p>
         </div>
         <button id="primary" class="primary" hidden></button>
