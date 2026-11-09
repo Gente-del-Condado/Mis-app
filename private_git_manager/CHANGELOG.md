@@ -1,3 +1,7 @@
+# 0.15.2
+
+- Ayuda en español para Mis-component, las claves SSH y la recuperación de copias desde Forgejo.
+
 # 0.15.1
 
 - Vista Componentes con buscador, filtros, versiones de catálogo y acceso al README.
