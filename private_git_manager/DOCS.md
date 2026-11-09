@@ -97,6 +97,10 @@ El gestor necesita el rol `manager` y escritura en `/addons`. Instala solo códi
 
 ---
 
+## Copias completas en Forgejo
+
+La integración complementaria **Private Git Manager · Forgejo Backup** añade Forgejo como ubicación de las copias nativas de todo Home Assistant. Configúrala por SSH con una clave de despliegue y deja activado el cifrado. Consulta la [guía de instalación y recuperación](https://github.com/Gente-del-Condado/HA-Private-Git-Manager/blob/main/FORGEJO_BACKUPS.md).
+
 ## Copias de seguridad de cada aplicación
 
 **Copias de seguridad** abre las copias nativas de Home Assistant que contienen esa aplicación: nombre, fecha, tamaño, ubicación y protección con contraseña. También aparecen copias generales o creadas fuera del gestor. La lista se filtra por el identificador exacto de la aplicación.
