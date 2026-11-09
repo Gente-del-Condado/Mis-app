@@ -1,0 +1,36 @@
+configuration:
+  language:
+    name: Service language (optional)
+    description: 'Language code: es (Spanish) or en (English). Leave empty to use the language saved in the panel.
+      Setting it here fixes the language of logs and notifications and locks that setting in the panel. Save and
+      restart.'
+  panel_login:
+    name: Panel sign-in method
+    description: 'both: Home Assistant users through its interface and token for direct access. homeassistant: Home
+      Assistant sessions only in the panel; the token still works for the status sensor. token: always requires
+      the token. Save and restart.'
+  admin_token:
+    name: PiVigia panel token
+    description: Choose at least 16 random characters. Use it to sign in to the panel; this is not your Home Assistant
+      password.
+  trusted_networks:
+    name: Cameras allowed without an SMTP username or password
+    description: Optional. Comma-separated IPs or networks, for example 192.0.2.50/32. Leave empty to require authentication.
+      Do not allow the entire network if only one camera needs access.
+  allow_plain_auth:
+    name: Allow unencrypted SMTP authentication
+    description: Enable only for cameras without STARTTLS support on a trusted local network. This does not configure
+      outgoing email security.
+  tls_cert:
+    name: Incoming STARTTLS certificate
+    description: Optional. Path to the certificate mounted in /ssl, for example /ssl/pivigia.crt. If you do not
+      use STARTTLS, leave both certificate and key empty. To authenticate cameras without TLS, enable unencrypted
+      SMTP authentication on a trusted local network.
+  tls_key:
+    name: Incoming STARTTLS private key
+    description: Optional. Path to the key in /ssl, for example /ssl/pivigia.key. Set both paths for STARTTLS or
+      leave both empty. The camera must trust the certificate.
+network:
+  2525/tcp: SMTP port for receiving photos from your cameras. Change the Home Assistant access port here.
+  8099/tcp: Port for direct token access and sensors. Open Web UI uses Home Assistant Ingress and does not depend
+    on this published port.

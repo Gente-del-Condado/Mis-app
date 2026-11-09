@@ -1,0 +1,123 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add JackSignal",
+        "description": "Create a player for the local audio output. You can link Alarmo under Configure."
+      }
+    },
+    "abort": {
+      "already_configured": "The player is already installed."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "JackSignal",
+        "description": "Upload clips in Media → My media. Use this menu to test them and choose which ones Alarmo should play.",
+        "menu_options": {
+          "alarm": "Link Alarmo",
+          "event": "Assign sound to an Alarmo event",
+          "sensor": "Assign sound to an open sensor",
+          "preview": "Test a sound on the jack"
+        }
+      },
+      "alarm": {
+        "title": "Link Alarmo",
+        "description": "Choose your Alarmo panel. Clear the selection to disconnect it.",
+        "data": {
+          "alarm": "Alarm panel"
+        }
+      },
+      "event": {
+        "title": "Choose an event",
+        "data": {
+          "event": "Alarmo event"
+        }
+      },
+      "event_sound": {
+        "title": "Event sound and priority",
+        "description": "Choose a sound from My media. Clear the sound to remove the rule.",
+        "data": {
+          "sound": "Sound",
+          "priority": "Priority",
+          "repeat": "Repeat while the alarm is triggered"
+        }
+      },
+      "sensor": {
+        "title": "Choose a sensor",
+        "description": "This rule applies when Alarmo cannot arm because this sensor is open.",
+        "data": {
+          "sensor": "Sensor"
+        }
+      },
+      "sensor_sound": {
+        "title": "Sensor sound and priority",
+        "description": "Clear the sound to remove the rule. If several sensors block arming, the highest-priority matching sound plays.",
+        "data": {
+          "sound": "Sound",
+          "priority": "Priority"
+        }
+      },
+      "preview": {
+        "title": "Test audio",
+        "description": "Choose a clip and submit to play it on the jack. {status}",
+        "data": {
+          "sound": "Sound"
+        }
+      }
+    },
+    "error": {
+      "local_sound_required": "Choose an existing audio file from My media.",
+      "higher_priority": "A higher-priority sound is playing.",
+      "ffmpeg_unavailable": "FFmpeg could not start."
+    }
+  },
+  "selector": {
+    "priority": {
+      "options": {
+        "low": "Low",
+        "normal": "Normal",
+        "high": "High",
+        "critical": "Critical"
+      }
+    },
+    "alarm_event": {
+      "options": {
+        "triggered": "Alarm triggered",
+        "pending": "Entry delay",
+        "arming": "Exit delay",
+        "armed": "Armed",
+        "disarmed": "Disarmed",
+        "failed_to_arm": "Failed to arm"
+      }
+    }
+  },
+  "services": {
+    "play_sound": {
+      "name": "Play alert",
+      "description": "Play a sound through JackSignal according to its priority.",
+      "fields": {
+        "sound": {
+          "name": "Sound",
+          "description": "Choose the audio to play."
+        },
+        "priority": {
+          "name": "Priority",
+          "description": "Equal or higher priorities replace the current sound."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_media": {
+      "message": "Choose supported audio from My media or an HTTP(S) audio URL."
+    },
+    "missing_media": {
+      "message": "The selected audio could not be found."
+    },
+    "ffmpeg_unavailable": {
+      "message": "FFmpeg could not start."
+    }
+  }
+}
