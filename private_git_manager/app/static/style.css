@@ -450,6 +450,12 @@ label {
   font-weight: 550;
   margin: 18px 0;
 }
+.ynh-question {
+  margin-block: 18px;
+}
+.ynh-question label {
+  margin: 0;
+}
 input,
 select {
   display: block;

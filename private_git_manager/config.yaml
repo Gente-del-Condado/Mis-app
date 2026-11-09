@@ -1,5 +1,5 @@
 name: HA Private Git Manager
-version: "0.15.2"
+version: "0.15.3"
 slug: private_git_manager
 description: Gestiona claves SSH y aplicaciones de repositorios privados GitHub, Forgejo y Gitea.
 arch:

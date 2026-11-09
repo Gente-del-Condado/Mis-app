@@ -1,3 +1,9 @@
+# 0.15.3
+
+- Corrige el acceso de Nginx al socket del gestor tras iniciar sesión en YunoHost.
+- El instalador de YunoHost muestra requisitos incumplidos y deriva las preguntas condicionales al instalador nativo.
+- Si el servidor pierde la respuesta tras una operación en YunoHost, el gestor impide reenviar el formulario.
+
 # 0.15.2
 
 - Ayuda en español para Mis-component, las claves SSH y la recuperación de copias desde Forgejo.

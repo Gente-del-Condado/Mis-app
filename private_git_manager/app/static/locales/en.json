@@ -499,6 +499,8 @@
   "yunohost_native_error": "YunoHost rejected the operation. Check its logs for details.",
   "yunohost_not_installed": "There are no installed instances of this package.",
   "yunohost_already_installed": "The package is already installed and only supports one instance. Use Upgrade.",
+  "yunohost_conditional_unsupported": "This package uses conditional questions. Install it from the native YunoHost administration.",
+  "yunohost_requirements": "The server does not meet the package requirements.",
   "yunohost_file_unsupported": "This package requires a file upload. Use native administration to install it.",
   "yunohost_source_changed": "The repository changed. Sync and review the commit again.",
   "yunohost_package_invalid": "Could not prepare a valid YunoHost package.",
