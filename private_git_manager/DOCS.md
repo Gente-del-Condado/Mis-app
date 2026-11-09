@@ -97,6 +97,12 @@ El gestor necesita el rol `manager` y escritura en `/addons`. Instala solo códi
 
 ---
 
+## Instalar o actualizar integraciones de Core
+
+Añade y sincroniza un repositorio con `custom_components/<dominio>/manifest.json` y `__init__.py`. En la fila de la integración, pulsa **Instalar integración** o **Actualizar integración**, revisa el commit y confirma. Tras finalizar el trabajo, reinicia Home Assistant Core. Usa **Ajustes → Dispositivos y servicios** para configurar una integración nueva.
+
+Supervisor monta la configuración de Core con escritura para habilitar este flujo. Instala código Python solo de repositorios en los que confíes. Una copia existente se conserva antes de reemplazarla, incluso cuando proviene de una instalación manual. La copia queda bajo una carpeta oculta `.pgm-<dominio>-*` en `custom_components`. Para volver a esa versión, detén Core, mueve la carpeta activa aparte, coloca `previous` con el nombre del dominio y vuelve a iniciar Core.
+
 ## Copias completas en Forgejo
 
 La integración complementaria **Private Git Manager · Forgejo Backup** añade Forgejo como ubicación de las copias nativas de todo Home Assistant. Configúrala por SSH con una clave de despliegue y deja activado el cifrado. Consulta la [guía de instalación y recuperación](https://github.com/Gente-del-Condado/HA-Private-Git-Manager/blob/main/FORGEJO_BACKUPS.md).

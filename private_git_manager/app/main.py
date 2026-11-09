@@ -21,7 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
 
-from . import yunohost
+from . import integrations, yunohost
 from .application import Applications
 from .backups import Backups
 from .core import VERSION, Manager, Problem, endpoint
@@ -184,6 +184,16 @@ class ConfirmInput(Input):
     confirmed: bool = False
 
 
+class IntegrationInput(Input):
+    domain: str = Field(pattern=r"^[a-z][a-z0-9_]{0,79}$")
+
+
+class IntegrationDeploy(IntegrationInput, ConfirmInput):
+    expected_commit: str = Field(pattern=r"^(?:[a-f0-9]{40}|[a-f0-9]{64})$")
+    expected_local_digest: str | None = Field(pattern=r"^[a-f0-9]{64}$")
+    adopt_existing: bool = False
+
+
 class YunoHostStageInput(Input):
     expected_commit: str = Field(pattern=r"^(?:[a-f0-9]{40}|[a-f0-9]{64})$")
 
@@ -271,6 +281,39 @@ def index():
     return FileResponse(static / "index.html")
 
 
+def core_integrations():
+    config = os.environ.get("PGM_CORE_CONFIG")
+    if not config or YUNOHOST or not manager.supervisor.token:
+        raise Problem(
+            "La gestión de integraciones requiere Home Assistant OS.", "integration_unavailable"
+        )
+    return integrations.Integrations(manager, config)
+
+
+@app.post("/api/repos/{repo_id}/integrations/preflight")
+def integration_preflight(repo_id: str, body: IntegrationInput):
+    with mutation():
+        return core_integrations().inspect(repo_id, body.domain)
+
+
+@app.post("/api/repos/{repo_id}/integrations/deploy")
+def integration_deploy(repo_id: str, body: IntegrationDeploy, request: Request):
+    confirmed(body)
+    installer = core_integrations()
+    return queued(
+        request,
+        "integration_deploy",
+        "repo:" + repo_id,
+        lambda: installer.deploy(
+            repo_id,
+            body.domain,
+            body.expected_commit,
+            body.expected_local_digest,
+            body.adopt_existing,
+        ),
+    )
+
+
 @app.get("/api/state")
 def state():
     result = manager.snapshot()
@@ -279,6 +322,16 @@ def state():
         for repo_id, repo in result["repos"].items():
             if repo.get("commit"):
                 repo["yunohost_package"] = yunohost.package(manager.data / "repos" / repo_id)
+    elif manager.supervisor.token and os.environ.get("PGM_CORE_CONFIG"):
+        installer = core_integrations()
+        if installer.available():
+            for repo_id, repo in result["repos"].items():
+                if repo.get("commit"):
+                    checkout = manager.data / "repos" / repo_id
+                    repo["integrations"] = [
+                        {**item, **installer.summary(item["domain"])}
+                        for item in integrations.catalog(checkout)
+                    ]
     result["jobs"] = jobs.snapshot()
     result["disk"] = {
         "data_free": shutil.disk_usage(manager.data).free,
