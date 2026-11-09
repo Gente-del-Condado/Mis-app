@@ -1,3 +1,8 @@
+# 0.15.0
+
+- Instala y actualiza integraciones de Home Assistant Core desde repositorios Git sincronizados.
+- Revisa el commit antes de instalar y conserva la versión anterior en cada actualización.
+
 # 0.14.1
 
 - Manual web ilustrado y ayuda actualizada para Home Assistant.

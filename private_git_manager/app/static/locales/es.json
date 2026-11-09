@@ -503,5 +503,18 @@
   "yunohost_source_changed": "El repositorio ha cambiado. Sincroniza y revisa el commit de nuevo.",
   "yunohost_package_invalid": "No se pudo preparar un paquete válido de YunoHost.",
   "yunohost_stage_limit": "Hay demasiados paquetes preparados. Cierra los formularios pendientes o inténtalo más tarde.",
-  "yunohost_only": "Solo disponible en YunoHost."
+  "yunohost_only": "Solo disponible en YunoHost.",
+  "integrationType": "Integración de Core",
+  "integrationInstall": "Instalar integración",
+  "integrationUpdate": "Actualizar integración",
+  "integrationOnDisk": "En disco: {version}",
+  "integrationReview": "Instalar {name} {version} desde el commit {commit}. Confirma solo si confías en este código Python. Reinicia Home Assistant Core después de que termine el trabajo.",
+  "integrationAdopt": "La copia local {version} se adoptará y se guardará como respaldo.",
+  "integrationPrevious": "La copia anterior {version} se guardará como respaldo.",
+  "job_integration_deploy": "Instalar o actualizar integración",
+  "integration_unavailable": "La gestión de integraciones requiere acceso a la configuración de Home Assistant Core.",
+  "integration_conflict": "La integración local no se puede reemplazar desde este repositorio.",
+  "integration_source": "La integración no pertenece al commit sincronizado o contiene archivos no válidos.",
+  "integration_changed": "El código cambió después de la revisión. Revísalo de nuevo.",
+  "integration_swap": "No se pudo instalar la integración de forma atómica."
 }

@@ -503,5 +503,18 @@
   "yunohost_source_changed": "The repository changed. Sync and review the commit again.",
   "yunohost_package_invalid": "Could not prepare a valid YunoHost package.",
   "yunohost_stage_limit": "Too many packages are staged. Close pending forms or try again later.",
-  "yunohost_only": "Only available on YunoHost."
+  "yunohost_only": "Only available on YunoHost.",
+  "integrationType": "Core integration",
+  "integrationInstall": "Install integration",
+  "integrationUpdate": "Update integration",
+  "integrationOnDisk": "On disk: {version}",
+  "integrationReview": "Install {name} {version} from commit {commit}. Confirm only if you trust this Python code. Restart Home Assistant Core after the job completes.",
+  "integrationAdopt": "The local copy {version} will be adopted and kept as a backup.",
+  "integrationPrevious": "The previous copy {version} will be kept as a backup.",
+  "job_integration_deploy": "Install or update integration",
+  "integration_unavailable": "Managing integrations requires access to the Home Assistant Core configuration.",
+  "integration_conflict": "The local integration cannot be replaced from this repository.",
+  "integration_source": "The integration is not in the synced commit or contains invalid files.",
+  "integration_changed": "The code changed after review. Review it again.",
+  "integration_swap": "Could not install the integration atomically."
 }

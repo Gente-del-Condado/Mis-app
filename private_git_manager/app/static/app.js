@@ -404,6 +404,37 @@ async function submitYunoHost(context, data) {
   ynhCleanup(context.staged);
 }
 
+function integrationRows(repo, busy) {
+  return (repo.integrations || []).map((item) => {
+    const label = item.installed_version ? "integrationUpdate" : "integrationInstall";
+    const attrs = controls(repo.id) + " " + controls(item.domain, "slug") + (busy || item.conflict ? " disabled" : "");
+    const installed = item.installed_version ? ` · ${esc(t("integrationOnDisk", { version: item.installed_version }))}` : "";
+    return `<div class="app-row"><div><strong>${esc(item.name)}</strong><p>${esc(t("integrationType"))} · ${esc(item.domain)} · ${esc(item.version)}${installed}</p>${item.conflict ? `<p>${esc(t("integration_conflict"))}</p>` : ""}</div><div class="app-actions">${button("integration-deploy", t(label), attrs)}</div></div>`;
+  }).join("");
+}
+
+async function openIntegrationDeploy(node, id, domain) {
+  if (checkingDeployment) return;
+  checkingDeployment = true;
+  node.setAttribute("aria-busy", "true");
+  try {
+    const path = `repos/${encodeURIComponent(id)}/integrations`;
+    const info = await api(`${path}/preflight`, "POST", { domain });
+    const label = info.installed_version ? "integrationUpdate" : "integrationInstall";
+    const body = t("integrationReview", { name: info.name, version: info.version, commit: info.commit });
+    const previous = info.installed_version ? " " + t(info.adoption ? "integrationAdopt" : "integrationPrevious", { version: info.installed_version }) : "";
+    confirm(t(label), body + previous, () => queue(`${path}/deploy`, {
+      domain, expected_commit: info.commit, expected_local_digest: info.local_digest,
+      adopt_existing: info.adoption, confirmed: true,
+    }), true);
+  } catch (error) {
+    notice(errorText(error), true);
+  } finally {
+    checkingDeployment = false;
+    node.removeAttribute("aria-busy");
+  }
+}
+
 function renderRepos() {
   const repos = Object.values(state.repos),
     filtered = repos.filter((r) =>
@@ -421,7 +452,8 @@ function renderRepos() {
         (r.catalog?.maintainer || "") +
         " " +
         r.apps.map((a) => a.name + " " + a.description).join(" ") + " " +
-        (r.yunohost_package?.name || "") + " " + (r.yunohost_package?.id || "")
+        (r.yunohost_package?.name || "") + " " + (r.yunohost_package?.id || "") + " " +
+        (r.integrations || []).map((item) => item.name + " " + item.domain).join(" ")
       )
         .toLowerCase()
         .includes(repoSearch.toLowerCase()),
@@ -451,7 +483,7 @@ function renderRepos() {
           .map((a) => appRow(r, a, busy))
           .join(
             "",
-          )}${hiddenApps(r)}${yunohostRow(r, busy)}${r.commit && !r.apps.length && !r.yunohost_package ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
+          )}${hiddenApps(r)}${yunohostRow(r, busy)}${integrationRows(r, busy)}${r.commit && !r.apps.length && !r.yunohost_package && !r.integrations?.length ? `<div class="app-row"><div><strong>${esc(t("noApps"))}</strong><p>${esc(t("noAppsHelp"))}</p></div></div>` : ""}</article>`;
       })
       .join("");
   const detached = Object.values(state.deployments).filter(
@@ -1621,6 +1653,10 @@ document.addEventListener("click", async (event) => {
     anchor.download = "ha-private-git.pub";
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  if (action === "integration-deploy") {
+    await openIntegrationDeploy(node, id, slug);
+    return;
   }
   if (action === "deploy") {
     if (checkingDeployment) return;
