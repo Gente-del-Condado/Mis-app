@@ -1,3 +1,9 @@
+# 0.15.1
+
+- Vista Componentes con buscador, filtros, versiones de catálogo y acceso al README.
+- Distingue instalaciones manuales e integraciones vinculadas a otro repositorio.
+- La ficha permite sincronizar, instalar o actualizar tras revisar el commit.
+
 # 0.15.0
 
 - Instala y actualiza integraciones de Home Assistant Core desde repositorios Git sincronizados.

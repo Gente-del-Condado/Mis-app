@@ -110,22 +110,43 @@ class Integrations:
             raise Problem("El commit no contiene esa integración.", "integration_source")
         return repo, checkout, source, info
 
-    def summary(self, domain):
+    @staticmethod
+    def _owner(target):
+        receipt = target / RECEIPT
+        if not receipt.exists() and not receipt.is_symlink():
+            return None
+        try:
+            if receipt.is_symlink() or not receipt.is_file() or receipt.stat().st_size > 1024:
+                raise ValueError
+            owner = json.loads(receipt.read_bytes())["repo_id"]
+            if not isinstance(owner, str) or not owner:
+                raise ValueError
+            return owner
+        except (OSError, ValueError, TypeError, KeyError, RecursionError) as exc:
+            raise Problem(
+                "El registro de instalación no es válido.", "integration_conflict"
+            ) from exc
+
+    def summary(self, repo_id, domain):
+        version = None
         try:
             target = self._target(domain)
             installed = manifest(target)
+            version = installed["version"] if installed else None
+            owner = self._owner(target) if installed else None
             return {
-                "installed_version": installed["version"] if installed else None,
+                "installed_version": version,
                 "conflict": target.exists() and not installed,
+                "other_source": owner is not None and owner != repo_id,
+                "adoption": installed is not None and owner is None,
             }
         except Problem:
-            return {"installed_version": None, "conflict": True}
+            return {"installed_version": version, "conflict": True}
 
     def inspect(self, repo_id, domain):
         target = self._target(domain)
         repo, _, _, info = self._source(repo_id, domain)
         old = manifest(target)
-        receipt = target / RECEIPT
         owner = None
         if target.exists():
             if old is None:
@@ -133,23 +154,11 @@ class Integrations:
                     "La carpeta contiene una integración diferente o inválida.",
                     "integration_conflict",
                 )
-            if receipt.exists() or receipt.is_symlink():
-                try:
-                    if (
-                        receipt.is_symlink()
-                        or not receipt.is_file()
-                        or receipt.stat().st_size > 1024
-                    ):
-                        raise ValueError
-                    owner = json.loads(receipt.read_bytes())["repo_id"]
-                except (OSError, ValueError, TypeError, KeyError) as exc:
-                    raise Problem(
-                        "El registro de instalación no es válido.", "integration_conflict"
-                    ) from exc
-                if owner != repo_id:
-                    raise Problem(
-                        "La integración pertenece a otro repositorio.", "integration_conflict"
-                    )
+            owner = self._owner(target)
+            if owner is not None and owner != repo_id:
+                raise Problem(
+                    "La integración pertenece a otro repositorio.", "integration_conflict"
+                )
             for directory, dirs, files in os.walk(target):
                 for name in dirs + files:
                     mode = (Path(directory) / name).lstat().st_mode

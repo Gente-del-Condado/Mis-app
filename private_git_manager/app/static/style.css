@@ -1578,3 +1578,27 @@ textarea::placeholder {
   color: var(--muted);
   opacity: 1;
 }
+
+.integration-toolbar {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.integration-toolbar > div {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.integration-toolbar .search {
+  width: 100%;
+}
+.integration-card {
+  margin-block: 12px;
+}
+.integration-card h2 {
+  margin: 0;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.integration-card .app-description {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

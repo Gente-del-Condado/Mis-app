@@ -516,5 +516,20 @@
   "integration_conflict": "The local integration cannot be replaced from this repository.",
   "integration_source": "The integration is not in the synced commit or contains invalid files.",
   "integration_changed": "The code changed after review. Review it again.",
-  "integration_swap": "Could not install the integration atomically."
+  "integration_swap": "Could not install the integration atomically.",
+  "integrationsTitle": "Components",
+  "integrationsSubtitle": "Install and update Home Assistant Core integrations from your repositories.",
+  "integrationSearch": "Search components",
+  "integrationStatus": "Status",
+  "integrationCatalogVersion": "Catalog: {version}",
+  "integrationOnDiskStatus": "Same version on disk",
+  "integrationDifferentVersion": "Different version in catalog",
+  "integrationLocal": "Unlinked local installation",
+  "integrationAdoptAction": "Link and update",
+  "integrationReviewAction": "Review and reinstall",
+  "integrationCount": "Components in this repository: {count}",
+  "integrationsEmpty": "No components yet",
+  "integrationsEmptyHelp": "Add and sync a repository such as Mis-component with integrations in custom_components/.",
+  "integrationRestartHelp": "After installing or updating a component, restart Home Assistant Core to load the code.",
+  "integrationBlockedStatus": "Local folder conflict"
 }
