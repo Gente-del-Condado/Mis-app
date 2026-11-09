@@ -307,6 +307,8 @@ async function nativeYunoHost(path, method = "GET", data) {
       body: data === undefined ? undefined : new URLSearchParams(data),
     });
     if ([401, 403].includes(response.status)) throw ynhError("yunohost_session");
+    // Un proxy puede perder la respuesta después de que YunoHost haya ejecutado la operación.
+    if (method !== "GET" && response.status >= 500) throw ynhError("yunohost_unknown");
     const body = await response.text();
     result = body ? JSON.parse(body) : null;
   } catch (error) {
@@ -330,22 +332,24 @@ function ynhLocale(value, fallback = "") {
   if (typeof value === "string") return value;
   return value?.[preferences.language] || value?.en || value?.fr || fallback;
 }
+function ynhInput(q) {
+  return !q.readonly && !["display_text", "markdown", "alert", "button"].includes(q.type);
+}
 function ynhQuestion(q) {
-  if (q.readonly || ["display_text", "markdown", "alert"].includes(q.type))
-    return `<p class="muted">${esc(ynhLocale(q.ask))}</p>`;
-  const title = esc(ynhLocale(q.ask, q.id)), name = `arg:${esc(q.id)}`;
-  const required = q.optional || q.visible !== true && q.visible !== undefined ? "" : " required";
-  const help = q.help ? `<small class="muted">${esc(ynhLocale(q.help))}</small>` : "";
+  if (!ynhInput(q)) return `<p class="muted">${esc(ynhLocale(q.ask))}</p>`;
+  const title = esc(ynhLocale(q.ask, q.id)), id = `ynh-arg-${q.id}`;
+  const name = `arg:${q.id}`;
+  const help = q.help ? `<small class="muted" id="${id}-help">${esc(ynhLocale(q.help))}</small>` : "";
+  const attrs = `id="${id}" name="${name}"${q.optional ? "" : " required"}${help ? ` aria-describedby="${id}-help"` : ""}`;
   const initial = q.type === "password" ? "" : q.default ?? "";
   let choices = Array.isArray(q.choices) ? q.choices.map((value) => [value, value]) : Object.entries(q.choices || {});
   if (q.type === "boolean") choices = [[1, t("yunohostYes")], [0, t("yunohostNo")]];
-  if (q.type === "file") throw ynhError("yunohost_file_unsupported");
   const control = choices.length
-    ? `<select name="${name}"${required}><option value="">${esc(t("yunohostChoose"))}</option>${choices.map(([value, label]) => `<option value="${esc(value)}"${String(value) === String(initial === true ? 1 : initial === false ? 0 : initial) ? " selected" : ""}>${esc(ynhLocale(label, String(label)))}</option>`).join("")}</select>`
+    ? `<select ${attrs}><option value="">${esc(t("yunohostChoose"))}</option>${choices.map(([value, label]) => `<option value="${esc(value)}"${String(value) === String(initial === true ? 1 : initial === false ? 0 : initial) ? " selected" : ""}>${esc(ynhLocale(label, String(label)))}</option>`).join("")}</select>`
     : q.type === "text"
-      ? `<textarea name="${name}"${required}>${esc(initial)}</textarea>`
-      : `<input name="${name}" type="${["password", "email", "url", "date", "time", "color"].includes(q.type) ? q.type : "text"}" value="${esc(initial)}"${required}${q.type === "password" ? ' autocomplete="new-password"' : ""}>`;
-  return `<label>${title}${control}${help}</label>`;
+      ? `<textarea ${attrs}>${esc(initial)}</textarea>`
+      : `<input ${attrs} type="${["password", "email", "url", "date", "time", "color"].includes(q.type) ? q.type : "text"}" value="${esc(initial)}"${q.type === "password" ? ' autocomplete="new-password"' : ""}>`;
+  return `<div class="ynh-question"><label for="${id}">${title}</label>${control}${help}</div>`;
 }
 async function openYunoHostAction(repoId, action) {
   if (loadingModal || state.platform !== "yunohost") return;
@@ -374,8 +378,22 @@ async function openYunoHostAction(repoId, action) {
       const manifest = await nativeYunoHost("apps/manifest?" + new URLSearchParams({ app: staged.path }));
       if (manifest?.id !== pkg.id || !Array.isArray(manifest.install)) throw ynhError("yunohost_package_invalid");
       if (instances.length && manifest.integration?.multi_instance !== true) throw ynhError("yunohost_already_installed");
-      const fields = manifest.install.filter((q) => typeof q.id === "string" && /^[a-zA-Z_][a-zA-Z0-9_]{0,79}$/.test(q.id));
-      args = fields.filter((q) => !q.readonly && !["display_text", "markdown", "alert"].includes(q.type)).map((q) => q.id);
+      const unmet = Object.values(manifest.requirements || {}).filter((requirement) => requirement?.passed === false);
+      if (unmet.length) {
+        throw Object.assign(ynhError("yunohost_requirements"), {
+          nativeMessage: unmet.map((requirement) => typeof requirement.error === "string" ? requirement.error : "").join(" ").slice(0, 1200),
+        });
+      }
+      const fields = manifest.install.filter((q) => q?.visible !== false);
+      if (fields.some((q) => typeof q?.id !== "string" || !/^[a-zA-Z_][a-zA-Z0-9_]{0,79}$/.test(q.id))) {
+        throw ynhError("yunohost_package_invalid");
+      }
+      if (fields.some((q) => typeof q.visible === "string")) {
+        throw ynhError("yunohost_conditional_unsupported");
+      }
+      const inputs = fields.filter(ynhInput);
+      if (inputs.some((q) => q.type === "file")) throw ynhError("yunohost_file_unsupported");
+      args = inputs.map((q) => q.id);
       questions = field("yunohostLabel", "label", pkg.name, "required") + fields.map(ynhQuestion).join("");
     }
     const details = action === "remove" ? "yunohostRemoveInfo" : action === "upgrade" ? "yunohostUpgradeInfo" : "yunohostInstallInfo";

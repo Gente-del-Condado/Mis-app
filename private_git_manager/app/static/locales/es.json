@@ -499,6 +499,8 @@
   "yunohost_native_error": "YunoHost rechazó la operación. Revisa sus registros si necesitas más detalles.",
   "yunohost_not_installed": "No hay ninguna instancia instalada de este paquete.",
   "yunohost_already_installed": "El paquete ya está instalado y solo admite una instancia. Usa Actualizar.",
+  "yunohost_conditional_unsupported": "El paquete usa preguntas condicionales. Instálalo desde la administración nativa de YunoHost.",
+  "yunohost_requirements": "El servidor no cumple los requisitos del paquete.",
   "yunohost_file_unsupported": "Este paquete requiere cargar un archivo. Usa la administración nativa para instalarlo.",
   "yunohost_source_changed": "El repositorio ha cambiado. Sincroniza y revisa el commit de nuevo.",
   "yunohost_package_invalid": "No se pudo preparar un paquete válido de YunoHost.",

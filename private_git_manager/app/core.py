@@ -25,7 +25,7 @@ from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.15.2"
+VERSION = "0.15.3"
 
 
 class SupervisorUncertain(Problem):

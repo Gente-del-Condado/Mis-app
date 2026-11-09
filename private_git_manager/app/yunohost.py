@@ -1,4 +1,4 @@
-"""Prepare a private Git checkout for the native YunoHost admin API."""
+"""Prepara un paquete Git privado para la API de administración de YunoHost."""
 
 import re
 import shutil
@@ -9,7 +9,7 @@ import uuid
 from .core import Problem, run
 
 STAGE_ID = re.compile(r"[a-f0-9]{32}")
-PACKAGE_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
+PACKAGE_ID = re.compile(r"[a-z0-9](?:[a-z0-9-]|_(?!_)){0,62}")
 MANIFEST_LIMIT = 128 * 1024
 STAGE_TTL = 24 * 60 * 60
 MAX_STAGES = 8
