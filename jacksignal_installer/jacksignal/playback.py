@@ -35,6 +35,12 @@ class Playback:
         self.owner: str | None = None
         self._repeating_siren = False
         self.changed: Callable[[], None] = lambda: None
+        self.listeners: set[Callable[[], None]] = set()
+
+    def notify(self) -> None:
+        self.changed()
+        for listener in tuple(self.listeners):
+            listener()
 
     async def play(
         self,
@@ -66,14 +72,14 @@ class Playback:
                     stderr=asyncio.subprocess.PIPE,
                 )
             except OSError:
-                self.changed()
+                self.notify()
                 raise
             self._process = process
             self.sound = sound
             self.priority = priority
             self.owner = owner
             self._repeating_siren = repeat and owner == "triggered" and priority == Priority.CRITICAL
-            self.changed()
+            self.notify()
             self._create_task(self._watch(process, sound), "jacksignal playback")
 
             return True
@@ -89,7 +95,7 @@ class Playback:
             if self._process is not process:
                 return
             self._reset()
-            self.changed()
+            self.notify()
             if process.returncode:
                 # Only local diagnostics are safe to include verbatim.
                 details = error.decode(errors="replace").strip() if sound.local else ""
@@ -98,9 +104,11 @@ class Playback:
                     sound.title, process.returncode, f": {details}" if details else "",
                 )
 
-    async def set_paused(self, paused: bool) -> None:
+    async def set_paused(self, paused: bool, *, owner: str | None = None) -> None:
         """Pause or resume the existing process."""
         async with self._lock:
+            if owner is not None and owner != self.owner:
+                return
             process = self._process
             if process is None or process.returncode is not None or self.paused == paused:
                 return
@@ -109,14 +117,14 @@ class Playback:
             except ProcessLookupError:
                 return
             self.paused = paused
-            self.changed()
+            self.notify()
 
     async def stop(self, *, owner: str | None = None) -> None:
         """Stop playback, optionally only if started by the given owner."""
         async with self._lock:
             if owner is None or owner == self.owner:
                 await self._stop()
-                self.changed()
+                self.notify()
 
     async def close(self) -> None:
         """Release the audio output and reject future requests."""

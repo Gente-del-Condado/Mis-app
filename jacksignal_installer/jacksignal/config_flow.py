@@ -1,6 +1,6 @@
 """Native settings panel for Alarmo and sound assignments."""
 
-from homeassistant.config_entries import ConfigFlow, OptionsFlowWithReload
+from homeassistant.config_entries import ConfigFlow, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
@@ -16,6 +16,7 @@ from .const import (
     Priority,
 )
 from .media import resolve
+from .dlna import DLNA, settings
 from .selectors import media_selector, priority_selector, validation
 
 
@@ -37,12 +38,41 @@ class SonidosConfigFlow(ConfigFlow, domain=DOMAIN):
         return SoundOptions()
 
 
-class SoundOptions(OptionsFlowWithReload):
+class SoundOptions(OptionsFlow):
     """Use native configuration dialogs for sound rules."""
 
     async def async_step_init(self, user_input=None):
         return self.async_show_menu(
-            step_id="init", menu_options=["alarm", "event", "sensor", "preview"],
+            step_id="init", menu_options=["alarm", "event", "sensor", "preview", "dlna"],
+        )
+
+    async def async_step_dlna(self, user_input=None):
+        options = dict(self.config_entry.options)
+        errors = {}
+        if user_input is not None:
+            try:
+                settings(user_input)
+                receiver = self.hass.data.get(DOMAIN)
+                if receiver is not None:
+                    await receiver.configure({**options, DLNA: user_input})
+            except (ValueError, KeyError):
+                errors["base"] = "dlna_address"
+            except OSError:
+                errors["base"] = "dlna_start"
+            else:
+                options[DLNA] = user_input
+                return self.async_create_entry(data=options)
+        schema = validation.Schema({
+            validation.Required("enabled", default=False): selector.BooleanSelector(),
+            validation.Optional("address"): selector.TextSelector(),
+            validation.Required("port", default=49200): selector.NumberSelector({
+                "min": 1024, "max": 65535, "step": 1, "mode": "box",
+            }),
+        })
+        return self.async_show_form(
+            step_id="dlna", data_schema=self.add_suggested_values_to_schema(
+                schema, user_input if user_input is not None else options.get(DLNA, {}),
+            ), errors=errors,
         )
 
     async def async_step_alarm(self, user_input=None):

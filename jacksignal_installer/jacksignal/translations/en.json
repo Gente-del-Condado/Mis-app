@@ -19,7 +19,8 @@
           "alarm": "Link Alarmo",
           "event": "Assign sound to an Alarmo event",
           "sensor": "Assign sound to an open sensor",
-          "preview": "Test a sound on the jack"
+          "preview": "Test a sound on the jack",
+          "dlna": "DLNA audio receiver"
         }
       },
       "alarm": {
@@ -65,12 +66,23 @@
         "data": {
           "sound": "Sound"
         }
+      },
+      "dlna": {
+        "title": "DLNA / UPnP",
+        "description": "Enable the audio receiver on your local network. Enter the Raspberry LAN IPv4 address (for example 192.168.1.50). Clients on that network can control it without a password. Requires FFprobe. Alarmo alerts take priority.",
+        "data": {
+          "enabled": "Enable receiver",
+          "address": "Raspberry IPv4",
+          "port": "HTTP port"
+        }
       }
     },
     "error": {
       "local_sound_required": "Choose an existing audio file from My media.",
       "higher_priority": "A higher-priority sound is playing.",
-      "ffmpeg_unavailable": "FFmpeg could not start."
+      "ffmpeg_unavailable": "FFmpeg could not start.",
+      "dlna_address": "Check the LAN IPv4, port and FFprobe installation.",
+      "dlna_start": "Could not start DLNA. Check that the IP belongs to this host and the port is free."
     }
   },
   "selector": {
@@ -118,6 +130,9 @@
     },
     "ffmpeg_unavailable": {
       "message": "FFmpeg could not start."
+    },
+    "audio_unavailable": {
+      "message": "Could not control the PulseAudio output volume."
     }
   }
 }

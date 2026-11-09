@@ -19,7 +19,8 @@
           "alarm": "Vincular Alarmo",
           "event": "Asignar sonido a un evento de Alarmo",
           "sensor": "Asignar sonido a un sensor abierto",
-          "preview": "Probar un sonido por el jack"
+          "preview": "Probar un sonido por el jack",
+          "dlna": "Receptor DLNA de audio"
         }
       },
       "alarm": {
@@ -65,12 +66,23 @@
         "data": {
           "sound": "Sonido"
         }
+      },
+      "dlna": {
+        "title": "DLNA / UPnP",
+        "description": "Activa el receptor de audio para tu red local. Indica la IPv4 local de la Raspberry (por ejemplo 192.168.1.50). Los clientes de esa red pueden controlarlo sin contraseña. Requiere FFprobe. Los avisos de Alarmo tienen prioridad.",
+        "data": {
+          "enabled": "Activar receptor",
+          "address": "IPv4 de la Raspberry",
+          "port": "Puerto HTTP"
+        }
       }
     },
     "error": {
       "local_sound_required": "Elige un archivo de audio existente en Mis archivos multimedia.",
       "higher_priority": "Está sonando un aviso de mayor prioridad.",
-      "ffmpeg_unavailable": "No se pudo iniciar FFmpeg."
+      "ffmpeg_unavailable": "No se pudo iniciar FFmpeg.",
+      "dlna_address": "Comprueba la IPv4 local, el puerto y que FFprobe esté instalado.",
+      "dlna_start": "No se pudo iniciar DLNA. Comprueba que la IP pertenece a este equipo y que el puerto está libre."
     }
   },
   "selector": {
@@ -118,6 +130,9 @@
     },
     "ffmpeg_unavailable": {
       "message": "No se pudo iniciar FFmpeg."
+    },
+    "audio_unavailable": {
+      "message": "No se pudo controlar el volumen de la salida PulseAudio."
     }
   }
 }
