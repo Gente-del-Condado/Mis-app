@@ -1,5 +1,5 @@
 name: JackSignal Installer
-version: "0.6.0"
+version: "0.7.0"
 slug: jacksignal_installer
 description: Install or update the JackSignal integration from this repository.
 arch:

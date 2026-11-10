@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0
+
+- Configure sensor speech in native Home Assistant forms: engine, surrounding text, unit and priority, without YAML.
+- Add manual, state-change and numeric threshold-crossing triggers, with a minimum interval between alerts.
+- Preview without saving, edit/delete saved rules and list them in the assignment overview.
+- Expose the saved sensor speech as a visual automation action.
+- Ignore unavailable values, startup/recovery transitions and obsolete speech after options change.
+
 ## 0.6.0
 
 - Add an independent closing/deactivation sound and condition for each binary sensor.

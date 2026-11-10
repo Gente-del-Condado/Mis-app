@@ -1,5 +1,22 @@
 # JackSignal Installer
 
+## Voz sin YAML / Speech without YAML (0.7.0)
+
+Ve a **JackSignal → Configurar → Configurar voz de un sensor**. Elige el sensor,
+motor TTS, texto antes/después del valor, unidad y prioridad. Decide si hablar
+manualmente, al cambiar el valor o al cruzar un umbral. El intervalo mínimo evita
+avisos seguidos. Usa **Probar sin guardar** y después **Guardar**. La misma pantalla
+permite editar o eliminar la regla. Necesitas un motor TTS configurado previamente.
+La acción visual **JackSignal · Decir valor del sensor** permite usar la frase
+guardada desde cualquier automatización, sin YAML ni Alarmo.
+
+Open **JackSignal → Configure → Configure sensor speech**. Select the sensor,
+TTS engine, text before/after its value, unit and priority. Choose manual,
+value-change or threshold-crossing triggers and a minimum alert interval.
+Test without saving, then save. Reopen the same sensor to edit or delete its rule.
+A configured TTS engine is required. Use the visual **Speak sensor value** action
+from any automation to read its current value with the saved phrase and priority.
+
 ## Español
 
 1. Pulsa **Iniciar** y comprueba el **Registro**. El instalador se detiene solo al terminar.
