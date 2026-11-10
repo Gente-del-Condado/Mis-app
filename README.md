@@ -40,6 +40,8 @@ automáticamente aquella instalación.
 
 ## Actualizaciones y desarrollo
 
+Los cambios se suben a Forgejo en cada proyecto. Forgejo los replica a GitHub y GitHub Actions publica solo la carpeta instalable en Mis-app de Forgejo. La réplica de ese catálogo actualiza esta tienda pública sin depender de un PC. Las integraciones por separado están en [Mis-component](https://github.com/Gente-del-Condado/Mis-component).
+
 `private_git_manager/` se publica automáticamente con GitHub Actions cuando se
 actualiza la app en la rama `main` de
 [HA-Private-Git-Manager](https://github.com/Gente-del-Condado/HA-Private-Git-Manager).
