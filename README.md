@@ -17,7 +17,7 @@ Tienda → menú ⋮ → Repositorios**:
 https://github.com/Gente-del-Condado/Mis-app
 ```
 
-Después selecciona **HA Private Git Manager**, instala, inicia y abre su interfaz web.
+Después selecciona **HA Private Git Manager** o **PiVigia**, instala, inicia y abre su interfaz web.
 La primera instalación construye la app y requiere conexión a Internet.
 
 ## Aplicaciones
@@ -26,8 +26,16 @@ La primera instalación construye la app y requiere conexión a Internet.
 | --- | --- | --- |
 | [JackSignal Installer](jacksignal_installer/DOCS.md) | Instala y actualiza el reproductor de audio local con avisos de Alarmo y receptor DLNA. | `amd64`, `aarch64` |
 | [HA Private Git Manager](private_git_manager/README.md) | Gestiona claves SSH y aplicaciones de repositorios GitHub, Forgejo y Gitea desde Home Assistant. | `amd64`, `aarch64` |
+| [PiVigia](pivigia/README.md) | Analiza localmente fotos de cámaras recibidas por SMTP y envía avisos por correo o Telegram; incluye RTSP opcional. | `amd64`, `aarch64` |
 
 [Guía de uso](private_git_manager/DOCS.md) · [Historial de versiones](private_git_manager/CHANGELOG.md)
+
+[Guía de PiVigia](pivigia/DOCS.md) · [Cambios de PiVigia](pivigia/CHANGELOG.md)
+
+PiVigia conserva su estado experimental. La integración opcional de sensores de
+Home Assistant se instala por separado. Si ya utilizas PiVigia desde otro
+repositorio o una carpeta local, añadir esta tienda no migra sus datos ni sustituye
+automáticamente aquella instalación.
 
 ## Actualizaciones y desarrollo
 
@@ -36,6 +44,14 @@ actualiza la app en la rama `main` de
 [HA-Private-Git-Manager](https://github.com/Gente-del-Condado/HA-Private-Git-Manager).
 El desarrollo se realiza allí; los cambios manuales en esta copia se sustituyen
 en la siguiente publicación. Otras aplicaciones de este repositorio se conservan.
+
+`pivigia/` se publica automáticamente desde el proyecto PiVigia: los cambios de
+Forgejo se replican a GitHub y Actions valida y construye el complemento antes de
+copiar únicamente `addons/pivigia/` a esta tienda. No incluye YunoHost ni la
+integración de sensores. El commit de publicación identifica el commit de origen;
+los cambios manuales en esta copia se sustituyen en la siguiente sincronización.
+El repositorio de desarrollo continúa siendo privado y el código del complemento
+distribuido aquí es público.
 
 Para que Home Assistant ofrezca una actualización hay que aumentar la versión en
 el manifiesto de la app original. Las actualizaciones se instalan desde Home Assistant.
