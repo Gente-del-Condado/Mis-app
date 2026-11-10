@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.1
+
+- Refresh Spanish/English installation, sound rules, sensor speech, priorities and audio-only DLNA documentation.
+- Separate installer instructions from integration configuration and document manual-only startup.
+- Add integration documentation/support links, code owner and local brand assets; align HACS and installer metadata with the tested Home Assistant baseline.
+- Document the current Forgejo/GitHub publication paths. No playback behavior changes.
+
 ## 0.7.0
 
 - Configure sensor speech in native Home Assistant forms: engine, surrounding text, unit and priority, without YAML.
