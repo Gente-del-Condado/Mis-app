@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.4
+
+- Automatically publish the individual Marketplace distribution and its immutable version tag from a source push to Forgejo.
+- Create GitHub releases from mirrored branches/tags, with version checks and changelog notes.
+- Clarify Marketplace first-install configuration without restart, restart notices for loaded integrations, and the separate installer workflow.
+- No audio playback or sensor-rule behavior changes.
+
 ## 0.7.3
 
 - Group sensor settings into clearly labelled opening and closing fields, each with its own sound and condition.
