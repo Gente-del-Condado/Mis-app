@@ -7,10 +7,14 @@ El complemento ejecuta el receptor SMTP, el detector y el panel. La integración
 Necesitas Home Assistant con Supervisor, arquitectura AMD64 o ARM64 y conexión para descargar dependencias y el modelo inicial.
 
 1. En la tienda de aplicaciones/complementos, abre **Repositorios**.
-2. Añade `https://gentedelcondado.es/wolfbelmi88/pivigia`. Supervisor necesita poder clonar el repositorio desde tu instalación.
+2. Añade `https://github.com/Gente-del-Condado/Mis-app`, la tienda pública de Gente del Condado. Supervisor necesita poder clonar el repositorio desde tu instalación.
 3. Busca **PiVigia** e instala. La construcción inicial puede tardar varios minutos.
 4. En **Configuración**, introduce un `admin_token` propio de al menos 16 caracteres. Guarda.
 5. Inicia el complemento, revisa **Registro** y abre **Interfaz web**.
+
+Mis-app recibe automáticamente la carpeta del complemento cuando se actualiza el proyecto. Home Assistant ofrece una actualización cuando aumenta la versión de su manifiesto; la sincronización de la tienda no instala esa actualización por sí sola.
+
+Si ya instalaste PiVigia desde Forgejo, otro repositorio o una carpeta local, conserva la URL y la instancia existentes. La identidad del complemento incluye el repositorio: añadir Mis-app no migra datos ni convierte aquella instancia en esta. Haz copia y planifica una migración antes de cambiar de origen; no inicies dos instancias con los mismos puertos.
 6. Sigue los primeros pasos de esta página para crear un buzón y enviar una prueba.
 
 Si ya tienes PiVigia instalado, conserva **la URL y la instancia existentes**. Añadir el mismo proyecto con otra URL puede crear otro identificador de repositorio; no traslada automáticamente los datos.
@@ -108,7 +112,7 @@ El acceso directo al puerto web no hereda una sesión de Home Assistant. Para ad
 5. Configura la cámara con la IP de Home Assistant, el puerto SMTP publicado, el buzón como usuario y destinatario, y su contraseña.
 6. Genera un evento real y comprueba **Actividad**. Un mensaje filtrado no genera aviso; revisa la regla antes de considerarlo un fallo.
 
-La guía ampliada está en [Primeros pasos](https://gentedelcondado.es/wolfbelmi88/pivigia/src/branch/main/docs/PRIMEROS_PASOS.md), con [reglas y ejemplos](https://gentedelcondado.es/wolfbelmi88/pivigia/src/branch/main/docs/BUZONES.md), [Telegram y correo](https://gentedelcondado.es/wolfbelmi88/pivigia/src/branch/main/docs/NOTIFICACIONES.md) y [diagnóstico](https://gentedelcondado.es/wolfbelmi88/pivigia/src/branch/main/docs/PROBLEMAS.md).
+La guía ampliada está en [Primeros pasos](https://gentedelcondado.es/forgejo/wolfbelmi88/pivigia/src/branch/main/docs/PRIMEROS_PASOS.md), con [reglas y ejemplos](https://gentedelcondado.es/forgejo/wolfbelmi88/pivigia/src/branch/main/docs/BUZONES.md), [Telegram y correo](https://gentedelcondado.es/forgejo/wolfbelmi88/pivigia/src/branch/main/docs/NOTIFICACIONES.md) y [diagnóstico](https://gentedelcondado.es/forgejo/wolfbelmi88/pivigia/src/branch/main/docs/PROBLEMAS.md).
 
 ## Idioma y apariencia
 
@@ -120,7 +124,7 @@ Español e inglés están incluidos. Las traducciones de los formularios del com
 
 Instala `custom_components/pivigia` dentro de la carpeta de configuración de Home Assistant y reinicia. En **Dispositivos y servicios → Añadir integración**, busca PiVigia e introduce una URL accesible desde Home Assistant, por ejemplo `http://192.0.2.10:8099`, y el token.
 
-La URL debe apuntar a la API directa, no a una ruta temporal de Ingress. HACS requiere un repositorio en GitHub; Forgejo por sí solo no es un repositorio personalizado de HACS. Consulta [Integración y automatizaciones](https://gentedelcondado.es/wolfbelmi88/pivigia/src/branch/main/docs/INTEGRACION.md) para la instalación manual, entidades y ejemplos.
+La URL debe apuntar a la API directa, no a una ruta temporal de Ingress. HACS requiere un repositorio en GitHub; Forgejo por sí solo no es un repositorio personalizado de HACS. Consulta [Integración y automatizaciones](https://gentedelcondado.es/forgejo/wolfbelmi88/pivigia/src/branch/main/docs/INTEGRACION.md) para la instalación manual, entidades y ejemplos.
 
 ## Actualizar sin perder datos
 
@@ -141,4 +145,4 @@ Para instalar desde una carpeta local de desarrollo, conserva su identidad y sus
 - **No aparecen cambios:** confirma que has guardado y reiniciado cuando el ajuste sea de arranque.
 - **No aparece una actualización:** revisa el repositorio de la instancia y el registro de Supervisor.
 
-Consulta [Copias](https://gentedelcondado.es/wolfbelmi88/pivigia/src/branch/main/docs/COPIAS.md) y [Solución de problemas](https://gentedelcondado.es/wolfbelmi88/pivigia/src/branch/main/docs/PROBLEMAS.md). Las pruebas del proyecto incluyen contratos del complemento, pero no sustituyen la comprobación en tu instalación real de Supervisor.
+Consulta [Copias](https://gentedelcondado.es/forgejo/wolfbelmi88/pivigia/src/branch/main/docs/COPIAS.md) y [Solución de problemas](https://gentedelcondado.es/forgejo/wolfbelmi88/pivigia/src/branch/main/docs/PROBLEMAS.md). Las pruebas del proyecto incluyen contratos del complemento, pero no sustituyen la comprobación en tu instalación real de Supervisor.

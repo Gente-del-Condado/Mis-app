@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+- Select the listening IPv4 from Home Assistant's visible network interfaces or enter it manually.
+- Allow disabling SSDP multicast for manual receivers over routed networks/VPNs.
+- Preserve discovery for existing configurations; document VPN routing and sender requirements.
+
 ## 0.3.0
 
 - Add an optional audio-only UPnP MediaRenderer, advertised as JackSignal Audio.

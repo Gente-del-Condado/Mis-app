@@ -1,3 +1,9 @@
+# 1.4.5
+
+- Envío y recuperación manual de perfiles y copias cifradas en repositorios privados de Forgejo.
+- Icono y logotipo del complemento en la tienda de Home Assistant.
+- Publicación automática del complemento en Mis-app a partir de la rama principal.
+
 # 1.4.4
 
 - Guías de instalación independientes de otros proyectos.

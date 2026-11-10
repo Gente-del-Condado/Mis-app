@@ -36,7 +36,7 @@ def settings(value):
     port = int(value.get("port", 49200))
     if not 1024 <= port <= 65535:
         raise ValueError("Invalid HTTP port")
-    return str(address), port
+    return str(address), port, bool(value.get("discovery", True))
 
 
 @web.middleware
@@ -109,6 +109,12 @@ async def subscribe(service, request):
 
 class AudioServer(UpnpServer):
     """Use the library's protocol handlers with bounded HTTP requests and cleanup."""
+
+    discovery = True
+
+    async def _async_start_ssdp(self):
+        if self.discovery:
+            await super()._async_start_ssdp()
 
     async def _async_start_http_server(self):
         app = web.Application(client_max_size=65536, middlewares=[local_callbacks])
@@ -190,7 +196,7 @@ class DlnaReceiver:
                 manufacturer_url=None,
                 model_description="Audio-only receiver with Alarmo priorities",
                 model_name="JackSignal",
-                model_number="0.3.0",
+                model_number="0.4.0",
                 model_url=None,
                 serial_number=None,
                 udn=udn,
@@ -209,10 +215,11 @@ class DlnaReceiver:
                 transport.backend = playback
                 transport.publish()
 
-        host, port = address
+        host, port, discovery = address
         self.server = AudioServer(
             Renderer, (host, 0), http_port=port, boot_id=int(time.time())
         )
+        self.server.discovery = discovery
         await self.server.async_start()
         self.transport = self.server._device.service(
             "urn:schemas-upnp-org:service:AVTransport:1"

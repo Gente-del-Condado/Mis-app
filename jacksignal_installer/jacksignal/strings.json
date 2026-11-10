@@ -20,7 +20,7 @@
           "event": "Assign sound to an Alarmo event",
           "sensor": "Assign sound to an open sensor",
           "preview": "Test a sound on the jack",
-          "dlna": "DLNA audio receiver"
+          "dlna": "DLNA: network and port"
         }
       },
       "alarm": {
@@ -68,12 +68,13 @@
         }
       },
       "dlna": {
-        "title": "DLNA / UPnP",
-        "description": "Enable the audio receiver on your local network. Enter the Raspberry LAN IPv4 address (for example 192.168.1.50). Clients on that network can control it without a password. Requires FFprobe. Alarmo alerts take priority.",
+        "title": "DLNA: network and port",
+        "description": "Choose an IPv4 address on an interface visible to Home Assistant (Ethernet, Wi-Fi or VPN). You can enter another address belonging to this host. For VPNs without multicast, disable SSDP discovery and add http://IP:PORT/description.xml in a sender supporting manual receivers. The VPN must allow connections in both directions and access to the audio URL. A VPN in another container may require a route to the local IP. The receiver has no password: use trusted networks only. Alarmo retains priority.",
         "data": {
           "enabled": "Enable receiver",
-          "address": "Raspberry IPv4",
-          "port": "HTTP port"
+          "address": "Listening interface / IPv4",
+          "port": "HTTP port",
+          "discovery": "Automatic SSDP discovery (UDP 1900)"
         }
       }
     },

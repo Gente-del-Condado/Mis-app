@@ -20,7 +20,7 @@
           "event": "Asignar sonido a un evento de Alarmo",
           "sensor": "Asignar sonido a un sensor abierto",
           "preview": "Probar un sonido por el jack",
-          "dlna": "Receptor DLNA de audio"
+          "dlna": "DLNA: red y puerto"
         }
       },
       "alarm": {
@@ -68,12 +68,13 @@
         }
       },
       "dlna": {
-        "title": "DLNA / UPnP",
-        "description": "Activa el receptor de audio para tu red local. Indica la IPv4 local de la Raspberry (por ejemplo 192.168.1.50). Los clientes de esa red pueden controlarlo sin contraseña. Requiere FFprobe. Los avisos de Alarmo tienen prioridad.",
+        "title": "DLNA: red y puerto",
+        "description": "Elige una IPv4 de una interfaz visible para Home Assistant (Ethernet, Wi-Fi o VPN). Puedes escribir otra IP del mismo equipo. Para VPN sin multicast, desactiva el descubrimiento SSDP y añade http://IP:PUERTO/description.xml en un emisor que admita receptores manuales. La VPN debe permitir las conexiones en ambos sentidos y el acceso a la URL del audio. Una VPN en otro contenedor puede requerir una ruta a la IP local. El receptor no tiene contraseña: úsalo solo en redes de confianza. Alarmo mantiene su prioridad.",
         "data": {
           "enabled": "Activar receptor",
-          "address": "IPv4 de la Raspberry",
-          "port": "Puerto HTTP"
+          "address": "Interfaz / IPv4 de escucha",
+          "port": "Puerto HTTP",
+          "discovery": "Descubrimiento automático SSDP (UDP 1900)"
         }
       }
     },

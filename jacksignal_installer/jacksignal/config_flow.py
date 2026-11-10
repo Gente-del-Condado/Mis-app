@@ -1,5 +1,6 @@
 """Native settings panel for Alarmo and sound assignments."""
 
+from homeassistant.components import network
 from homeassistant.config_entries import ConfigFlow, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
@@ -15,8 +16,8 @@ from .const import (
     SENSOR_RULES,
     Priority,
 )
-from .media import resolve
 from .dlna import DLNA, settings
+from .media import resolve
 from .selectors import media_selector, priority_selector, validation
 
 
@@ -62,12 +63,26 @@ class SoundOptions(OptionsFlow):
             else:
                 options[DLNA] = user_input
                 return self.async_create_entry(data=options)
+        addresses = {}
+        for adapter in await network.async_get_adapters(self.hass):
+            for ipv4 in adapter["ipv4"]:
+                address = ipv4["address"]
+                try:
+                    settings({"enabled": True, "address": address})
+                except ValueError:
+                    continue
+                addresses[address] = f"{adapter['name']} — {address}"
         schema = validation.Schema({
             validation.Required("enabled", default=False): selector.BooleanSelector(),
-            validation.Optional("address"): selector.TextSelector(),
+            validation.Optional("address"): selector.SelectSelector({
+                "options": [{"value": ip, "label": label} for ip, label in addresses.items()],
+                "custom_value": True,
+                "mode": selector.SelectSelectorMode.DROPDOWN,
+            }),
             validation.Required("port", default=49200): selector.NumberSelector({
                 "min": 1024, "max": 65535, "step": 1, "mode": "box",
             }),
+            validation.Required("discovery", default=True): selector.BooleanSelector(),
         })
         return self.async_show_form(
             step_id="dlna", data_schema=self.add_suggested_values_to_schema(
