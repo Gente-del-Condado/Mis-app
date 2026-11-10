@@ -1,4 +1,4 @@
-"""App-scoped native Supervisor backups. Passwords live only in queued callbacks."""
+"""Copias parciales del Supervisor, locales o con destino Git por SSH."""
 
 import hashlib
 import json
@@ -8,9 +8,11 @@ import tarfile
 import time
 import uuid
 from datetime import UTC, datetime
+from tempfile import TemporaryFile
 from urllib.parse import urlencode
 
 from .application import Applications
+from .backup_git import LIMIT, BackupGit
 from .core import SupervisorUncertain
 from .errors import Problem
 
@@ -174,8 +176,7 @@ class Backups:
         self.manager.event("app_backup_restored", slug=slug, backup=selected)
         return {"ok": True, "backup": selected}
 
-    def import_archive(self, repo_id, slug, archive):
-        self.apps.target(repo_id, slug, mutate=True)
+    def inspect_archive(self, slug, archive, *, encrypted=False):
         members = set()
         manifest = None
         try:
@@ -214,6 +215,23 @@ class Backups:
             {f"{local}.tar", f"{local}.tar.gz"} & members
         ):
             raise Problem("La copia no contiene esta aplicación.", "backup_app_missing")
+        if encrypted and (
+            manifest.get("protected") is not True
+            or manifest.get("type") != "partial"
+            or len(apps) != 1
+            or manifest.get("homeassistant")
+            or manifest.get("folders")
+        ):
+            raise Problem(
+                "Solo se admiten copias cifradas de una aplicación.", "backup_git_encrypted"
+            )
+        return selected
+
+    def import_archive(self, repo_id, slug, archive, *, encrypted=False, expected=None):
+        self.apps.target(repo_id, slug, mutate=True)
+        selected = self.inspect_archive(slug, archive, encrypted=encrypted)
+        if expected is not None and selected != expected:
+            raise Problem("El identificador no coincide con la copia remota.", "backup_git_invalid")
         existing = self.manager.supervisor.call("GET", "/backups").get("backups", [])
         if any(item["slug"] == selected for item in existing):
             raise Problem("Ya existe una copia con este identificador.", "backup_import_duplicate")
@@ -230,10 +248,64 @@ class Backups:
         self.manager.event("app_backup_imported", slug=slug, backup=selected)
         return backup
 
-    def configure_schedule(self, repo_id, slug, hours, keep):
+    def git_copies(self, repo_id, slug, destination):
+        self.apps.target(repo_id, slug)
+        return {"copies": BackupGit(self.manager, destination, slug).list()}
+
+    def git_import(self, repo_id, slug, destination, copy, commit):
+        self.apps.target(repo_id, slug, mutate=True)
+        self.manager.progress("backupGitImporting")
+        with BackupGit(self.manager, destination, slug).read(copy, commit) as archive:
+            return self.import_archive(repo_id, slug, archive, encrypted=True, expected=copy[17:])
+
+    def git_export(self, repo_id, slug, destination, selected, revision):
+        backup = self.reviewed(repo_id, slug, selected, revision)
+        if not backup["protected"] or backup["other_content"] or backup["type"] != "partial":
+            raise Problem(
+                "Solo se admiten copias cifradas de una aplicación.", "backup_git_encrypted"
+            )
+        remote = BackupGit(self.manager, destination, slug)
+        self.manager.progress("backupGitExporting")
+        with TemporaryFile(dir=self.manager.data) as archive:
+            stream = self.download(repo_id, slug, selected, revision)
+            try:
+                total = 0
+                for part in stream.chunks():
+                    total += len(part)
+                    if total > LIMIT:
+                        raise Problem("La copia supera el límite de 512 MiB.", "backup_import_size")
+                    archive.write(part)
+            finally:
+                stream.close()
+            if self.inspect_archive(slug, archive, encrypted=True) != selected:
+                raise Problem("El identificador no coincide con la copia.", "backup_git_invalid")
+            result = remote.export(backup, archive)
+        self.manager.event(
+            "app_backup_git_exported", slug=slug, backup=selected, repo_id=destination
+        )
+        return result
+
+    def configure_schedule(self, repo_id, slug, hours, keep, destination=None, password=None):
         self.apps.target(repo_id, slug, mutate=True)
         schedules = self.manager.repo(repo_id).setdefault("backup_schedules", {})
-        schedule = schedules.setdefault(slug, {"copies": []})
+        schedule = schedules.get(slug, {"copies": []})
+        previous = schedule.get("git_destination")
+        if hours and destination:
+            BackupGit(self.manager, destination, slug)
+            password = password or (
+                schedule.get("git_password") if destination == previous else None
+            )
+            if not password:
+                raise Problem(
+                    "Introduce una contraseña para las copias programadas.", "backup_git_password"
+                )
+            schedule.update(git_destination=destination, git_password=password)
+        else:
+            schedule.pop("git_destination", None)
+            schedule.pop("git_password", None)
+        if previous != schedule.get("git_destination"):
+            schedule.pop("git_pending", None)
+        schedules[slug] = schedule
         if schedule.get("hours") != hours:
             schedule["next_at"] = time.time() + hours * 3600 if hours else None
         schedule.update(hours=hours, keep=keep)
@@ -246,13 +318,37 @@ class Backups:
             return
         schedule.update(next_at=now + schedule["hours"] * 3600, last_attempt=now)
         self.manager.save()
-        name = f"PGM · local_{slug} · {uuid.uuid4().hex}"
-        result = self.create(repo_id, slug, name)
-        selected = result["backup"]
-        detail = self.details(repo_id, slug, selected)
-        if detail["name"] != name or detail["other_content"] or detail["type"] != "partial":
-            raise Problem("No se pudo verificar la copia programada.", "backup_uncertain")
-        schedule["copies"].append({"slug": selected, "name": name, "date": detail["date"]})
+        destination = schedule.get("git_destination")
+        pending = schedule.get("git_pending")
+        if pending:
+            present = {item["slug"] for item in self.list(repo_id, slug)["backups"]}
+            if pending["slug"] not in present:
+                pending = None
+                schedule.pop("git_pending", None)
+                self.manager.save()
+        if not pending:
+            if destination:
+                BackupGit(self.manager, destination, slug)
+            name = f"PGM · local_{slug} · {uuid.uuid4().hex}"
+            selected = self.create(repo_id, slug, name, schedule.get("git_password"))["backup"]
+            detail = self.details(repo_id, slug, selected)
+            if detail["name"] != name or detail["other_content"] or detail["type"] != "partial":
+                raise Problem("No se pudo verificar la copia programada.", "backup_uncertain")
+            pending = {"slug": selected, "name": name, "date": detail["date"]}
+            schedule["copies"].append(pending)
+            if destination:
+                schedule["git_pending"] = pending
+            self.manager.save()
+        selected = pending["slug"]
+        result = {"ok": True, "backup": selected}
+        if destination:
+            detail = self.details(repo_id, slug, selected)
+            if any(detail[key] != value for key, value in pending.items()):
+                raise Problem("No se pudo verificar la copia programada.", "backup_uncertain")
+            result["remote"] = self.git_export(
+                repo_id, slug, destination, selected, detail["revision"]
+            )
+            schedule.pop("git_pending", None)
         schedule["last_success"] = time.time()
         self.manager.save()
         listed = self.list(repo_id, slug)["backups"]
