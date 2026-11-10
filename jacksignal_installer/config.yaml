@@ -1,0 +1,13 @@
+name: JackSignal Installer
+version: "0.4.0"
+slug: jacksignal_installer
+description: Install or update the JackSignal integration from this repository.
+arch:
+  - aarch64
+  - amd64
+startup: once
+boot: manual_only
+init: true
+map:
+  - type: homeassistant_config
+    read_only: false
