@@ -1,3 +1,7 @@
+# 0.16.0
+
+- Exporta e importa el catálogo cifrado del gestor por SSH en Forgejo y GitHub, en Home Assistant OS y YunoHost.
+
 # 0.15.3
 
 - Corrige el acceso de Nginx al socket del gestor tras iniciar sesión en YunoHost.

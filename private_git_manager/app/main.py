@@ -28,6 +28,7 @@ from .core import VERSION, Manager, Problem, endpoint
 from .documentation import RepositoryDocs
 from .jobs import Jobs, Scheduler
 from .messages import event_text
+from .migration import Migration
 from .storage import migrate_app_data
 
 YUNOHOST = os.environ.get("PGM_PLATFORM") == "yunohost"
@@ -194,6 +195,20 @@ class IntegrationDeploy(IntegrationInput, ConfirmInput):
     adopt_existing: bool = False
 
 
+class MigrationExport(Input):
+    recipient: str = Field(min_length=1, max_length=128)
+
+
+class MigrationRead(Input):
+    copy_id: str = Field(min_length=1, max_length=64)
+    commit: str = Field(min_length=40, max_length=64)
+    identity: str = Field(min_length=1, max_length=128)
+
+
+class MigrationImport(MigrationRead, ConfirmInput):
+    pass
+
+
 class YunoHostStageInput(Input):
     expected_commit: str = Field(pattern=r"^(?:[a-f0-9]{40}|[a-f0-9]{64})$")
 
@@ -339,6 +354,34 @@ def state():
         "addons_free": shutil.disk_usage(manager.addons).free,
     }
     return result
+
+
+@app.get("/api/migration/{repo_id}/copies")
+def migration_copies(repo_id: str):
+    with mutation():
+        return Migration(manager, repo_id).copies()
+
+
+@app.post("/api/migration/{repo_id}/export")
+def migration_export(repo_id: str, body: MigrationExport):
+    with mutation():
+        return Migration(manager, repo_id).export(body.recipient.strip())
+
+
+@app.post("/api/migration/{repo_id}/preview")
+def migration_preview(repo_id: str, body: MigrationRead):
+    with mutation():
+        catalog = Migration(manager, repo_id).read(body.copy_id, body.commit, body.identity.strip())
+        return catalog.model_dump()
+
+
+@app.post("/api/migration/{repo_id}/import")
+def migration_import(repo_id: str, body: MigrationImport):
+    confirmed(body)
+    with mutation():
+        migration = Migration(manager, repo_id)
+        catalog = migration.read(body.copy_id, body.commit, body.identity.strip())
+        return migration.apply(catalog)
 
 
 @app.post("/api/repos/{repo_id}/yunohost-stage")
