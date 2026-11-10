@@ -11,7 +11,7 @@ El instalador escribe en `/config/custom_components/jacksignal` y guarda una cop
 En **JackSignal → Configurar → Ver sonidos asignados** puedes consultar los eventos,
 sensores, archivos y prioridades. En **Asignar sonido a un sensor abierto**, elige
 el sensor y configura si avisa al impedir armar Alarmo y cuándo avisa al abrir:
-nunca, solo con la alarma desarmada o con cualquier estado. Requiere vincular un
+nunca, solo con la alarma desarmada o con cualquier estado. Solo el modo desarmada y el fallo al armar requieren vincular un
 panel en **Vincular Alarmo**. Las asignaciones anteriores siguen avisando solo al
 impedir el armado hasta que las edites. Abrir se interpreta como un cambio real
 de `off` a `on`; recuperar conexión o iniciar Home Assistant no dispara un aviso.
@@ -26,6 +26,22 @@ The installer writes to `/config/custom_components/jacksignal` and keeps the pre
 
 Under **JackSignal → Configure → View sound assignments**, review events, sensors,
 files and priorities. Edit a sensor to choose failed-arming alerts and opening
-alerts (never, only while disarmed, or in any alarm state). A linked alarm panel
-is required. Existing rules remain failed-arming-only until edited. Opening
+alerts (never, only while disarmed, or in any alarm state). Only disarmed mode and failed arming require a linked alarm panel. Existing rules remain failed-arming-only until edited. Opening
 alerts require an `off` to `on` transition, not startup or reconnection.
+
+## Cierre, otros sensores y voz / Closing, other sensors and speech
+
+Desde 0.6.0, el formulario del sensor ofrece **Sonido de cierre / desactivación**
+y **Aviso al cerrar / desactivarse**, independientes del aviso de apertura.
+Ambos usan la prioridad de la regla. El modo **siempre** funciona sin Alarmo.
+Para cualquier evento o sensor numérico, usa una automatización de Home Assistant
+con `jacksignal.play_sound`; para leer valores en voz alta usa `tts.speak` con un
+motor TTS configurado y `media_player.jacksignal` como destino. La voz entra con
+prioridad baja y no interrumpe los avisos de mayor prioridad. Consulta los ejemplos
+completos del [README](https://github.com/Gente-del-Condado/jacksignal#sensores-automatizaciones-y-voz).
+
+Since 0.6.0, sensors have independent closing/deactivation audio and conditions.
+Always mode works without Alarmo. Use Home Assistant automations with
+`jacksignal.play_sound` for any trigger, or `tts.speak` with a configured TTS
+engine and the JackSignal media player for dynamic speech. Speech uses low
+priority and cannot interrupt higher-priority alerts.

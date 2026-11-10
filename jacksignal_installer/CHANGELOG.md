@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+- Add an independent closing/deactivation sound and condition for each binary sensor.
+- Allow always-on sensor rules without linking Alarmo; preserve disarmed-only checks and alarm priorities.
+- Keep closing-only rules and show closing assignments in the overview.
+- Document arbitrary Home Assistant automation triggers and native TTS announcements with dynamic sensor values.
+
 ## 0.5.0
 
 - Add a configuration overview showing assigned and unassigned Alarmo events and opening sensors, with sound, priority, repeat and playback conditions.
