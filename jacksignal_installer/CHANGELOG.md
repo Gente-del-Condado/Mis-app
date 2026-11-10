@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.5
+
+- Advertise the installed integration version in the DLNA device description instead of the fixed 0.7.0 value.
+- Include the public project URL in DLNA model metadata. Both values now come from the packaged manifest.
+- Verify the served device metadata in the DLNA regression suite. Discovery and playback behavior are unchanged.
+
 ## 0.7.4
 
 - Automatically publish the individual Marketplace distribution and its immutable version tag from a source push to Forgejo.

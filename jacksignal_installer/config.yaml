@@ -1,5 +1,5 @@
 name: JackSignal Installer
-version: "0.7.4"
+version: "0.7.5"
 slug: jacksignal_installer
 description: Install JackSignal for local audio, Alarmo alerts, sensor speech and audio-only DLNA.
 url: https://github.com/Gente-del-Condado/jacksignal-ha
