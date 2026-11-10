@@ -21,7 +21,7 @@ hassio_api: true
 hassio_role: default
 backup: cold
 timeout: 30
-stage: experimental
+stage: stable
 options:
   admin_username: admin
   node_name: homeassistant-gateway

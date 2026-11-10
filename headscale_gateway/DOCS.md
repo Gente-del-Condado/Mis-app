@@ -10,8 +10,8 @@ Necesitas una instalación de Home Assistant con Supervisor y soporte de
 aplicaciones/complementos, arquitectura amd64 o aarch64 y permiso de administrador.
 Para conectar la VPN necesitas un servidor Headscale existente. Prepara también
 un nombre estable para este nodo, un dominio de servicios y los datos del DNS
-que vayas a utilizar. El paquete tiene estado **experimental**: la aceptación
-completa en Home Assistant OS sigue pendiente.
+que vayas a utilizar. El complemento se publica como **estable** en la tienda
+de Home Assistant.
 
 Recorrido recomendado: instalar → abrir el panel → configurar Headscale y DNS →
 publicar un servicio de prueba → guardar una copia. No necesitas configurar

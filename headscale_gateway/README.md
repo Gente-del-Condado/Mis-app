@@ -14,6 +14,5 @@ para acceder desde el menú. Entrarás con tu sesión administradora de Home
 Assistant, sin otra contraseña del Gateway. Las credenciales iniciales son
 opcionales y sirven para configurar una cuenta separada para el acceso directo.
 
-El empaquetado sigue en fase experimental hasta completar las pruebas de
-instalación, actualización y restauración en Home Assistant OS real. Consulta
+El complemento se publica como estable en la tienda de Home Assistant. Consulta
 `DOCS.md` para conocer los requisitos de red, las copias y la recuperación.
