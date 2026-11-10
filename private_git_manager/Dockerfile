@@ -1,5 +1,5 @@
 FROM docker.io/library/python:3.13-alpine
-RUN apk add --no-cache git openssh-client tini \
+RUN apk add --no-cache age git openssh-client tini \
     && mkdir -p /app /data /addons
 WORKDIR /app
 COPY requirements.txt .

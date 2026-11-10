@@ -106,9 +106,9 @@ function notice(message, error = false) {
   $("#notice").className = error ? "error" : "";
   $("#notice").hidden = false;
 }
-async function api(path, method = "GET", data, requestId) {
+async function api(path, method = "GET", data, requestId, timeoutMs = 22000) {
   const controller = new AbortController(),
-    timeout = setTimeout(() => controller.abort(), 22000);
+    timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch("api/" + path, {
       method,
@@ -803,12 +803,37 @@ function renderActivity() {
       : `<div class="empty">${esc(t("emptyLogs"))}</div>`
   }</div>`;
 }
+function openMigration(action) {
+  const repos = Object.values(state.repos).filter((repo) => !repo.url.startsWith("https:") && repo.key_id);
+  const title = t(action === "export" ? "migrationExport" : "migrationImport");
+  if (!repos.length) {
+    modal("migration-info", title, `<p>${esc(t("migrationRepoHelp"))}</p>`, button("close-modal", t("close")));
+    return;
+  }
+  const repoOptions = repos.map((repo) =>
+    `<option value="${esc(repo.id)}">${esc(repo.name)} · ${esc(repo.url)}</option>`,
+  ).join("");
+  const recipient = action === "export" ? `<label for="migration-recipient">${esc(t("migrationRecipient"))}
+    <input id="migration-recipient" name="recipient" required maxlength="128" placeholder="age1…" aria-describedby="migration-help"></label>` : "";
+  modal("migration-" + action, title, `<p id="migration-help">${esc(t(action === "export" ? "migrationExportHelp" : "migrationRepoHelp"))}</p>
+    <label for="migration-repo">${esc(t("migrationRepository"))}
+      <select id="migration-repo" name="repo" required aria-describedby="migration-help">${repoOptions}</select>
+    </label>${recipient}`, actions(action === "export" ? "migrationPublish" : "migrationList"));
+}
+
+const migrationApi = (repo, action, data) =>
+  api(`migration/${encodeURIComponent(repo)}/${action}`, data ? "POST" : "GET", data, undefined, 135000);
+
 function renderSettings() {
   const yunohost = state.platform === "yunohost";
   const platformDetails = yunohost
     ? `<dt>${esc(t("accessMethod"))}</dt><dd>${esc(t("yunohostAccess"))}</dd>`
     : `<dt>${esc(t("addonsFree"))}</dt><dd>${bytes(state.disk.addons_free)}</dd><dt>Ingress</dt><dd>172.30.32.2 · :8099</dd>`;
-  return `<div class="settings-grid"><article class="card settings-card"><h2>${esc(t("settings"))}</h2><label>${esc(t("language"))}<select id="setting-language"><option value="es" ${preferences.language === "es" ? "selected" : ""}>Español</option><option value="en" ${preferences.language === "en" ? "selected" : ""}>English</option></select></label><label>${esc(t("appearance"))}<select id="setting-theme">${["system", "light", "dark"].map((theme) => `<option value="${theme}" ${preferences.theme === theme ? "selected" : ""}>${esc(t(theme))}</option>`).join("")}</select></label><p class="muted">${esc(t("preferencesHelp"))}</p></article><article class="card settings-card"><div class="section-title"><h2>${esc(t("environment"))}</h2>${button("refresh", t("refresh"))}</div><dl><dt>${yunohost ? esc(t("environment")) : "Supervisor"}</dt><dd>${esc(environmentText())}</dd><dt>${esc(t("version"))}</dt><dd>${esc(state.version)}</dd><dt>${esc(t("dataFree"))}</dt><dd>${bytes(state.disk.data_free)}</dd>${platformDetails}</dl></article></div><article class="card settings-card"><h2>${esc(t("securityTitle"))}</h2><p>${esc(t(yunohost ? "yunohostSecurity" : "securityText"))}</p><p class="muted">${esc(t(yunohost ? "yunohostScope" : "scopeText"))}</p></article>`;
+  return `<div class="settings-grid"><article class="card settings-card"><h2>${esc(t("settings"))}</h2><label>${esc(t("language"))}<select id="setting-language"><option value="es" ${preferences.language === "es" ? "selected" : ""}>Español</option><option value="en" ${preferences.language === "en" ? "selected" : ""}>English</option></select></label><label>${esc(t("appearance"))}<select id="setting-theme">${["system", "light", "dark"].map((theme) => `<option value="${theme}" ${preferences.theme === theme ? "selected" : ""}>${esc(t(theme))}</option>`).join("")}</select></label><p class="muted">${esc(t("preferencesHelp"))}</p></article><article class="card settings-card"><div class="section-title"><h2>${esc(t("environment"))}</h2>${button("refresh", t("refresh"))}</div><dl><dt>${yunohost ? esc(t("environment")) : "Supervisor"}</dt><dd>${esc(environmentText())}</dd><dt>${esc(t("version"))}</dt><dd>${esc(state.version)}</dd><dt>${esc(t("dataFree"))}</dt><dd>${bytes(state.disk.data_free)}</dd>${platformDetails}</dl></article></div>
+    <article class="card settings-card"><h2>${esc(t("migrationTitle"))}</h2>
+      <p>${esc(t("migrationSummary"))}</p><div class="repo-actions">
+      ${button("migration-export", t("migrationExport"))}${button("migration-import", t("migrationImport"))}</div>
+    </article><article class="card settings-card"><h2>${esc(t("securityTitle"))}</h2><p>${esc(t(yunohost ? "yunohostSecurity" : "securityText"))}</p><p class="muted">${esc(t(yunohost ? "yunohostScope" : "scopeText"))}</p></article>`;
 }
 function showView(next) {
   view = next;
@@ -1372,6 +1397,47 @@ async function submitModal(event) {
   const data = Object.fromEntries(new FormData(event.target)),
     context = modalContext;
   try {
+    if (context.type === "migration-export") {
+      const saved = await migrationApi(data.repo, "export", { recipient: data.recipient });
+      modal("migration-info", t("migrationExport"), `<p>${esc(t("migrationPublished"))}</p><code>${esc(saved.id)}</code>`, button("close-modal", t("close")));
+      return;
+    }
+    if (context.type === "migration-import") {
+      const copies = await migrationApi(data.repo, "copies");
+      if (!copies.length) {
+        modal("migration-info", t("migrationImport"), `<p>${esc(t("migrationEmpty"))}</p>`, button("close-modal", t("close")));
+        return;
+      }
+      const options = copies.map(({ id }) => `<option value="${esc(id)}">${esc(id)}</option>`).join("");
+      modal("migration-preview", t("migrationImport"), `
+        <label for="migration-copy">${esc(t("migrationCopy"))}<select id="migration-copy" name="copy" required>${options}</select></label>
+        <label for="migration-identity">${esc(t("migrationIdentity"))}
+          <input id="migration-identity" name="identity" type="password" autocomplete="off" required maxlength="128" aria-describedby="migration-key-help">
+        </label><p id="migration-key-help">${esc(t("migrationIdentityHelp"))}</p>`,
+        actions("migrationReview"), { repo: data.repo, copies });
+      return;
+    }
+    if (context.type === "migration-preview") {
+      const copy = context.copies.find(({ id }) => id === data.copy);
+      if (!copy) throw new Error(t("migration_invalid"));
+      const selection = { copy_id: copy.id, commit: copy.commit, identity: data.identity };
+      const catalog = await migrationApi(context.repo, "preview", selection);
+      const entries = catalog.repositories.map((repo) =>
+        `<li><strong>${esc(repo.name)}</strong> · ${esc(repo.ref)}<br><code>${esc(repo.url)}</code>${repo.fingerprint ? `<br><small>${esc(t("migrationFingerprint"))} ${esc(repo.fingerprint)}</small>` : ""}</li>`,
+      ).join("");
+      modal("migration-apply", t("migrationReview"), `<p>${esc(t("migrationReviewHelp"))}</p><ul>${entries}</ul>
+        <label class="checkbox"><input type="checkbox" required>${esc(t("migrationConsent"))}</label>`,
+        actions("migrationImport"), { repo: context.repo, selection, safeFocus: true });
+      return;
+    }
+    if (context.type === "migration-apply") {
+      if (!event.target.reportValidity()) return;
+      const result = await migrationApi(context.repo, "import", { ...context.selection, confirmed: true });
+      $("#modal").close();
+      await refresh();
+      notice(t("migrationImported", { count: result.added }));
+      return;
+    }
     if (context.type === "ynh-action") {
       await submitYunoHost(context, data);
       $("#modal").close();
@@ -1648,6 +1714,10 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "show-repos") {
     showView("repos");
+    return;
+  }
+  if (["migration-export", "migration-import"].includes(action)) {
+    openMigration(action.slice("migration-".length));
     return;
   }
   if (action === "activity") {

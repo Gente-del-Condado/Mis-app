@@ -97,6 +97,15 @@ El gestor necesita el rol `manager` y escritura en `/addons`. Instala solo códi
 
 ---
 
+## Exportar e importar la configuración del gestor
+
+1. Crea un repositorio privado dedicado en Forgejo o GitHub. En **Repositorios**, conéctalo por SSH y verifica la huella. La clave de despliegue necesita escritura para exportar y solo lectura para importar.
+2. Genera un par de claves de recuperación con `age-keygen -o recuperacion-pgm.txt` en un equipo de confianza. Guarda ese archivo fuera de la instalación. Para ver solo la clave pública ejecuta `age-keygen -y recuperacion-pgm.txt`.
+3. En **Preferencias → Copia y migración del gestor → Exportar configuración cifrada**, selecciona el repositorio y pega la clave pública `age1…`. El gestor publica el archivo cifrado como una etiqueta `pgm-config-…`.
+4. En una instalación nueva, conecta el repositorio de recuperación con una clave de lectura y abre **Importar desde repositorio**. Selecciona una copia, pega la línea `AGE-SECRET-KEY-1…` y revisa las URL antes de confirmar. Configura las credenciales y verifica las huellas antes de sincronizar.
+
+Se exportan nombres, URL, referencias y huellas de origen. Las claves SSH privadas, tokens, datos de aplicaciones y registros quedan fuera. La importación solo añade repositorios y conserva las entradas existentes. Puedes mover un catálogo entre Home Assistant OS y YunoHost.
+
 ## Instalar o actualizar integraciones de Core
 
 Abre **Componentes** en el menú del gestor para consultar los catálogos sincronizados, comparar las versiones y filtrar por estado. Desde la ficha de cada integración puedes abrir el README del repositorio, sincronizarlo y revisar el commit antes de instalar o actualizar.
