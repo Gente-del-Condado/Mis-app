@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.2
+
+- Prevent PulseAudio from discarding the end of finite clips: request a 200 ms output buffer and append one second of silence before FFmpeg disconnects.
+- Keep the same interruption priorities and uninterrupted repeating sirens; the player may remain active briefly during the silent tail.
+- Show the current raw sensor state and allow explicit opening polarity for on/off, true/false and open/closed entities; preserve existing on=open rules.
+- Report priority rejection to Media playback callers instead of silently ignoring the request.
+- Add debug messages for playback replacement/rejection and sensor conditions to diagnose missing opening/closing alerts without logging audio URLs.
+- Add an opt-in regression capturing real FFmpeg output from an isolated PulseAudio null sink for 2- and 20-second clips.
+
 ## 0.7.1
 
 - Refresh Spanish/English installation, sound rules, sensor speech, priorities and audio-only DLNA documentation.
