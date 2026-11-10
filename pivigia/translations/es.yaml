@@ -1,0 +1,35 @@
+configuration:
+  language:
+    name: Idioma del servicio (opcional)
+    description: 'Código de idioma: es (español) o en (inglés). Vacío usa el idioma guardado en el panel. Si lo
+      indicas aquí, fija el idioma de los registros y avisos y bloquea ese ajuste en el panel. Guarda y reinicia.'
+  panel_login:
+    name: Método de acceso al panel
+    description: 'both: usuarios de Home Assistant desde su interfaz y token por acceso directo. homeassistant:
+      solo sesión de Home Assistant en el panel; el token sigue sirviendo para el sensor de estado. token: siempre
+      pide el token. Guarda y reinicia.'
+  admin_token:
+    name: Token del panel de PiVigia
+    description: Elige al menos 16 caracteres aleatorios. Lo usarás para entrar en el panel; no es tu contraseña
+      de Home Assistant.
+  trusted_networks:
+    name: Cámaras permitidas sin usuario ni contraseña SMTP
+    description: Opcional. IP o redes separadas por comas, por ejemplo 192.0.2.50/32. Vacío exige autenticación.
+      No pongas toda tu red si solo necesitas una cámara.
+  allow_plain_auth:
+    name: Permitir autenticación SMTP sin cifrado
+    description: Activa solo para cámaras que no soportan STARTTLS y dentro de una red local de confianza. No configura
+      la seguridad del correo de salida.
+  tls_cert:
+    name: Certificado STARTTLS de entrada
+    description: Opcional. Ruta al certificado montado en /ssl, por ejemplo /ssl/pivigia.crt. Si no usas STARTTLS,
+      deja vacíos el certificado y la clave. Para autenticar cámaras sin TLS, activa Permitir autenticación SMTP
+      sin cifrado en una red local de confianza.
+  tls_key:
+    name: Clave privada STARTTLS de entrada
+    description: Opcional. Ruta a la clave en /ssl, por ejemplo /ssl/pivigia.key. Configura ambas rutas para usar
+      STARTTLS o deja ambas vacías. La cámara debe confiar en el certificado.
+network:
+  2525/tcp: Puerto SMTP para recibir las fotos de tus cámaras. Cambia aquí el puerto de acceso en Home Assistant.
+  8099/tcp: Puerto para acceso directo con token y sensores. Abrir interfaz web utiliza Ingress de Home Assistant
+    y no depende de este puerto publicado.

@@ -1,0 +1,41 @@
+name: PiVigia
+version: "0.1.4"
+slug: pivigia
+description: Fotos por correo, modelos descargables, pruebas de detección y cámaras RTSP opcionales. Acceso con Home Assistant.
+arch:
+  - aarch64
+  - amd64
+startup: application
+boot: auto
+init: false
+timeout: 60
+stage: experimental
+ingress: true
+ingress_port: 8099
+ingress_stream: true
+panel_icon: mdi:email-search
+panel_title: PiVigia
+panel_admin: false
+ports:
+  2525/tcp: 2525
+  8099/tcp: 8099
+ports_description:
+  2525/tcp: Entrada de correo SMTP desde las cámaras
+  8099/tcp: Acceso directo con token y sensores; Home Assistant usa Ingress
+webui: "http://[HOST]:[PORT:8099]"
+watchdog: "http://[HOST]:[PORT:8099]/healthz"
+map:
+  - type: ssl
+    read_only: true
+options:
+  admin_token: null
+  panel_login: both
+  allow_plain_auth: false
+schema:
+  language: "str?"
+  admin_token: password
+  panel_login: list(both|homeassistant|token)
+  trusted_networks: "str?"
+  allow_plain_auth: bool
+  tls_cert: "str?"
+  tls_key: "str?"

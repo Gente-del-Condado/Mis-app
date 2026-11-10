@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      try {
+        const savedTheme = localStorage.getItem("pivigia-theme");
+        if (savedTheme === "light" || savedTheme === "dark") {
+          document.documentElement.dataset.theme = savedTheme;
+          document.querySelector('meta[name="color-scheme"]').content = savedTheme;
+        }
+      } catch { /* Un almacenamiento bloqueado no debe impedir el acceso al panel. */ }
+    </script>
+    <title data-i18n="PiVigia · Administración">PiVigia · Administración</title>
+    <style>
+      /* Capas: colores y alternativas, base, navegación, controles y utilidades. */
+      @layer theme, base, shell, components, utilities;
+      @layer theme {
+        :root {
+          --page-light: #f2f3ec; --page-dark: #111511;
+          --page: var(--page-light);
+          --surface-light: #fffef9; --surface-dark: #1a201a;
+          --surface: var(--surface-light);
+          --sidebar-light: #e9ecdf; --sidebar-dark: #151a15;
+          --sidebar: var(--sidebar-light);
+          --raised-light: #f5f7ef; --raised-dark: #212921;
+          --raised: var(--raised-light);
+          --field-light: #fffefb; --field-dark: #131913;
+          --field: var(--field-light);
+          --text-light: #243021; --text-dark: #edf1e6;
+          --text: var(--text-light);
+          --muted-light: #596551; --muted-dark: #a7b29d;
+          --muted: var(--muted-light);
+          --border-light: #d5dccb; --border-dark: #354131;
+          --border: var(--border-light);
+          --input-border-light: #8c9b7e; --input-border-dark: #6e8062;
+          --input-border: var(--input-border-light);
+          --accent-light: #426020; --accent-dark: #c4e780;
+          --accent: var(--accent-light);
+          --accent-soft-light: #e5eed5; --accent-soft-dark: #2b391f;
+          --accent-soft: var(--accent-soft-light);
+          --on-accent-light: #ffffff; --on-accent-dark: #1a270d;
+          --on-accent: var(--on-accent-light);
+          --danger-light: #a53237; --danger-dark: #ffaaa4;
+          --danger: var(--danger-light);
+          --danger-soft-light: #f9e7e4; --danger-soft-dark: #402b29;
+          --danger-soft: var(--danger-soft-light);
+          --warning-light: #795400; --warning-dark: #edcf85;
+          --warning: var(--warning-light);
+          --warning-soft-light: #f7efda; --warning-soft-dark: #3a321e;
+          --warning-soft: var(--warning-soft-light);
+          --grid-line-light: #ced9bd; --grid-line-dark: #3d5030;
+          --grid-line: var(--grid-line-light);
+          --mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+          color-scheme: light dark;
+          accent-color: var(--accent);
+          font-family: Inter, "Segoe UI", system-ui, sans-serif;
+          color: var(--text);
+          background: var(--page);
+        }
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --page: var(--page-dark);
+            --surface: var(--surface-dark);
+            --sidebar: var(--sidebar-dark);
+            --raised: var(--raised-dark);
+            --field: var(--field-dark);
+            --text: var(--text-dark);
+            --muted: var(--muted-dark);
+            --border: var(--border-dark);
+            --input-border: var(--input-border-dark);
+            --accent: var(--accent-dark);
+            --accent-soft: var(--accent-soft-dark);
+            --on-accent: var(--on-accent-dark);
+            --danger: var(--danger-dark);
+            --danger-soft: var(--danger-soft-dark);
+            --warning: var(--warning-dark);
+            --warning-soft: var(--warning-soft-dark);
+            --grid-line: var(--grid-line-dark);
+          }
+        }
+        :root[data-theme="light"] {
+          color-scheme: light;
+          --page: var(--page-light);
+          --surface: var(--surface-light);
+          --sidebar: var(--sidebar-light);
+          --raised: var(--raised-light);
+          --field: var(--field-light);
+          --text: var(--text-light);
+          --muted: var(--muted-light);
+          --border: var(--border-light);
+          --input-border: var(--input-border-light);
+          --accent: var(--accent-light);
+          --accent-soft: var(--accent-soft-light);
+          --on-accent: var(--on-accent-light);
+          --danger: var(--danger-light);
+          --danger-soft: var(--danger-soft-light);
+          --warning: var(--warning-light);
+          --warning-soft: var(--warning-soft-light);
+          --grid-line: var(--grid-line-light);
+        }
+        :root[data-theme="dark"] {
+          color-scheme: dark;
+          --page: var(--page-dark);
+          --surface: var(--surface-dark);
+          --sidebar: var(--sidebar-dark);
+          --raised: var(--raised-dark);
+          --field: var(--field-dark);
+          --text: var(--text-dark);
+          --muted: var(--muted-dark);
+          --border: var(--border-dark);
+          --input-border: var(--input-border-dark);
+          --accent: var(--accent-dark);
+          --accent-soft: var(--accent-soft-dark);
+          --on-accent: var(--on-accent-dark);
+          --danger: var(--danger-dark);
+          --danger-soft: var(--danger-soft-dark);
+          --warning: var(--warning-dark);
+          --warning-soft: var(--warning-soft-dark);
+          --grid-line: var(--grid-line-dark);
+        }
+        @supports (color: light-dark(white, black)) {
+          :root, :root[data-theme] {
+            --page: light-dark(var(--page-light), var(--page-dark));
+            --surface: light-dark(var(--surface-light), var(--surface-dark));
+            --sidebar: light-dark(var(--sidebar-light), var(--sidebar-dark));
+            --raised: light-dark(var(--raised-light), var(--raised-dark));
+            --field: light-dark(var(--field-light), var(--field-dark));
+            --text: light-dark(var(--text-light), var(--text-dark));
+            --muted: light-dark(var(--muted-light), var(--muted-dark));
+            --border: light-dark(var(--border-light), var(--border-dark));
+            --input-border: light-dark(var(--input-border-light), var(--input-border-dark));
+            --accent: light-dark(var(--accent-light), var(--accent-dark));
+            --accent-soft: light-dark(var(--accent-soft-light), var(--accent-soft-dark));
+            --on-accent: light-dark(var(--on-accent-light), var(--on-accent-dark));
+            --danger: light-dark(var(--danger-light), var(--danger-dark));
+            --danger-soft: light-dark(var(--danger-soft-light), var(--danger-soft-dark));
+            --warning: light-dark(var(--warning-light), var(--warning-dark));
+            --warning-soft: light-dark(var(--warning-soft-light), var(--warning-soft-dark));
+            --grid-line: light-dark(var(--grid-line-light), var(--grid-line-dark));
+          }
+        }
+      }
+      @layer base {
+        :where(body, main, aside, section, header, footer, nav, div, form, details, summary,
+               input, select, textarea, button, a, table, td, th) { box-sizing: border-box; }
+        body { margin: 0; font-size: .9375rem; line-height: 1.5; }
+        h1, h2, h3 { line-height: 1.2; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere; }
+        h1 { font-size: clamp(1.8rem, 3vw, 2.5rem); margin: 0; font-weight: 650; }
+        h2 { font-size: 1.15rem; margin: 0 0 1.25rem; font-weight: 650; }
+        h3 { font-size: 1rem; margin: 0 0 1rem; }
+        p { color: var(--muted); line-height: 1.7; margin-block: .75rem; overflow-wrap: anywhere; }
+        small { line-height: 1.6; }
+        a { color: var(--accent); text-underline-offset: .2em; }
+        code { color: var(--accent); overflow-wrap: anywhere; }
+        button, input, select, textarea { font: inherit; }
+        button {
+          display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+          min-block-size: 2.75rem; border: 1px solid var(--input-border); border-radius: .5rem;
+          padding: .65rem 1rem; color: var(--text); background: var(--raised); cursor: pointer;
+          font-size: .8125rem; font-weight: 600; line-height: 1.35;
+          transition: background-color .15s, border-color .15s;
+        }
+        button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+        button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+        button.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(.94); }
+        button.danger { color: var(--danger); }
+        button:disabled { opacity: .55; cursor: not-allowed; }
+        label { display: block; font-size: .8125rem; font-weight: 550; margin-block-end: 1rem; }
+        input, select, textarea {
+          inline-size: 100%; min-inline-size: 0; min-block-size: 2.75rem; margin-block-start: .5rem;
+          padding: .7rem .8rem; border: 1px solid var(--input-border); border-radius: .5rem;
+          color: var(--text); background: var(--field); font-size: .9375rem;
+        }
+        textarea { resize: vertical; }
+        input[type="checkbox"] { inline-size: 1.05rem; min-block-size: 1.05rem; margin: 0 .55rem 0 0; vertical-align: middle; }
+        label:has(> input[type="checkbox"]) { padding-block: .4rem; }
+        label small { display: block; margin-block-start: .5rem; color: var(--muted); font-weight: 400; }
+        input::file-selector-button { background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: .3rem; padding: .35rem .6rem; margin-inline-end: .6rem; }
+        :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+        ol { color: var(--muted); padding-inline-start: 1.3rem; line-height: 1.8; }
+        li + li { margin-block-start: .5rem; }
+        table { inline-size: 100%; border-collapse: collapse; font-size: .8125rem; }
+        th, td { padding: 1rem; text-align: start; border-block-end: 1px solid var(--border); vertical-align: top; }
+        th { color: var(--muted); font-size: .6875rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; background: var(--raised); }
+        tbody tr:last-child td { border-block-end: 0; }
+        td:first-child { min-inline-size: 8rem; font-variant-numeric: tabular-nums; }
+        td:nth-child(2) { overflow-wrap: anywhere; }
+        td .hint { font-size: .75rem; }
+      }
+      @layer shell {
+        .brand { display: flex; align-items: center; gap: .75rem; color: var(--text); text-decoration: none; }
+        .brand-mark { display: grid; place-items: center; inline-size: 2.65rem; block-size: 2.65rem; border: 1px solid var(--accent); border-radius: .7rem; background: var(--accent-soft); color: var(--accent); flex-shrink: 0; }
+        .brand-mark .icon { inline-size: 1.6rem; block-size: 1.6rem; }
+        .brand-name { font-size: 1.45rem; letter-spacing: -.065em; font-weight: 750; line-height: 1.1; }
+        .brand-name span { color: var(--accent); }
+        .brand-caption { display: block; font: .6rem/1.8 var(--mono); letter-spacing: .14em; color: var(--muted); }
+        .public-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem clamp(1.25rem, 5vw, 4rem); }
+        .public-header .theme-control { inline-size: 10.5rem; margin: 0; }
+        #app { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); min-block-size: 100dvh; align-items: start; }
+        .sidebar {
+          position: sticky; inset-block-start: 0; block-size: 100dvh; overflow-y: auto;
+          background: var(--sidebar); border-inline-end: 1px solid var(--border); padding: 2rem 1.125rem 1.25rem;
+          display: flex; flex-direction: column; overscroll-behavior: contain;
+        }
+        .sidebar-brand { padding-inline: .55rem; margin-block-end: 2.5rem; }
+        .sidebar-body { display: flex; flex-direction: column; flex: 1; gap: 1.75rem; }
+        .nav-group { color: var(--muted); font: .625rem var(--mono); letter-spacing: .15em; margin: 0 .8rem .75rem; }
+        .admin-group { margin-block-start: 1.75rem; }
+        nav { display: flex; flex-direction: column; gap: .4rem; }
+        nav button { position: relative; justify-content: start; text-align: start; inline-size: 100%; padding: .85rem .8rem; background: transparent; border: 1px solid transparent; color: var(--muted); font-weight: 500; }
+        nav button .icon { flex-shrink: 0; margin-inline-end: .3rem; }
+        nav button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--border); font-weight: 650; }
+        nav button.active::after { content: ""; inline-size: .35rem; block-size: .35rem; border-radius: 50%; background: currentColor; margin-inline-start: auto; }
+        .sidebar-bottom { margin-block-start: auto; }
+        .theme-control { color: var(--muted); font-size: .6875rem; letter-spacing: .03em; }
+        .theme-control select { font-size: .8125rem; background: var(--sidebar); }
+        .account { display: flex; align-items: start; gap: .65rem; padding-block: 1.25rem .75rem; border-block-start: 1px solid var(--border); }
+        .account-avatar { display: grid; place-items: center; flex-shrink: 0; inline-size: 2rem; block-size: 2rem; background: var(--accent-soft); color: var(--accent); border-radius: .4rem; font: .6875rem var(--mono); }
+        #access-state { margin: 0; font-size: .6875rem; line-height: 1.65; }
+        #logout { inline-size: 100%; background: transparent; border-color: var(--border); color: var(--muted); }
+        .workspace { min-inline-size: 0; inline-size: 100%; max-inline-size: 90rem; margin-inline: auto; padding: 0 clamp(1.25rem, 3.5vw, 3.5rem) 1rem; }
+        .topbar { min-block-size: 5.25rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-block: .75rem; border-block-end: 1px solid var(--border); }
+        .eyebrow { font: .625rem/1.5 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+        .topbar-meta { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: end; }
+        #last-sync { color: var(--muted); font: .625rem var(--mono); }
+        .page-heading { padding-block: 2rem 1.75rem; }
+        .page-heading p { margin-block: .55rem 0; font-size: .875rem; }
+        .page-heading .eyebrow { display: block; color: var(--accent); margin-block-end: .55rem; }
+        .workspace footer { margin-block-start: 2rem; padding-block: 1.25rem; border-block-start: 1px solid var(--border); display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; color: var(--muted); font: .625rem/1.6 var(--mono); }
+        #menu-toggle { display: none; }
+        .login-layout { max-inline-size: 67rem; margin: clamp(1rem, 7vh, 5rem) auto; padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 6vw, 6rem); align-items: center; }
+        .login-intro h1 { font-size: clamp(2.2rem, 5vw, 3.7rem); max-inline-size: 10ch; margin-block: 1.25rem; }
+        .login-intro > p { max-inline-size: 38ch; }
+        .login-card { padding: 2rem; }
+        .login-card h2 { font-size: 1.5rem; }
+        .login-card .primary { inline-size: 100%; }
+        .login-card .eyebrow { display: block; margin-block-end: 1rem; color: var(--accent); }
+        @media (max-width: 50rem) {
+          #app { grid-template-columns: minmax(0, 1fr); }
+          .sidebar { block-size: auto; z-index: 5; padding: .9rem 1.125rem; border-inline-end: 0; border-block-end: 1px solid var(--border); }
+          .sidebar-brand { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin: 0; padding: 0; }
+          .brand-caption { font-size: .5625rem; }
+          .brand-name { font-size: 1.25rem; }
+          #menu-toggle { display: inline-flex; }
+          .sidebar-body { display: none; padding-block-start: 1.5rem; max-block-size: calc(100dvh - 6rem); overflow-y: auto; }
+          .sidebar.menu-open .sidebar-body { display: flex; }
+          .topbar { min-block-size: 3.75rem; }
+          .page-heading { padding-block: 1.5rem; }
+          .login-layout { grid-template-columns: 1fr; max-inline-size: 34rem; gap: 1rem; margin-block: 0; }
+          .login-intro h1 { max-inline-size: none; font-size: 2.2rem; }
+        }
+      }
+      @layer components {
+        .icon { display: block; inline-size: 1.125rem; block-size: 1.125rem; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; padding: 1.5rem; margin-block-end: 1.25rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 1rem; }
+        .grid > *, .row > *, .actions > * { min-inline-size: 0; }
+        .row, .actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+        .row h2, .row h3 { margin: 0; }
+        .actions { justify-content: start; }
+        .briefing { display: grid; grid-template-columns: minmax(0, 1fr) 9rem; align-items: center; gap: 1.5rem; background: var(--raised); }
+        .briefing h2 { font-size: clamp(1.25rem, 2vw, 1.6rem); margin-block: .5rem .75rem; }
+        .briefing p { margin: 0; font-size: .8125rem; }
+        .briefing .eyebrow { color: var(--accent); }
+        .radar { display: block; inline-size: 100%; aspect-ratio: 1; color: var(--accent); }
+        .login-intro .radar { inline-size: 11rem; margin-block-start: 2rem; }
+        .radar-grid { stroke: var(--grid-line); stroke-width: 1; fill: none; }
+        .radar-trace { stroke: currentColor; fill: none; stroke-width: 1.5; }
+        .radar-dot { fill: currentColor; }
+        #metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-block: 1.25rem; }
+        .metric { padding: 1.2rem; margin: 0; }
+        .metric-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; color: var(--muted); }
+        .metric-head small { font-size: .75rem; }
+        .metric strong { display: block; font-size: 2.1rem; font-weight: 550; letter-spacing: -.05em; font-variant-numeric: tabular-nums; margin-block: .65rem .2rem; }
+        .metric-foot { color: var(--muted); font: .5625rem/1.5 var(--mono); letter-spacing: .025em; overflow-wrap: anywhere; }
+        .metric[data-kind="sent"] strong { color: var(--accent); }
+        .metric[data-kind="failed"][data-alert="true"] strong { color: var(--danger); }
+        .badge, .event-state { display: inline-flex; align-items: center; gap: .45rem; font: .625rem/1.4 var(--mono); padding: .4rem .6rem; border: 1px solid var(--border); border-radius: .35rem; color: var(--muted); background: var(--surface); white-space: nowrap; }
+        .badge::before { content: ""; inline-size: .35rem; block-size: .35rem; border-radius: 50%; background: currentColor; }
+        .badge[data-state="ok"], .event-state[data-state="sent"] { color: var(--accent); background: var(--accent-soft); }
+        .badge[data-state="warning"], .event-state[data-state="queued"], .event-state[data-state="processing"] { color: var(--warning); background: var(--warning-soft); }
+        .badge[data-state="error"], .event-state[data-state="failed"] { color: var(--danger); background: var(--danger-soft); }
+        .setup-guide { padding: 0; }
+        .setup-guide summary { cursor: pointer; padding: 1.1rem 1.4rem; font-size: .8125rem; font-weight: 600; }
+        .setup-guide summary::marker { color: var(--accent); }
+        .setup-guide .guide-body { border-block-start: 1px solid var(--border); padding: 0 1.5rem 1rem; font-size: .8125rem; }
+        .activity-card { padding: 0; }
+        .activity-card > .row { padding: 1.4rem 1.5rem .35rem; }
+        .activity-card > p { padding-inline: 1.5rem; margin-block-end: 1.25rem; }
+        .scroll { position: relative; overflow: auto; overscroll-behavior-inline: contain; }
+        .activity-card table { min-inline-size: 40rem; }
+        .empty-state { padding: 2.25rem 1rem; text-align: center; }
+        .empty-state .icon { inline-size: 2rem; block-size: 2rem; margin: 0 auto 1rem; color: var(--accent); }
+        .empty-state strong { display: block; font-size: .9375rem; font-weight: 550; }
+        .empty-state p { max-inline-size: 48ch; margin: .6rem auto 0; }
+        .box { padding: 1.25rem; margin-block-start: 1rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--raised); }
+        .box > .row { margin-block-end: 1.25rem; }
+        .box > button { margin: .3rem .4rem .3rem 0; }
+        .result { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; padding: 1rem; border: 1px solid var(--border); background: var(--raised); border-radius: .5rem; margin-block-start: 1rem; }
+        .preview { display: block; max-inline-size: 100%; max-block-size: 31.25rem; border-radius: .5rem; margin-block-start: 1rem; }
+        .hint { font-size: .75rem; }
+        .wide { grid-column: 1 / -1; }
+        @media (max-width: 50rem) { .login-intro .radar { display: none; } }
+        #save-bar { position: sticky; inset-block-end: 1rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--input-border); border-radius: .7rem; box-shadow: 0 .5rem 2rem #0002; z-index: 2; }
+        #save-bar small { color: var(--muted); }
+        .notice { position: fixed; inset-block-start: 1rem; inset-inline-end: 1rem; inline-size: min(30rem, calc(100% - 2rem)); padding: 1rem 1.25rem; background: var(--accent-soft); color: var(--text); border: 1px solid var(--accent); border-radius: .6rem; z-index: 20; white-space: pre-wrap; box-shadow: 0 .5rem 2rem #0002; }
+        .error { background: var(--danger-soft); border-color: var(--danger); color: var(--text); }
+        @media (max-width: 65rem) { #metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 35rem) {
+          input, select, textarea { font-size: 1rem; }
+          .briefing { grid-template-columns: minmax(0, 1fr) 4rem; gap: .75rem; }
+          .card { padding: 1.15rem; }
+          .activity-card, .setup-guide { padding: 0; }
+          .topbar > .eyebrow { font-size: .5625rem; }
+          #last-sync { display: none; }
+          .box { padding: 1rem; }
+          .row { align-items: start; }
+          .metric { padding: 1rem; }
+          #save-bar { inset-block-end: .5rem; }
+        }
+      }
+      @layer utilities {
+        .hidden { display: none !important; }
+        .sr-only { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: clip; clip-path: inset(50%); white-space: nowrap; border: 0; }
+        .skip-link { position: fixed; inset-block-start: .5rem; inset-inline-start: .5rem; transform: translateY(-200%); padding: .75rem 1rem; background: var(--accent); color: var(--on-accent); border-radius: .4rem; z-index: 30; }
+        .skip-link:focus { transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+        @media (forced-colors: active) { nav button.active { outline: 2px solid Highlight; } .brand-mark, .badge { border-color: CanvasText; } }
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="sr-only" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><symbol id="icon-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12 18 6M12 3v2M3 12h2M12 19v2M19 12h2"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="icon-activity" viewBox="0 0 24 24"><path d="M3 13h4l3-8 4 14 3-6h4"/></symbol><symbol id="icon-camera" viewBox="0 0 24 24"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3z"/></symbol><symbol id="icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></symbol><symbol id="icon-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="8" cy="7" r="3"/><circle cx="16" cy="17" r="3"/></symbol><symbol id="icon-test" viewBox="0 0 24 24"><path d="M9 3h6M10 3v7l-6 9a1 1 0 0 0 1 2h14a1 1 0 0 0 1-2l-6-9V3M8 15h8"/></symbol><symbol id="icon-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M16 6.5h2M16 17.5h2"/></symbol><symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol><symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="icon-sent" viewBox="0 0 24 24"><path d="m3 11 18-8-8 18-2-8-8-2ZM11 13 21 3"/></symbol><symbol id="icon-filter" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v7l-4 2v-9z"/></symbol><symbol id="icon-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3ZM12 9v5M12 17h.01"/></symbol></defs></svg>
+    <a id="skip-link" class="skip-link" href="#login-title"><span data-i18n="Saltar al contenido">Saltar al contenido</span></a>
+    <header id="public-header" class="public-header"><div class="brand"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#icon-radar"/></svg></span><div><div class="brand-name">Pi<span>Vigia</span></div><small class="brand-caption"><span data-i18n="INTELIGENCIA LOCAL">INTELIGENCIA LOCAL</span></small></div></div><label class="theme-control" for="language-login"><span data-i18n="Idioma del panel">Idioma del panel</span><select id="language-login" data-language-picker></select></label><label class="theme-control" for="theme-login"><span data-i18n="Apariencia">Apariencia</span><select id="theme-login" data-theme-picker><option value="system" data-i18n="Sistema">Sistema</option><option value="dark" data-i18n="Oscuro">Oscuro</option><option value="light" data-i18n="Claro">Claro</option></select></label></header>
+    <main id="main-content" tabindex="-1">
+      <div id="notice" class="notice hidden" role="status"></div>
+      <section id="login" class="login-layout" aria-labelledby="login-title">
+        <div class="login-intro"><span class="eyebrow"><span data-i18n="OBSERVA · DETECTA · ACTÚA">OBSERVA · DETECTA · ACTÚA</span></span>
+          <h1><span data-i18n="Tu mirada.">Tu mirada.</span><br><span data-i18n="Siempre alerta.">Siempre alerta.</span></h1>
+          <p><span data-i18n="Detección inteligente en tu equipo. Las imágenes de tus cámaras, convertidas en avisos que importan.">Detección inteligente en tu equipo. Las imágenes de tus cámaras, convertidas en avisos que importan.</span></p>
+          <svg class="radar" viewBox="0 0 160 160" aria-hidden="true">
+  <g class="radar-grid"><circle cx="80" cy="80" r="68"/><circle cx="80" cy="80" r="46"/><circle cx="80" cy="80" r="23"/><path d="M80 3v154M3 80h154M26 26l108 108M26 134 134 26"/></g>
+  <g class="radar-trace"><path d="M80 80 128 32M12 80a68 68 0 0 1 68-68"/><circle cx="80" cy="80" r="4"/></g>
+  <g class="radar-dot"><circle cx="111" cy="49" r="3"/><circle cx="45" cy="99" r="2.5"/><circle cx="98" cy="121" r="2"/></g>
+</svg>
+        </div>
+        <div class="card login-card"><span class="eyebrow"><span data-i18n="ACCESO AL CENTRO DE CONTROL">ACCESO AL CENTRO DE CONTROL</span></span>
+        <h2 id="login-title" tabindex="-1"><span data-i18n="Bienvenido a PiVigia">Bienvenido a PiVigia</span></h2>
+        <p><span data-i18n="Elige cómo entrar. Desde Home Assistant puedes utilizar tu sesión y sus permisos; el acceso directo usa el token si está habilitado.">Elige cómo entrar. Desde Home Assistant puedes utilizar tu sesión y sus permisos; el acceso directo usa el token si está habilitado.</span></p>
+        <label><span data-i18n="Método de acceso">Método de acceso</span><select id="login-method"><option value="token" data-i18n="Token de PiVigia">Token de PiVigia</option></select></label>
+        <div id="homeassistant-login" class="hidden">
+          <p><span data-i18n="Abre">Abre</span> <strong><span data-i18n="Home Assistant → PiVigia">Home Assistant → PiVigia</span></strong> <span data-i18n="en la barra lateral o desde el complemento. Allí se usa tu usuario sin introducir otra contraseña.">en la barra lateral o desde el complemento. Allí se usa tu usuario sin introducir otra contraseña.</span></p>
+          <p class="hint"><span data-i18n="Si estás en la dirección directa de PiVigia, vuelve a Home Assistant para entrar con tu sesión. No escribas aquí tu contraseña de Home Assistant.">Si estás en la dirección directa de PiVigia, vuelve a Home Assistant para entrar con tu sesión. No escribas aquí tu contraseña de Home Assistant.</span></p>
+          <button id="ha-login-button" type="button"><span data-i18n="Entrar con mi sesión de Home Assistant">Entrar con mi sesión de Home Assistant</span></button>
+        </div>
+        <p id="login-help" class="hint"><span data-i18n="El token se configura en las opciones del complemento; en instalación directa está en data/admin-token.">El token se configura en las opciones del complemento; en instalación directa está en data/admin-token.</span></p>
+        <form id="login-form">
+          <label
+            ><span data-i18n="Token de administración">Token de administración</span><input
+              id="token"
+              type="password"
+              required
+              autocomplete="current-password" /></label
+          ><button class="primary"><span data-i18n="Entrar">Entrar</span></button>
+        </form>
+        </div>
+      </section>
+      <div id="app" class="hidden">
+        <aside id="sidebar" class="sidebar" aria-label="Navegación y preferencias" data-i18n-aria-label="Navegación y preferencias">
+          <div class="sidebar-brand"><div class="brand"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#icon-radar"/></svg></span><div><div class="brand-name">Pi<span>Vigia</span></div><small class="brand-caption"><span data-i18n="INTELIGENCIA LOCAL">INTELIGENCIA LOCAL</span></small></div></div><button id="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-body"><svg class="icon" aria-hidden="true"><use href="#icon-menu"/></svg><span><span data-i18n="Menú">Menú</span></span></button></div>
+          <div id="sidebar-body" class="sidebar-body">
+            <nav aria-label="Secciones" data-i18n-aria-label="Secciones"><p class="nav-group"><span data-i18n="MONITORIZACIÓN">MONITORIZACIÓN</span></p><button type="button" data-tab="overview" aria-controls="overview"><svg class="icon" aria-hidden="true"><use href="#icon-activity"/></svg><span><span data-i18n="Actividad">Actividad</span></span></button>
+<button type="button" data-tab="cameras" aria-controls="cameras"><svg class="icon" aria-hidden="true"><use href="#icon-camera"/></svg><span><span data-i18n="Cámaras RTSP">Cámaras RTSP</span></span></button>
+<p id="admin-nav-label" class="nav-group admin-group"><span data-i18n="ADMINISTRACIÓN">ADMINISTRACIÓN</span></p><button type="button" data-tab="mailboxes" aria-controls="mailboxes"><svg class="icon" aria-hidden="true"><use href="#icon-mail"/></svg><span><span data-i18n="Buzones y reglas">Buzones y reglas</span></span></button>
+<button type="button" data-tab="settings" aria-controls="settings"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg><span><span data-i18n="Configuración">Configuración</span></span></button>
+<button type="button" data-tab="tests" aria-controls="tests"><svg class="icon" aria-hidden="true"><use href="#icon-test"/></svg><span><span data-i18n="Pruebas y modelos">Pruebas y modelos</span></span></button>
+<button type="button" data-tab="server" aria-controls="server"><svg class="icon" aria-hidden="true"><use href="#icon-server"/></svg><span><span data-i18n="Servidor y puertos">Servidor y puertos</span></span></button>
+</nav>
+            <div class="sidebar-bottom">
+              <label class="theme-control" for="language-panel"><span data-i18n="Idioma del panel">Idioma del panel</span><select id="language-panel" data-language-picker></select></label><label class="theme-control" for="theme-panel"><span data-i18n="Apariencia">Apariencia</span><select id="theme-panel" data-theme-picker><option value="system" data-i18n="Sistema">Sistema</option><option value="dark" data-i18n="Oscuro">Oscuro</option><option value="light" data-i18n="Claro">Claro</option></select></label>
+              <div class="account"><span id="account-avatar" class="account-avatar" aria-hidden="true">PV</span><p id="access-state"></p></div>
+              <button id="logout" type="button"><span data-i18n="Cerrar sesión">Cerrar sesión</span></button>
+            </div>
+          </div>
+        </aside>
+        <div class="workspace">
+          <header class="topbar"><span class="eyebrow"><span data-i18n="CENTRO DE CONTROL">CENTRO DE CONTROL</span> <span aria-hidden="true">/</span> PIVIGIA</span>
+            <div class="topbar-meta"><span id="last-sync"><span data-i18n="Sincronizando…">Sincronizando…</span></span><span id="system-health" class="badge"><span data-i18n="Consultando estado">Consultando estado</span></span></div>
+          </header>
+          <div class="page-heading"><span id="page-code" class="eyebrow"><span data-i18n="01 / MONITORIZACIÓN">01 / MONITORIZACIÓN</span></span><h1 id="page-title" tabindex="-1"><span data-i18n="Actividad">Actividad</span></h1><p id="page-description"><span data-i18n="Recepción, análisis y avisos, en un solo lugar.">Recepción, análisis y avisos, en un solo lugar.</span></p></div>
+        <section id="overview">
+          <div class="card briefing"><div><span class="eyebrow"><span data-i18n="ANÁLISIS EN TU EQUIPO">ANÁLISIS EN TU EQUIPO</span></span><h2><span data-i18n="Una mirada a tu sistema.">Una mirada a tu sistema.</span></h2><p id="model-state"><span data-i18n="Consultando el detector y el procesamiento…">Consultando el detector y el procesamiento…</span></p></div><svg class="radar" viewBox="0 0 160 160" aria-hidden="true">
+  <g class="radar-grid"><circle cx="80" cy="80" r="68"/><circle cx="80" cy="80" r="46"/><circle cx="80" cy="80" r="23"/><path d="M80 3v154M3 80h154M26 26l108 108M26 134 134 26"/></g>
+  <g class="radar-trace"><path d="M80 80 128 32M12 80a68 68 0 0 1 68-68"/><circle cx="80" cy="80" r="4"/></g>
+  <g class="radar-dot"><circle cx="111" cy="49" r="3"/><circle cx="45" cy="99" r="2.5"/><circle cx="98" cy="121" r="2"/></g>
+</svg></div>
+          <div class="grid" id="metrics" aria-label="Resumen de correos" data-i18n-aria-label="Resumen de correos"></div>
+          <details class="card setup-guide" id="setup-guide">
+            <summary><span data-i18n="Guía de puesta en marcha">Guía de puesta en marcha</span></summary><div class="guide-body">
+            <ol>
+              <li><strong><span data-i18n="Configura la salida:">Configura la salida:</span></strong> <span data-i18n="en Configuración, indica el servidor que enviará tus avisos por correo, o activa Telegram.">en Configuración, indica el servidor que enviará tus avisos por correo, o activa Telegram.</span></li>
+              <li><strong><span data-i18n="Crea un buzón:">Crea un buzón:</span></strong> <span data-i18n="en Buzones y reglas, define dónde recibe PiVigia las fotos y quién recibirá las alertas.">en Buzones y reglas, define dónde recibe PiVigia las fotos y quién recibirá las alertas.</span></li>
+              <li><strong><span data-i18n="Comprueba los ajustes:">Comprueba los ajustes:</span></strong> <span data-i18n="en Pruebas, envía un correo de prueba o analiza una imagen sin enviar avisos.">en Pruebas, envía un correo de prueba o analiza una imagen sin enviar avisos.</span></li>
+              <li><strong><span data-i18n="Conecta tu cámara:">Conecta tu cámara:</span></strong> <span data-i18n="usa la IP de PiVigia y el puerto SMTP de entrada. Puedes consultar los puertos en Servidor y puertos.">usa la IP de PiVigia y el puerto SMTP de entrada. Puedes consultar los puertos en Servidor y puertos.</span></li>
+            </ol>
+            <p id="setup-summary" class="hint"></p>
+            <p class="hint"><span data-i18n="El correo es el modo principal. Las cámaras RTSP son opcionales y pueden permanecer desactivadas.">El correo es el modo principal. Las cámaras RTSP son opcionales y pueden permanecer desactivadas.</span></p>
+          </div></details>
+          <div class="card activity-card">
+            <div class="row">
+              <h2><span data-i18n="Registro de actividad">Registro de actividad</span></h2>
+              <button id="refresh"><span data-i18n="Actualizar">Actualizar</span></button>
+            </div>
+            <p class="hint">
+              <span data-i18n="Las fotos se analizan localmente. Aquí aparecen las detecciones, los descartes y los errores de entrega.">Las fotos se analizan localmente. Aquí aparecen las detecciones, los descartes y los errores de entrega.</span>
+            </p>
+            <div class="scroll" tabindex="0" role="region" aria-label="Historial de correos, desplazable horizontalmente" data-i18n-aria-label="Historial de correos, desplazable horizontalmente">
+              <table>
+                <caption class="sr-only"><span data-i18n="Últimos correos recibidos y resultados de análisis y entrega">Últimos correos recibidos y resultados de análisis y entrega</span></caption>
+                <thead>
+                  <tr>
+                    <th scope="col"><span data-i18n="Fecha">Fecha</span></th>
+                    <th scope="col"><span data-i18n="Buzón">Buzón</span></th>
+                    <th scope="col"><span data-i18n="Estado">Estado</span></th>
+                    <th scope="col"><span data-i18n="Resultado">Resultado</span></th>
+                    <th scope="col"><span class="sr-only"><span data-i18n="Acciones">Acciones</span></span></th>
+                  </tr>
+                </thead>
+                <tbody id="events"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        <section id="tests" class="hidden">
+          <div class="card">
+            <h2><span data-i18n="Modelos de detección">Modelos de detección</span></h2>
+            <p><span data-i18n="Descarga los modelos que quieras comparar.">Descarga los modelos que quieras comparar.</span> <strong><span data-i18n="Descargar no activa el modelo.">Descargar no activa el modelo.</span></strong>
+              <span data-i18n="«Usar para correo y cámaras» cambia el detector habitual; la prueba de imagen permite elegir otro sin cambiarlo.">«Usar para correo y cámaras» cambia el detector habitual; la prueba de imagen permite elegir otro sin cambiarlo.</span></p>
+            <p class="hint"><span data-i18n="En una Raspberry Pi 4, empieza probando una foto. Los modelos grandes consumen más memoria y tardan más; varias cámaras comparten el detector y pueden esperar. Más tamaño no garantiza detectar una escena difícil. Solo se descarga el modelo: tus fotos se analizan localmente.">En una Raspberry Pi 4, empieza probando una foto. Los modelos grandes consumen más memoria y tardan más; varias cámaras comparten el detector y pueden esperar. Más tamaño no garantiza detectar una escena difícil. Solo se descarga el modelo: tus fotos se analizan localmente.</span></p>
+            <p id="model-download-state" role="status" aria-live="polite"></p>
+            <button type="button" id="model-download-cancel" class="hidden"><span data-i18n="Cancelar descarga">Cancelar descarga</span></button>
+            <div id="model-catalog" class="grid"></div>
+            <p class="hint"><span data-i18n="Los modelos descargados se conservan al actualizar. Puedes eliminarlos y volver a descargarlos. Para borrar el modelo activo, activa primero otro. MobileNet está incluido en la aplicación y se conserva como alternativa.">Los modelos descargados se conservan al actualizar. Puedes eliminarlos y volver a descargarlos. Para borrar el modelo activo, activa primero otro. MobileNet está incluido en la aplicación y se conserva como alternativa.</span></p>
+          </div>
+          <div class="card">
+            <h2><span data-i18n="Prueba 1 · Enviar un correo">Prueba 1 · Enviar un correo</span></h2>
+            <p><span data-i18n="Comprueba el correo">Comprueba el correo</span> <strong><span data-i18n="de salida">de salida</span></strong> <span data-i18n="usando la configuración que ya has guardado. Se enviará un correo real únicamente al destinatario que escribas aquí. No necesitas una cámara ni una detección.">usando la configuración que ya has guardado. Se enviará un correo real únicamente al destinatario que escribas aquí. No necesitas una cámara ni una detección.</span></p>
+            <form id="email-test-form">
+              <div class="grid">
+                <label><span data-i18n="Enviar la prueba a">Enviar la prueba a</span><input id="test-destination" type="email" required autocomplete="email" placeholder="tu-correo@ejemplo.es"  data-i18n-placeholder="tu-correo@ejemplo.es"/></label>
+                <label><span data-i18n="Asunto">Asunto</span><input id="test-subject" maxlength="160" required value="Prueba de PiVigia"  data-i18n-value="Prueba de PiVigia"/></label>
+              </div>
+              <label><span data-i18n="Mensaje">Mensaje</span><textarea id="test-text" rows="3" maxlength="5000" required data-i18n="Este es un correo de prueba enviado desde el panel de PiVigia.">Este es un correo de prueba enviado desde el panel de PiVigia.</textarea></label>
+              <p class="hint"><span data-i18n="Guarda primero los ajustes de correo en Configuración. La aceptación por el servidor SMTP no garantiza que el correo llegue a la bandeja de entrada; revisa también spam. Esta prueba no comprueba la recepción SMTP desde la cámara.">Guarda primero los ajustes de correo en Configuración. La aceptación por el servidor SMTP no garantiza que el correo llegue a la bandeja de entrada; revisa también spam. Esta prueba no comprueba la recepción SMTP desde la cámara.</span></p>
+              <button class="primary" id="test-send-email"><span data-i18n="Enviar correo de prueba">Enviar correo de prueba</span></button>
+              <div id="email-test-result" class="result hidden" role="status" aria-live="polite"></div>
+            </form>
+          </div>
+          <div class="card">
+            <h2><span data-i18n="Prueba 2 · Analizar una imagen">Prueba 2 · Analizar una imagen</span></h2>
+            <p><span data-i18n="Elige una foto de tu equipo para ver qué detecta PiVigia. Se procesa localmente: esta prueba no envía correos ni Telegram y no guarda la imagen.">Elige una foto de tu equipo para ver qué detecta PiVigia. Se procesa localmente: esta prueba no envía correos ni Telegram y no guarda la imagen.</span></p>
+            <form id="image-test-form">
+              <div class="grid">
+                <label><span data-i18n="Imagen de prueba">Imagen de prueba</span><input id="test-image" type="file" accept="image/*" required /></label>
+                <label><span data-i18n="Reglas que quieres comprobar">Reglas que quieres comprobar</span><select id="test-mailbox"></select></label>
+                <label><span data-i18n="Modelo para esta prueba">Modelo para esta prueba</span><select id="test-model"><option value="" data-i18n="Modelo activo">Modelo activo</option></select></label>
+              </div>
+              <p id="image-test-help" class="hint"></p>
+              <button class="primary" id="test-analyze-image"><span data-i18n="Analizar imagen sin enviar avisos">Analizar imagen sin enviar avisos</span></button>
+              <div id="image-test-result" class="result hidden" role="status" aria-live="polite"></div>
+              <img id="image-test-preview" class="preview hidden" alt="Imagen de prueba con las detecciones seleccionadas"  data-i18n-alt="Imagen de prueba con las detecciones seleccionadas"/>
+            </form>
+          </div>
+        </section>
+        <section id="server" class="hidden">
+          <div class="card">
+            <h2><span data-i18n="Servidor y puertos · entrada de cámaras y acceso al panel">Servidor y puertos · entrada de cámaras y acceso al panel</span></h2>
+            <p><span data-i18n="PiVigia recibe las fotos en su servidor SMTP de entrada. Después utiliza otro servidor SMTP, el de salida que configuras en Configuración, para enviar los avisos.">PiVigia recibe las fotos en su servidor SMTP de entrada. Después utiliza otro servidor SMTP, el de salida que configuras en Configuración, para enviar los avisos.</span></p>
+            <p id="server-access"></p>
+            <div id="server-info" class="result" role="status"></div>
+            <div id="server-managed" class="hidden"></div>
+            <form id="server-form" class="hidden">
+              <h3><span data-i18n="Ajustes de la instalación directa">Ajustes de la instalación directa</span></h3>
+              <p><span data-i18n="Guarda los cambios y reinicia el servicio PiVigia para aplicarlos. El panel seguirá funcionando en la dirección actual hasta el reinicio.">Guarda los cambios y reinicia el servicio PiVigia para aplicarlos. El panel seguirá funcionando en la dirección actual hasta el reinicio.</span></p>
+              <div id="server-fields" class="grid"></div>
+              <label><input type="checkbox" id="server-plain-auth" /> <span data-i18n="Permitir usuario y contraseña SMTP sin cifrado (solo red local de confianza)">Permitir usuario y contraseña SMTP sin cifrado (solo red local de confianza)</span></label>
+              <p class="hint"><span data-i18n="Conserva las direcciones de escucha 0.0.0.0 para aceptar conexiones desde tu red. 127.0.0.1 acepta solo conexiones del propio equipo. El token sigue siendo obligatorio para administrar PiVigia. Los campos fijados por variables de entorno aparecen bloqueados.">Conserva las direcciones de escucha 0.0.0.0 para aceptar conexiones desde tu red. 127.0.0.1 acepta solo conexiones del propio equipo. El token sigue siendo obligatorio para administrar PiVigia. Los campos fijados por variables de entorno aparecen bloqueados.</span></p>
+              <button class="primary" id="save-server"><span data-i18n="Guardar servidor para el próximo reinicio">Guardar servidor para el próximo reinicio</span></button>
+            </form>
+            <div id="server-result" class="result hidden" role="status" aria-live="polite"></div>
+          </div>
+          <div class="card">
+            <h2><span data-i18n="¿Qué debo poner en mi cámara?">¿Qué debo poner en mi cámara?</span></h2>
+            <ol>
+              <li><span data-i18n="Servidor SMTP: la IP del equipo que ejecuta PiVigia, por ejemplo la IP de tu Raspberry Pi. No escribas http:// ni el puerto en este campo.">Servidor SMTP: la IP del equipo que ejecuta PiVigia, por ejemplo la IP de tu Raspberry Pi. No escribas http:// ni el puerto en este campo.</span></li>
+              <li><span data-i18n="Puerto: el puerto de entrada publicado para SMTP; inicialmente es 2525. No es el puerto del panel ni el puerto de tu proveedor de correo.">Puerto: el puerto de entrada publicado para SMTP; inicialmente es 2525. No es el puerto del panel ni el puerto de tu proveedor de correo.</span></li>
+              <li><span data-i18n="Usuario y destinatario: la dirección completa del buzón que has creado en PiVigia. Contraseña: la de ese buzón.">Usuario y destinatario: la dirección completa del buzón que has creado en PiVigia. Contraseña: la de ese buzón.</span></li>
+              <li><span data-i18n="Si la cámara no admite STARTTLS, permite su IP exacta sin autenticación o habilita explícitamente autenticación sin cifrado en una red de confianza.">Si la cámara no admite STARTTLS, permite su IP exacta sin autenticación o habilita explícitamente autenticación sin cifrado en una red de confianza.</span></li>
+            </ol>
+            <p class="hint"><span data-i18n="Los nombres como pivigia.local solo funcionan en dispositivos que puedan resolverlos. La IP local es la opción más directa para una cámara.">Los nombres como pivigia.local solo funcionan en dispositivos que puedan resolverlos. La IP local es la opción más directa para una cámara.</span></p>
+          </div>
+        </section>
+        <form id="configuration" novalidate>
+          <section id="mailboxes" class="hidden">
+            <div class="card">
+              <div class="row">
+                <h2><span data-i18n="Buzones de entrada">Buzones de entrada</span></h2>
+                <button type="button" id="add-box"><span data-i18n="+ Añadir buzón">+ Añadir buzón</span></button>
+              </div>
+              <p class="hint">
+                <span data-i18n="Cada buzón es una dirección de entrada dentro de PiVigia, por ejemplo patio@pivigia.local; no necesitas comprar un dominio. La cámara enviará a la IP de PiVigia y al puerto SMTP de entrada (2525 inicialmente). Usa la dirección del buzón como usuario y destinatario. Los destinatarios de las alertas se indican en «Reenviar a».">Cada buzón es una dirección de entrada dentro de PiVigia, por ejemplo patio@pivigia.local; no necesitas comprar un dominio. La cámara enviará a la IP de PiVigia y al puerto SMTP de entrada (2525 inicialmente). Usa la dirección del buzón como usuario y destinatario. Los destinatarios de las alertas se indican en «Reenviar a».</span>
+              </p>
+              <div id="boxes"></div>
+            </div>
+          </section>
+          <section id="cameras" class="hidden">
+            <div class="card" id="camera-configuration-card">
+              <h2><span data-i18n="Cámaras en vivo · opción secundaria">Cámaras en vivo · opción secundaria</span></h2>
+              <p class="hint"><span data-i18n="El correo sigue siendo la función principal. Activa RTSP solo si necesitas analizar flujos. Vista por imágenes actualizadas, sin audio ni grabación de vídeo. Se detectan movimiento y personas.">El correo sigue siendo la función principal. Activa RTSP solo si necesitas analizar flujos. Vista por imágenes actualizadas, sin audio ni grabación de vídeo. Se detectan movimiento y personas.</span></p>
+              <label><input type="checkbox" id="rtsp-enabled" /> <span data-i18n="Activar recepción y análisis RTSP">Activar recepción y análisis RTSP</span></label>
+              <p class="hint"><span data-i18n="Hasta 8 cámaras configurables. Empieza con una cámara y su flujo secundario de baja resolución. Los correos tienen prioridad sobre el análisis en vivo. Guarda para aplicar los cambios.">Hasta 8 cámaras configurables. Empieza con una cámara y su flujo secundario de baja resolución. Los correos tienen prioridad sobre el análisis en vivo. Guarda para aplicar los cambios.</span></p>
+              <button type="button" id="add-camera"><span data-i18n="+ Añadir cámara">+ Añadir cámara</span></button>
+              <div id="camera-config"></div>
+            </div>
+            <div class="card">
+              <h2><span data-i18n="Vista y detecciones">Vista y detecciones</span></h2>
+              <p id="camera-summary" class="hint"></p>
+              <div class="grid" id="camera-live"></div>
+            </div>
+            <div class="card">
+              <h2><span data-i18n="Últimos eventos de cámaras">Últimos eventos de cámaras</span></h2>
+              <p class="hint"><span data-i18n="Se conservan metadatos según la retención del historial. Las imágenes de la vista solo están en memoria.">Se conservan metadatos según la retención del historial. Las imágenes de la vista solo están en memoria.</span></p>
+              <div id="camera-events"></div>
+            </div>
+          </section>
+          <section id="settings" class="hidden">
+            <div class="card">
+              <h2><span data-i18n="Idioma">Idioma</span></h2>
+              <label for="service-language"><span data-i18n="Idioma del servicio">Idioma del servicio</span></label>
+              <select id="service-language" aria-describedby="service-language-help"></select>
+              <p id="service-language-help" class="hint"><span data-i18n="Los registros, correos, Telegram e imágenes anotadas usarán este idioma. Guarda para aplicarlo.">Los registros, correos, Telegram e imágenes anotadas usarán este idioma. Guarda para aplicarlo.</span></p>
+              <p id="language-locked" class="hint hidden"><span data-i18n="Fijado por PIVIGIA_LANGUAGE">Fijado por PIVIGIA_LANGUAGE</span></p>
+            </div>
+            <div class="card">
+              <h2><span data-i18n="Acceso y permisos">Acceso y permisos</span></h2>
+              <p id="access-settings"></p>
+              <p class="hint"><span data-i18n="En Home Assistant elige el método de acceso en Configuración del complemento y reinícialo: both permite sesión de Home Assistant y token; homeassistant permite solo la sesión en el panel; token exige el token. En modo homeassistant el token conserva únicamente la consulta de estado para los sensores.">En Home Assistant elige el método de acceso en Configuración del complemento y reinícialo: both permite sesión de Home Assistant y token; homeassistant permite solo la sesión en el panel; token exige el token. En modo homeassistant el token conserva únicamente la consulta de estado para los sensores.</span></p>
+              <p class="hint"><span data-i18n="Los administradores de Home Assistant pueden configurar y hacer pruebas. Los usuarios normales y de solo lectura consultan actividad y cámaras. Los permisos se aplican también en el servidor. La identidad debe llegar por Ingress desde el Supervisor.">Los administradores de Home Assistant pueden configurar y hacer pruebas. Los usuarios normales y de solo lectura consultan actividad y cámaras. Los permisos se aplican también en el servidor. La identidad debe llegar por Ingress desde el Supervisor.</span></p>
+            </div>
+            <div class="card">
+              <h2><span data-i18n="Análisis de imágenes">Análisis de imágenes</span></h2>
+              <div class="grid" id="analysis-fields"></div>
+              <p class="hint">
+                <span data-i18n="Los límites se aplican antes de analizar. Valores iniciales compatibles con imágenes de 352 × 240. El modelo reconoce personas, coches y seis tipos de animales: aves, gatos, perros, vacas, caballos y ovejas.">Los límites se aplican antes de analizar. Valores iniciales compatibles con imágenes de 352 × 240. El modelo reconoce personas, coches y seis tipos de animales: aves, gatos, perros, vacas, caballos y ovejas.</span>
+              </p>
+            </div>
+            <div class="card">
+              <h2><span data-i18n="Correo de salida · quién enviará las alertas">Correo de salida · quién enviará las alertas</span></h2>
+              <p><span data-i18n="Estos son los datos de tu proveedor de correo o relé SMTP. No pongas aquí la IP de PiVigia salvo que tengas un relé de salida en ese equipo.">Estos son los datos de tu proveedor de correo o relé SMTP. No pongas aquí la IP de PiVigia salvo que tengas un relé de salida en ese equipo.</span></p>
+              <div class="grid" id="smtp-fields"></div>
+              <p class="hint"><span data-i18n="Después de guardar, abre Pruebas para enviar un correo al destinatario que elijas.">Después de guardar, abre Pruebas para enviar un correo al destinatario que elijas.</span></p>
+              <p class="hint">
+                <span data-i18n="Para Gmail utiliza el servidor y las credenciales permitidas por tu cuenta (por ejemplo, una contraseña de aplicación). El remitente debe estar autorizado en ese servidor. El aviso muestra las imágenes marcadas y los porcentajes; el correo original se adjunta completo.">Para Gmail utiliza el servidor y las credenciales permitidas por tu cuenta (por ejemplo, una contraseña de aplicación). El remitente debe estar autorizado en ese servidor. El aviso muestra las imágenes marcadas y los porcentajes; el correo original se adjunta completo.</span>
+              </p>
+            </div>
+            <div class="card">
+              <h2>Telegram</h2>
+              <label
+                ><input type="checkbox" id="telegram-enabled" /> <span data-i18n="Activar avisos por Telegram">Activar avisos por Telegram</span></label
+              >
+              <label
+                ><span data-i18n="Token del bot">Token del bot</span><input
+                  type="password"
+                  id="telegram-token"
+                  autocomplete="off"
+              /></label>
+              <p class="hint">
+                <span data-i18n="Crea un bot con @BotFather, guarda su token y envíale /start desde Telegram. Después pulsa «Buscar chats recientes» y copia el ID en los buzones que quieras avisar. Para un grupo, añade el bot y envía /start en ese grupo. Para un canal, permite al bot publicar.">Crea un bot con @BotFather, guarda su token y envíale /start desde Telegram. Después pulsa «Buscar chats recientes» y copia el ID en los buzones que quieras avisar. Para un grupo, añade el bot y envía /start en ese grupo. Para un canal, permite al bot publicar.</span>
+              </p>
+              <button type="button" id="telegram-chats">
+                <span data-i18n="Buscar chats recientes (token guardado)">Buscar chats recientes (token guardado)</span>
+              </button>
+              <div id="telegram-chat-list" aria-live="polite"></div>
+              <p class="hint">
+                <span data-i18n="Solo se envían imágenes a Telegram si lo activas y configuras un chat en el buzón. Puedes usar correo, Telegram o ambos. Cada foto lleva sus detecciones y porcentajes.">Solo se envían imágenes a Telegram si lo activas y configuras un chat en el buzón. Puedes usar correo, Telegram o ambos. Cada foto lleva sus detecciones y porcentajes.</span>
+              </p>
+            </div>
+            <div class="card">
+              <h2><span data-i18n="Conexión de las cámaras">Conexión de las cámaras</span></h2>
+              <p class="hint">
+                <span data-i18n="En Servidor y puertos puedes consultar cómo recibir las fotos y dónde cambiar los puertos, STARTTLS y las IP permitidas. En Home Assistant, esos ajustes se cambian en Configuración y Red del complemento; después hay que reiniciarlo.">En Servidor y puertos puedes consultar cómo recibir las fotos y dónde cambiar los puertos, STARTTLS y las IP permitidas. En Home Assistant, esos ajustes se cambian en Configuración y Red del complemento; después hay que reiniciarlo.</span>
+              </p>
+            </div>
+          </section>
+          <div class="actions hidden" id="save-bar">
+            <button class="primary" id="save"><span data-i18n="Guardar cambios">Guardar cambios</span></button
+            ><small><span data-i18n="Guarda buzones, reglas y notificaciones antes de hacer una prueba.">Guarda buzones, reglas y notificaciones antes de hacer una prueba.</span></small>
+          </div>
+        </form>
+        <footer><span>PiVigia <span id="service-version">__PIVIGIA_VERSION__</span></span><span><span data-i18n="DETECCIÓN LOCAL · UN ANÁLISIS A LA VEZ">DETECCIÓN LOCAL · UN ANÁLISIS A LA VEZ</span></span></footer>
+        </div>
+      </div>
+    </main>
+    <script id="i18n-data" type="application/json">__PIVIGIA_I18N__</script>
+    <script>
+      // Catálogos incrustados por el servidor; elegir idioma sin traducir datos del usuario.
+      const i18nData = JSON.parse(document.getElementById("i18n-data").textContent);
+      const catalogs = i18nData.catalogs;
+      const matchLanguage = value => {
+        const code = String(value || "").toLowerCase().replaceAll("_", "-");
+        return [code, code.split("-")[0]].find(key => Object.hasOwn(catalogs, key));
+      };
+      let savedLanguage;
+      try { savedLanguage = localStorage.getItem("pivigia-language"); } catch { /* El almacenamiento es opcional. */ }
+      const language = matchLanguage(new URL(location.href).searchParams.get("lang")) || matchLanguage(savedLanguage) ||
+        (navigator.languages || [navigator.language]).map(matchLanguage).find(Boolean) || i18nData.default_language;
+      const uiLocale = catalogs[language].meta.locale;
+      document.documentElement.lang = language;
+      document.documentElement.dir = catalogs[language].meta.direction || "ltr";
+      function t(message, values = {}) {
+        const translated = catalogs[language].messages[message] || catalogs.es.messages[message] || message;
+        return translated.replace(/\{(\w+)\}/g, (placeholder, key) => Object.hasOwn(values, key) ? String(values[key]) : placeholder);
+      }
+      for (const element of document.querySelectorAll("[data-i18n]")) element.textContent = t(element.dataset.i18n);
+      for (const attribute of ["alt", "title", "aria-label", "placeholder", "value"]) {
+        for (const element of document.querySelectorAll("[data-i18n-" + attribute + "]")) {
+          element.setAttribute(attribute, t(element.getAttribute("data-i18n-" + attribute)));
+        }
+      }
+      let configurationDirty = false;
+      document.querySelectorAll("#configuration, #server-form, #email-test-form").forEach(form => form.addEventListener("input", () => { configurationDirty = true; }));
+      document.querySelectorAll("#add-box, #add-camera").forEach(button => button.addEventListener("click", () => { configurationDirty = true; }));
+      document.getElementById("language-locked").classList.toggle("hidden", !i18nData.language_locked);
+      for (const picker of document.querySelectorAll("[data-language-picker], #service-language")) {
+        for (const [code, catalog] of Object.entries(catalogs)) {
+          const option = new Option(catalog.meta.name, code);
+          option.lang = code;
+          picker.add(option);
+        }
+        if (!picker.hasAttribute("data-language-picker")) continue;
+        picker.value = language;
+        picker.addEventListener("change", () => {
+          const chosen = picker.value;
+          if (configurationDirty && !confirm(t("Cambiar el idioma recarga el panel. Hay cambios sin guardar. ¿Descartarlos?"))) {
+            picker.value = language; return;
+          }
+          try { localStorage.setItem("pivigia-language", chosen); } catch { /* La URL conserva la selección sin almacenamiento. */ }
+          const url = new URL(location.href); url.searchParams.set("lang", chosen);
+          location.replace(url.href);
+        });
+      }
+    </script>
+    <script>
+      // Separar sesiones por ruta permite varias instancias Ingress en el mismo navegador.
+      const tokenStorageKey = "pivigia-token:" + location.pathname;
+      const signoutStorageKey = "pivigia-signed-out:" + location.pathname;
+      let token = sessionStorage.getItem(tokenStorageKey) || "", config = null, identity = null;
+      let loginOptions = {token_login: true, homeassistant_login: false, mode: "token"};
+      const $ = (id) => document.getElementById(id);
+      // Preferencia de apariencia independiente del idioma y sincronizada entre pestañas.
+      const themeMedia = matchMedia("(prefers-color-scheme: dark)");
+      const themePickers = [...document.querySelectorAll("[data-theme-picker]")];
+      function applyTheme(value, persist = false) {
+        const theme = ["light", "dark"].includes(value) ? value : "system";
+        if (theme === "system") delete document.documentElement.dataset.theme;
+        else document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="color-scheme"]').content = theme === "system" ? "light dark" : theme;
+        for (const picker of themePickers) {
+          picker.value = theme;
+          picker.querySelector('[value="system"]').textContent = t("Sistema · ") + (themeMedia.matches ? t("oscuro") : t("claro"));
+        }
+        if (persist) {
+          try {
+            if (theme === "system") localStorage.removeItem("pivigia-theme");
+            else localStorage.setItem("pivigia-theme", theme);
+          } catch { /* El tema sigue funcionando aunque no pueda guardarse. */ }
+        }
+      }
+      applyTheme(document.documentElement.dataset.theme);
+      themePickers.forEach(picker => picker.addEventListener("change", () => applyTheme(picker.value, true)));
+      themeMedia.addEventListener("change", () => applyTheme(document.documentElement.dataset.theme));
+      window.addEventListener("storage", event => {
+        if (event.key === "pivigia-theme" || event.key === null) applyTheme(event.newValue);
+      });
+      const mobileNavigation = matchMedia("(max-width: 50rem)");
+      function setMenu(open) {
+        $("sidebar").classList.toggle("menu-open", open);
+        $("menu-toggle").setAttribute("aria-expanded", String(open));
+      }
+      $("menu-toggle").onclick = () => setMenu($("menu-toggle").getAttribute("aria-expanded") !== "true");
+      $("sidebar").addEventListener("keydown", event => {
+        if (event.key === "Escape" && mobileNavigation.matches) {
+          setMenu(false);
+          $("menu-toggle").focus();
+        }
+      });
+      mobileNavigation.addEventListener("change", () => {
+        setMenu(false);
+        if (mobileNavigation.matches && $("sidebar-body").contains(document.activeElement)) $("menu-toggle").focus();
+      });
+      const sections = {
+        overview: [t("01 / MONITORIZACIÓN"), t("Actividad"), t("Recepción, análisis y avisos, en un solo lugar.")],
+        cameras: [t("02 / MONITORIZACIÓN"), t("Cámaras RTSP"), t("Una vista de tus cámaras y sus últimas detecciones.")],
+        mailboxes: [t("03 / ADMINISTRACIÓN"), t("Buzones y reglas"), t("Define qué detectar y quién recibe cada aviso.")],
+        settings: [t("04 / ADMINISTRACIÓN"), t("Configuración"), t("Ajusta el análisis y los canales de notificación.")],
+        tests: [t("05 / ADMINISTRACIÓN"), t("Pruebas y modelos"), t("Comprueba tus imágenes y elige el detector adecuado.")],
+        server: [t("06 / ADMINISTRACIÓN"), t("Servidor y puertos"), t("Consulta las conexiones y los ajustes de tu instalación.")],
+      };
+      function icon(name) {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("class", "icon");
+        svg.setAttribute("aria-hidden", "true");
+        const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        use.setAttribute("href", "#icon-" + name);
+        svg.append(use);
+        return svg;
+      }
+      function node(tag, text, cls) {
+        const n = document.createElement(tag);
+        if (text !== undefined) n.textContent = text;
+        if (cls) n.className = cls;
+        return n;
+      }
+      let noticeTimer;
+      let modelTimer;
+      function notice(message, error = false) {
+        clearTimeout(noticeTimer);
+        $("notice").textContent = message;
+        $("notice").className = "notice" + (error ? " error" : "");
+        noticeTimer = setTimeout(() => $("notice").classList.add("hidden"), 12000);
+      }
+      // Punto único de API: autenticación, idioma y protección de mutaciones Ingress.
+      async function api(path, options = {}) {
+        const {timeoutMs = 15000, headers = {}, ...requestOptions} = options;
+        let r;
+        try {
+          r = await fetch("api/" + path, {
+            ...requestOptions,
+            headers: {
+              ...(token ? {Authorization: "Bearer " + token} : {}),
+              "X-PiVigia-Request": "1",
+              "Accept-Language": language,
+              "Content-Type": "application/json",
+              ...headers,
+            },
+            signal: AbortSignal.timeout(timeoutMs),
+          });
+        } catch {
+          throw Error(
+            t("No se ha recibido respuesta a tiempo. Comprueba la conexión; si era un envío de prueba, revisa tu correo antes de repetirlo."),
+          );
+        }
+        const body = await r.json();
+        if (r.status === 401 && identity) showLogin(t("La sesión ya no es válida. Vuelve a entrar."));
+        if (!r.ok)
+          throw Error(
+            typeof body.detail === "string"
+              ? body.detail
+              : t("No se ha podido completar la operación"),
+          );
+        return body;
+      }
+      const analysis = [
+        ["min_width", t("Ancho mínimo (px)")],
+        ["min_height", t("Alto mínimo (px)")],
+        ["max_width", t("Ancho máximo (px)")],
+        ["max_height", t("Alto máximo (px)")],
+        ["max_image_bytes", t("Máximo por imagen (bytes)")],
+        ["max_images", t("Imágenes por correo")],
+        ["retention_days", t("Conservación del historial (días)")],
+        ["queue_limit", t("Máximo de mensajes conservados")],
+      ];
+      const smtp = [
+        ["smtp_host", t("Servidor SMTP de salida")],
+        ["smtp_port", t("Puerto SMTP de salida"), "number"],
+        ["smtp_security", t("Seguridad"), "select"],
+        ["smtp_username", t("Usuario")],
+        ["smtp_password", t("Contraseña"), "password"],
+        ["smtp_from", t("Remitente"), "email"],
+      ];
+      const help = {
+        min_width: t("Rechaza imágenes más estrechas que este valor; no las amplía para aceptarlas."),
+        min_height: t("Rechaza imágenes más bajas que este valor. Una imagen 352 × 240 cabe con los valores iniciales."),
+        max_width: t("Ancho máximo aceptado. El límite adicional de seguridad es de 16 megapíxeles por imagen."),
+        max_height: t("Alto máximo aceptado. Las imágenes demasiado grandes se omiten antes del análisis."),
+        max_image_bytes: t("Tamaño del archivo de cada imagen: 5 000 000 bytes son aproximadamente 5 MB."),
+        max_images: t("Máximo de imágenes que se analizan por correo; las restantes se omiten."),
+        retention_days: t("Días de historial y eventos. Los trabajos pendientes no se borran; los fallidos sí caducan."),
+        queue_limit: t("Máximo de mensajes pendientes o fallidos con contenido conservado. Una cola llena rechaza nuevos mensajes temporalmente."),
+        smtp_host: t("Nombre del proveedor o relé, sin http://. Ejemplo: smtp.tuproveedor.es."),
+        smtp_port: t("Normalmente 587 con STARTTLS o 465 con TLS directo. Usa el que indique tu proveedor."),
+        smtp_security: t("Debe coincidir con el puerto. Sin cifrado se reserva para un relé local de confianza."),
+        smtp_username: t("Usuario autorizado por tu proveedor; suele ser tu dirección de correo completa."),
+        smtp_password: t("Contraseña del proveedor o contraseña de aplicación. Los asteriscos conservan la guardada."),
+        smtp_from: t("Dirección remitente permitida por ese servidor. No es la dirección virtual del buzón de entrada."),
+        address: t("Ejemplo: patio@pivigia.local. La cámara usa esta dirección como usuario y destinatario."),
+        password: t("Contraseña que pondrás en la cámara. Los asteriscos mantienen la contraseña existente."),
+        destinations: t("Direcciones reales que recibirán alertas; separa varias con comas. Vacío permite usar solo Telegram."),
+        telegram_chat_ids: t("IDs de conversaciones o grupos, separados por comas. Busca los IDs con el botón de Telegram."),
+        confidence: t("Un valor mayor exige más seguridad al detector y puede omitir personas u objetos difíciles de ver."),
+        interval: t("Segundos entre análisis de esta cámara. Aumentarlo reduce el trabajo de inferencia."),
+        motion_percent: t("Porcentaje de imagen que debe cambiar entre muestras. Aumentarlo reduce avisos por cambios pequeños."),
+        cooldown: t("Espera entre eventos del mismo tipo y avisos de personas; evita una alerta en cada fotograma."),
+      };
+      function field(parent, key, title, value, type = "text") {
+        const label = node("label", title);
+        let input = node(type === "select" ? "select" : "input");
+        input.name = key;
+        if (type === "select") {
+          for (const [v, labelText] of [
+            ["starttls", "STARTTLS"],
+            ["ssl", t("TLS directo")],
+            ["plain", t("Sin cifrado (red de confianza)")],
+          ]) {
+            const o = node("option", labelText);
+            o.value = v;
+            input.append(o);
+          }
+        } else {
+          input.type = type;
+          if (type === "number") input.min = "1";
+        }
+        input.value = value ?? "";
+        label.append(input);
+        if (help[key]) label.append(node("small", help[key]));
+        parent.append(label);
+        return input;
+      }
+      // Formularios: conservar claves de modelo y leer los cambios antes de volver a dibujar.
+      function renderBoxes() {
+        const parent = $("boxes");
+        parent.replaceChildren();
+        config.mailboxes.forEach((box, i) => {
+          const card = node("div", undefined, "box");
+          const header = node("div", undefined, "row");
+          header.append(node("h3", t("Buzón {number}", {number: i + 1})));
+          const del = node("button", t("Eliminar"), "danger");
+          del.type = "button";
+          del.onclick = () => { configurationDirty = true;
+            readBoxes();
+            config.mailboxes.splice(i, 1);
+            renderBoxes();
+          };
+          header.append(del);
+          card.append(header);
+          const grid = node("div", undefined, "grid");
+          field(
+            grid,
+            "address",
+            t("Dirección del buzón"),
+            box.address,
+            "email",
+          ).required = true;
+          field(
+            grid,
+            "password",
+            t("Contraseña SMTP (mínimo 8 caracteres)"),
+            box.password,
+            "password",
+          ).required = true;
+          field(
+            grid,
+            "destinations",
+            t("Reenviar a (separados por comas)"),
+            box.destinations.join(", "),
+          );
+          field(
+            grid,
+            "telegram_chat_ids",
+            t("Chats de Telegram (IDs separados por comas)"),
+            (box.telegram_chat_ids || []).join(", "),
+          );
+          const confidence = field(
+            grid,
+            "confidence",
+            t("Confianza mínima (0,1 a 1)"),
+            box.confidence,
+            "number",
+          );
+          confidence.min = ".1";
+          confidence.max = "1";
+          confidence.step = ".05";
+          const ruleLabel = node("label", t("Cuándo avisar"));
+          const rule = node("select");
+          rule.name = "rule";
+          for (const [value, title] of [
+            ["present", t("Si aparece alguna categoría marcada")],
+            ["absent", t("Solo si no aparece ninguna categoría marcada")],
+            ["all", t("Reenviar todos los mensajes")],
+          ]) rule.add(new Option(title, value));
+          rule.value = box.forward_all ? "all" : box.invert_detection ? "absent" : "present";
+          ruleLabel.append(rule);
+          grid.append(ruleLabel);
+          card.append(grid);
+          for (const [key, label] of [
+            ["person", t("Personas")],
+            ["car", t("Coches")],
+            ["animal", t("Animales")],
+            ["enabled", t("Buzón activo")],
+          ]) {
+            const l = node("label");
+            const input = node("input");
+            input.type = "checkbox";
+            input.name = key;
+            input.checked = key === "enabled"
+              ? box[key]
+              : box.categories.includes(key);
+            l.append(input, document.createTextNode(label));
+            card.append(l);
+          }
+          card.append(node("p", t("Para silenciar coches, marca solo Coches y elige «Solo si no aparece ninguna categoría marcada». Un coche en cualquier foto silencia el correo entero. Si se omite alguna foto, no se envía aviso por ausencia."), "hint"));
+          parent.append(card);
+        });
+      }
+      function readBoxes() {
+        config.mailboxes = [...$("boxes").children].map((card) => {
+          const val = (n) => card.querySelector('[name="' + n + '"]').value;
+          const checked = (n) =>
+            card.querySelector('[name="' + n + '"]').checked;
+          return {
+            address: val("address"),
+            password: val("password"),
+            destinations: val("destinations")
+              .split(",")
+              .map((v) => v.trim())
+              .filter(Boolean),
+            telegram_chat_ids: val("telegram_chat_ids")
+              .split(",")
+              .map((v) => v.trim())
+              .filter(Boolean),
+            confidence: Number(val("confidence")),
+            categories: ["person", "car", "animal"].filter(checked),
+            enabled: checked("enabled"),
+            forward_all: val("rule") === "all",
+            invert_detection: val("rule") === "absent",
+          };
+        });
+      }
+      function renderSettings() {
+        $("service-language").value = config.language;
+        $("service-language").disabled = Boolean(i18nData.language_locked);
+        for (const [key, title] of analysis)
+          field($("analysis-fields"), key, title, config[key], "number");
+        for (const [key, title, type] of smtp)
+          field($("smtp-fields"), key, title, config[key], type);
+        $("telegram-enabled").checked = config.telegram_enabled;
+        $("telegram-token").value = config.telegram_bot_token;
+        renderBoxes();
+        $("rtsp-enabled").checked = config.rtsp_enabled;
+        renderCameras();
+      }
+      const states = {
+        queued: t("En cola"),
+        processing: t("Analizando"),
+        sent: t("Enviado"),
+        filtered: t("Filtrado"),
+        failed: t("Fallido"),
+        discarded: t("Descartado"),
+      };
+      const detectionLabels = {person: t("Persona"), car: t("Coche"), animal: t("Animal"), bird: t("Ave"), cat: t("Gato"),
+        cow: t("Vaca"), dog: t("Perro"), horse: t("Caballo"), sheep: t("Oveja"), elephant: t("Elefante"), bear: t("Oso"),
+        zebra: t("Cebra"), giraffe: t("Jirafa")};
+      // Supervisión: actualizar datos sin convertir nombres ni errores externos en HTML.
+      async function refresh() {
+        try {
+          const [status, events, currentSession] = await Promise.all([
+            api("status"), api("events"), api("auth/session"),
+          ]);
+          if (identity && (currentSession.role !== identity.role || currentSession.user_id !== identity.user_id)) {
+            await login(false); return;
+          }
+          $("model-state").textContent =
+            (status.model_ready
+              ? t("Modelo disponible: {model}", {model: status.model || "mobilenet"})
+              : t("Falta descargar el modelo")) +
+            " · " +
+            (status.worker_alive
+              ? t("Procesamiento activo")
+              : t("Procesamiento detenido"));
+          $("service-version").textContent = status.version || t("Versión no informada");
+          const healthy = status.model_ready && status.worker_alive;
+          $("system-health").textContent = healthy ? t("Sistema activo") : t("Revisar sistema");
+          $("system-health").dataset.state = healthy ? "ok" : "warning";
+          $("last-sync").textContent = t("Actualizado {time}", {time: new Date().toLocaleTimeString(uiLocale)});
+          $("metrics").replaceChildren();
+          for (const [key, name, count, description, glyph] of [
+            ["queued", t("En cola"), (status.counts.queued || 0) + (status.counts.processing || 0), t("PENDIENTES DE PROCESAR"), "clock"],
+            ["sent", t("Enviados"), status.counts.sent || 0, t("AVISOS ENTREGADOS"), "sent"],
+            ["filtered", t("Filtrados"), status.counts.filtered || 0, t("SEGÚN TUS REGLAS"), "filter"],
+            ["failed", t("Fallidos"), status.counts.failed || 0, t("REQUIEREN REVISIÓN"), "alert"],
+          ]) {
+            const c = node("div", undefined, "card metric");
+            c.dataset.kind = key;
+            c.dataset.alert = String(count > 0);
+            const heading = node("div", undefined, "metric-head");
+            heading.append(node("small", name), icon(glyph));
+            c.append(heading, node("strong", String(count)), node("span", description, "metric-foot"));
+            $("metrics").append(c);
+          }
+          $("events").replaceChildren();
+          for (const e of events) {
+            const tr = node("tr");
+            tr.append(
+              node("td", new Date(e.created * 1000).toLocaleString(uiLocale)),
+              node("td", e.mailbox),
+            );
+            const stateCell = node("td");
+            const stateLabel = node("span", states[e.status] || e.status, "event-state");
+            stateLabel.dataset.state = e.status;
+            stateCell.append(stateLabel);
+            tr.append(stateCell);
+            const info = node("td");
+            info.append(
+              node(
+                "span",
+                e.result.detections
+                  ?.map(
+                    (d) => (detectionLabels[d.label] || d.label) + " " + Math.round(d.confidence * 100) + "%",
+                  )
+                  .join(", ") || t("Sin detecciones"),
+              ),
+            );
+            if (e.result.skipped?.length)
+              info.append(node("p", e.result.skipped.join(" · "), "hint"));
+            if (e.delivered?.length)
+              info.append(
+                node(
+                  "p",
+                  t("Entregado: ") +
+                    e.delivered
+                      .map((key) => {
+                        if (!key.startsWith("telegram:"))
+                          return t("correo a {address}", {address: key});
+                        const parts = key.split(":");
+                        return (
+                          t("Telegram ") +
+                          parts[2] +
+                          (parts[3] === "text"
+                            ? t(" (texto)")
+                            : t(" · imagen {number}", {number: parts[3]}))
+                        );
+                      })
+                      .join("; "),
+                  "hint",
+                ),
+              );
+            if (e.error) info.append(node("p", e.error, "hint"));
+            tr.append(info);
+            const actions = node("td");
+            if (e.status === "failed" && identity?.can_admin) {
+              const b = node("button", t("Reintentar"));
+              b.type = "button";
+              b.onclick = async () => {
+                try {
+                  await api("events/" + e.id + "/retry", { method: "POST" });
+                  await refresh();
+                } catch (err) {
+                  notice(err.message, true);
+                }
+              };
+              actions.append(b);
+            }
+            tr.append(actions);
+            $("events").append(tr);
+          }
+          if (!events.length) {
+            const tr = node("tr");
+            const td = node("td");
+            const empty = node("div", undefined, "empty-state");
+            empty.append(icon("mail"), node("strong", t("A la espera de la primera imagen")),
+              node("p", identity?.can_admin ? t("Crea un buzón y conecta tu cámara. Aquí verás cada análisis y el estado de sus avisos.") : t("Los análisis y avisos aparecerán aquí cuando lleguen correos de las cámaras.")));
+            td.append(empty);
+            td.colSpan = 5;
+            tr.append(td);
+            $("events").append(tr);
+          }
+        } catch (e) {
+          $("system-health").textContent = t("Sin conexión");
+          $("system-health").dataset.state = "error";
+          $("last-sync").textContent = t("Sin actualizar");
+          notice(e.message, true);
+        }
+      }
+      function updateLoginChoice() {
+        const useHA = $("login-method").value === "homeassistant";
+        $("homeassistant-login").classList.toggle("hidden", !useHA);
+        $("login-form").classList.toggle("hidden", useHA || !loginOptions.token_login);
+        $("login-help").classList.toggle("hidden", useHA);
+      }
+      function showLogin(message = "") {
+        clearInterval(modelTimer);
+        identity = null; config = null; token = "";
+        sessionStorage.removeItem(tokenStorageKey);
+        clearPreviews();
+        $("events").replaceChildren(); $("camera-events").replaceChildren();
+        $("image-test-preview").removeAttribute("src");
+        $("app").classList.add("hidden"); $("login").classList.remove("hidden");
+        $("public-header").classList.remove("hidden");
+        $("skip-link").href = "#login-title";
+        setMenu(false);
+        document.title = t("PiVigia · Acceso");
+        $("token").value = "";
+        if (message) notice(message);
+      }
+      // Los permisos efectivos vienen del servidor; ocultar botones no sustituye autorización.
+      async function login(showErrors = true) {
+        try {
+          const session = await api("auth/session");
+          if (!["admin", "viewer"].includes(session.role)) throw Error(t("Este token solo permite consultar el sensor de estado."));
+          identity = session;
+          if (session.provider === "homeassistant") {
+            token = ""; sessionStorage.removeItem(tokenStorageKey);
+          } else sessionStorage.setItem(tokenStorageKey, token);
+          const admin = session.can_admin;
+          $("admin-nav-label").classList.toggle("hidden", !admin);
+          $("account-avatar").textContent = session.name.trim().slice(0, 2).toUpperCase() || "PV";
+          for (const name of ["mailboxes", "settings", "tests", "server"]) {
+            document.querySelector('[data-tab="' + name + '"]').classList.toggle("hidden", !admin);
+          }
+          $("setup-guide").classList.toggle("hidden", !admin);
+          $("camera-configuration-card").classList.toggle("hidden", !admin);
+          $("access-state").textContent = session.name + " · " + (admin ? t("Administración") : t("Solo consulta")) +
+            " · " + (session.provider === "homeassistant" ? t("Sesión de Home Assistant") : t("Token de PiVigia"));
+          $("logout").textContent = session.provider === "homeassistant" ? t("Salir del panel") : t("Cerrar sesión");
+          if (admin) {
+            config = await api("settings");
+            renderTestOptions();
+            $("analysis-fields").replaceChildren(); $("smtp-fields").replaceChildren();
+            renderSettings();
+            $("access-settings").textContent = t("Método activo: {method}.", {method: {both: t("Home Assistant y token"), homeassistant: t("Home Assistant (token solo para el sensor de estado)"), token: t("Token de PiVigia")}[loginOptions.mode]});
+          }
+          $("login").classList.add("hidden"); $("app").classList.remove("hidden");
+          $("public-header").classList.add("hidden");
+          $("skip-link").href = "#page-title";
+          document.querySelector('[data-tab="overview"]').click();
+          sessionStorage.removeItem(signoutStorageKey);
+          clearTimeout(noticeTimer);
+          $("notice").classList.add("hidden");
+          await refresh();
+        } catch (error) {
+          showLogin();
+          if (showErrors) notice(error.message, true);
+        }
+      }
+      $("login-method").onchange = updateLoginChoice;
+      $("login-form").onsubmit = event => {
+        event.preventDefault(); token = $("token").value; login();
+      };
+      $("ha-login-button").onclick = () => { token = ""; login(); };
+      $("logout").onclick = () => {
+        const wasHA = identity?.provider === "homeassistant";
+        sessionStorage.setItem(signoutStorageKey, "1");
+        showLogin(wasHA ? t("Has salido del panel. Tu sesión de Home Assistant sigue activa; puedes cerrarla desde Home Assistant.") : t("Sesión del panel cerrada."));
+      };
+      async function initializeLogin() {
+        try {
+          loginOptions = await api("auth/options");
+          const select = $("login-method"); select.replaceChildren();
+          if (loginOptions.homeassistant_login) {
+            const option = node("option", t("Mi usuario de Home Assistant")); option.value = "homeassistant"; select.append(option);
+          }
+          if (loginOptions.token_login) {
+            const option = node("option", t("Token de PiVigia")); option.value = "token"; select.append(option);
+          }
+          updateLoginChoice();
+          if (!sessionStorage.getItem(signoutStorageKey)) {
+            if (token && loginOptions.token_login) {
+              select.value = "token"; updateLoginChoice(); await login(false);
+            } else if (loginOptions.homeassistant_login) {
+              token = ""; await login(false);
+            }
+          }
+        } catch (error) { notice(t("No se puede consultar el acceso de PiVigia. Recarga la página y comprueba el servicio."), true); }
+      }
+      $("refresh").onclick = refresh;
+      document.querySelectorAll("[data-tab]").forEach(
+        (button) =>
+          (button.onclick = () => {
+            if (!identity || (!identity.can_admin && !["overview", "cameras"].includes(button.dataset.tab))) return;
+            document
+              .querySelectorAll("[data-tab]")
+              .forEach((b) => {
+                b.classList.toggle("active", b === button);
+                if (b === button) b.setAttribute("aria-current", "page");
+                else b.removeAttribute("aria-current");
+              });
+            const [code, title, description] = sections[button.dataset.tab];
+            $("page-code").textContent = code;
+            $("page-title").textContent = title;
+            $("page-description").textContent = description;
+            document.title = title + " · PiVigia";
+            setMenu(false);
+            for (const id of ["overview", "mailboxes", "settings", "cameras", "tests", "server"])
+              $(id).classList.toggle("hidden", button.dataset.tab !== id);
+            $("save-bar").classList.toggle(
+              "hidden",
+              !identity?.can_admin || !["mailboxes", "settings", "cameras"].includes(button.dataset.tab),
+            );
+            if (button.dataset.tab === "server") loadServer();
+            clearInterval(modelTimer);
+            if (button.dataset.tab === "tests" && identity?.can_admin) {
+              loadModels();
+              modelTimer = setInterval(loadModels, 3000);
+            }
+            if (button.dataset.tab === "cameras") {
+              if (identity?.can_admin) { readCameras(); readBoxes(); renderCameras(); }
+              refreshCameras();
+            }
+            else clearPreviews();
+            $("page-title").focus({preventScroll: true});
+            window.scrollTo({top: 0, behavior: "instant"});
+          }),
+      );
+      $("add-box").onclick = () => {
+        readBoxes();
+        config.mailboxes.push({
+          address: "",
+          password: "",
+          destinations: [],
+          telegram_chat_ids: [],
+          categories: ["person", "car", "animal"],
+          confidence: 0.5,
+          enabled: true,
+          forward_all: false,
+        });
+        renderBoxes();
+      };
+      $("configuration").onsubmit = async (e) => {
+        e.preventDefault();
+        if (!identity?.can_admin) return;
+        const invalid = $("configuration").querySelector(":invalid");
+        if (invalid) {
+          document
+            .querySelector('[data-tab="' + invalid.closest("section").id + '"]')
+            .click();
+          invalid.reportValidity();
+          return;
+        }
+        $("save").disabled = true;
+        try {
+          readBoxes();
+          for (const [key] of [...analysis, ...smtp]) {
+            const value = document.querySelector('[name="' + key + '"]').value;
+            config[key] =
+              analysis.some(([k]) => k === key) || key === "smtp_port"
+                ? Number(value)
+                : value;
+          }
+          readCameras();
+          config.language = $("service-language").value;
+          config.rtsp_enabled = $("rtsp-enabled").checked;
+          config.telegram_enabled = $("telegram-enabled").checked;
+          config.telegram_bot_token = $("telegram-token").value;
+          await api("settings", {
+            method: "PUT",
+            body: JSON.stringify(config),
+          });
+          config = await api("settings");
+          renderTestOptions();
+          $("telegram-token").value = config.telegram_bot_token;
+          renderBoxes();
+          renderCameras();
+          await refreshCameras();
+          configurationDirty = false;
+          notice(t("Configuración guardada"));
+          await refresh();
+        } catch (e) {
+          notice(e.message, true);
+        } finally {
+          $("save").disabled = false;
+        }
+      };
+      $("telegram-chats").onclick = async () => {
+        const button = $("telegram-chats");
+        button.disabled = true;
+        try {
+          const chats = await api("telegram/chats", { method: "POST" });
+          $("telegram-chat-list").replaceChildren();
+          for (const chat of chats)
+            $("telegram-chat-list").append(
+              node("p", chat.name + " · ID: " + chat.id),
+            );
+          if (!chats.length)
+            $("telegram-chat-list").append(
+              node(
+                "p",
+                t("No hay chats recientes. Guarda el token, envía /start al bot y vuelve a buscar."),
+              ),
+            );
+        } catch (error) {
+          notice(error.message, true);
+        } finally {
+          button.disabled = false;
+        }
+      };
+      function renderCameras() {
+        const parent = $("camera-config");
+        parent.replaceChildren();
+        (config.cameras || []).forEach((camera, i) => {
+          const card = node("div", undefined, "box");
+          card.dataset.id = camera.id;
+          const header = node("div", undefined, "row");
+          header.append(node("h3", t("Cámara {number}", {number: i + 1})));
+          const del = node("button", t("Eliminar"), "danger");
+          del.type = "button";
+          del.onclick = () => { configurationDirty = true; readCameras(); config.cameras.splice(i, 1); renderCameras(); };
+          header.append(del);
+          card.append(header);
+          const grid = node("div", undefined, "grid");
+          field(grid, "name", t("Nombre"), camera.name).required = true;
+          const url = field(grid, "url", t("URL rtsp://usuario:clave@IP/ruta (oculta al guardar)"), camera.url, "password");
+          url.required = true;
+          url.autocomplete = "new-password";
+          for (const [key, title, min, max, step] of [
+            ["interval", t("Analizar cada (segundos)"), 1, 60, 0.5],
+            ["confidence", t("Confianza de persona (0,1 a 1)"), 0.1, 1, 0.05],
+            ["motion_percent", t("Movimiento mínimo (% de imagen)"), 0.1, 100, 0.1],
+            ["cooldown", t("Espera entre eventos y avisos (segundos)"), 10, 3600, 1],
+          ]) {
+            const input = field(grid, key, title, camera[key], "number");
+            input.min = min; input.max = max; input.step = step; input.required = true;
+          }
+          const label = node("label", t("Buzón para avisos en vivo (opcional)"));
+          const select = node("select");
+          select.name = "alert_mailbox";
+          const none = node("option", t("Solo panel e historial")); none.value = ""; select.append(none);
+          for (const box of config.mailboxes) {
+            const option = node("option", box.address); option.value = box.address; select.append(option);
+          }
+          select.value = camera.alert_mailbox || "";
+          label.append(select); grid.append(label); card.append(grid);
+          const enabled = node("label"); const input = node("input");
+          input.name = "enabled"; input.type = "checkbox"; input.checked = camera.enabled;
+          enabled.append(input, document.createTextNode(t(" Cámara activa"))); card.append(enabled);
+          card.append(node("p", t("El buzón debe estar activo y tener Personas seleccionadas. Sus límites, confianza y destinos se aplican al aviso. La URL se guarda en los datos privados del servicio."), "hint"));
+          parent.append(card);
+        });
+        $("add-camera").disabled = (config.cameras || []).length >= 8;
+      }
+      function readCameras() {
+        config.cameras = [...$("camera-config").children].map(card => {
+          const val = key => card.querySelector('[name="' + key + '"]').value;
+          return {id: card.dataset.id, name: val("name"), url: val("url"),
+            enabled: card.querySelector('[name="enabled"]').checked,
+            interval: Number(val("interval")), confidence: Number(val("confidence")),
+            motion_percent: Number(val("motion_percent")), cooldown: Number(val("cooldown")),
+            alert_mailbox: val("alert_mailbox")};
+        });
+      }
+      $("add-camera").onclick = () => {
+        readCameras(); readBoxes();
+        if (config.cameras.length >= 8) return;
+        config.cameras.push({id: "cam-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+          name: t("Nueva cámara"), url: "", enabled: true, interval: 2, confidence: .5,
+          motion_percent: 2, cooldown: 60, alert_mailbox: ""});
+        renderCameras();
+      };
+      // Liberar URLs de objetos al abandonar cámaras para no retener imágenes en memoria.
+      const previewURLs = new Map();
+      let cameraRefreshBusy = false;
+      function clearPreviews() {
+        for (const url of previewURLs.values()) URL.revokeObjectURL(url);
+        previewURLs.clear();
+        $("camera-live").replaceChildren();
+      }
+      async function refreshCameras() {
+        if ($("cameras").classList.contains("hidden") || cameraRefreshBusy || !identity) return;
+        cameraRefreshBusy = true;
+        try {
+          const data = await api("cameras");
+          if ($("cameras").classList.contains("hidden")) return;
+          $("camera-summary").textContent = !data.enabled ? t("RTSP desactivado. El correo funciona de forma independiente.") :
+            data.smtp_busy ? t("Correos pendientes: análisis en vivo en espera. La vista sigue actualizándose.") :
+            t("Conexión y análisis activos según los intervalos configurados. Vista actualizada cada 2 segundos.");
+          clearPreviews();
+          const states = {disabled: t("Desactivada"), connecting: t("Conectando…"), connected: t("Conectada"), reconnecting: t("Sin señal · reintentando")};
+          await Promise.all(data.cameras.map(async camera => {
+            const card = node("div", undefined, "box");
+            card.append(node("h3", camera.name));
+            const old = !camera.analyzed || Date.now() / 1000 - camera.analyzed > 15;
+            card.append(node("p", states[camera.state] || camera.state));
+            if (camera.state === "connected") {
+              card.append(node("p", old ? t("Análisis pendiente o en espera") :
+                (camera.motion ? t("Movimiento") : t("Sin movimiento")) + " · " + (camera.motion_score || 0) + t("% · Personas: ") + (camera.people || 0)));
+              if (camera.analyzed) card.append(node("small", t("Último análisis: {time}", {time: new Date(camera.analyzed * 1000).toLocaleTimeString(uiLocale)})));
+              if (camera.error) card.append(node("p", camera.error, "hint"));
+              const image = node("img"); image.alt = t("Vista de {camera}", {camera: camera.name});
+              image.style.cssText = "width:100%;height:auto;border-radius:8px";
+              card.append(image);
+              $("camera-live").append(card);
+              try {
+                const response = await fetch("api/cameras/" + encodeURIComponent(camera.id) + "/preview", {
+                  headers: token ? {Authorization: "Bearer " + token} : {}, signal: AbortSignal.timeout(5000), cache: "no-store"});
+                if (!response.ok) throw Error();
+                const blob = await response.blob();
+                if ($("cameras").classList.contains("hidden") || !image.isConnected) return;
+                const url = URL.createObjectURL(blob); previewURLs.set(camera.id, url); image.src = url;
+              } catch { image.remove(); card.append(node("p", t("Imagen no disponible"), "hint")); }
+            } else $("camera-live").append(card);
+          }));
+          $("camera-events").replaceChildren();
+          for (const event of data.events) {
+            $("camera-events").append(node("p", new Date(event.created * 1000).toLocaleString(uiLocale) + " · " +
+              event.camera_name + " · " + (event.kind === "person" ? t("Persona detectada") : t("Movimiento")) +
+              (event.detections.length ? " · " + event.detections.map(d => Math.round(d.confidence * 100) + "%").join(", ") : "")));
+          }
+          if (!data.events.length) $("camera-events").append(node("p", t("Todavía no hay eventos de cámaras."), "hint"));
+        } catch (error) { notice(error.message, true); }
+        finally { cameraRefreshBusy = false; }
+      }
+      function showResult(id, message, error = false) {
+        const element = $(id);
+        element.textContent = message;
+        element.className = "result" + (error ? " error" : "");
+      }
+      // Las pruebas son explícitas: la imagen se analiza sin guardar ni enviar avisos.
+      function renderTestOptions() {
+        const select = $("test-mailbox"), selected = select.value;
+        select.replaceChildren();
+        const all = node("option", t("Sin buzón · todas las categorías, confianza 50%"));
+        all.value = ""; select.append(all);
+        for (const box of config.mailboxes) {
+          const option = node("option", box.address + (box.enabled ? "" : " · desactivado"));
+          option.value = box.address; select.append(option);
+        }
+        if ([...select.options].some(option => option.value === selected)) select.value = selected;
+        $("image-test-help").textContent = t("Se usan los ajustes guardados: entre {min_width} × {min_height} y {max_width} × {max_height} píxeles; máximo {size} MB. Selecciona un buzón para comprobar sus categorías, confianza y destinos.", {min_width: config.min_width, min_height: config.min_height, max_width: config.max_width, max_height: config.max_height, size: (config.max_image_bytes / 1000000).toLocaleString(uiLocale)});
+        $("setup-summary").textContent = t("Buzones activos guardados: ") + config.mailboxes.filter(box => box.enabled).length +
+          t(" · Correo de salida ") + (config.smtp_host && config.smtp_from ? t("configurado") : t("pendiente")) +
+          t(" · Telegram ") + (config.telegram_enabled ? t("activado") : t("desactivado")) + ".";
+      }
+      $("email-test-form").onsubmit = async event => {
+        event.preventDefault();
+        $("test-send-email").disabled = true;
+        showResult("email-test-result", t("Enviando el correo con los ajustes guardados… No cierres esta pestaña."));
+        try {
+          const result = await api("tests/email", {method: "POST", timeoutMs: 90000, body: JSON.stringify({
+            destination: $("test-destination").value, subject: $("test-subject").value, text: $("test-text").value})});
+          showResult("email-test-result", result.detail);
+        } catch (error) { showResult("email-test-result", error.message, true); }
+        finally { $("test-send-email").disabled = false; }
+      };
+      $("image-test-form").onsubmit = async event => {
+        event.preventDefault();
+        const file = $("test-image").files[0];
+        if (!file) return;
+        $("image-test-preview").classList.add("hidden");
+        $("image-test-preview").removeAttribute("src");
+        if (file.size > config.max_image_bytes) {
+          showResult("image-test-result", t("El archivo supera el tamaño máximo guardado. Usa otra imagen o revisa los límites en Configuración."), true);
+          return;
+        }
+        $("test-analyze-image").disabled = true;
+        showResult("image-test-result", t("Analizando la imagen en PiVigia… No se enviarán avisos."));
+        try {
+          const result = await api("tests/image?mailbox=" + encodeURIComponent($("test-mailbox").value) +
+            "&model=" + encodeURIComponent($("test-model").value), {
+            method: "POST", body: file, headers: {"Content-Type": "application/octet-stream"}, timeoutMs: 300000});
+          const labels = {person: t("Persona"), car: t("Coche"), bird: t("Ave"), cat: t("Gato"), cow: t("Vaca"), dog: t("Perro"), horse: t("Caballo"), sheep: t("Oveja"), elephant: t("Elefante"), bear: t("Oso"), zebra: t("Cebra"), giraffe: t("Jirafa")};
+          const lines = [result.detail];
+          lines.push(t("Modelo usado: {model}. Tiempo de análisis (incluye espera): {seconds} s.", {model: result.model, seconds: result.elapsed_seconds.toLocaleString(uiLocale)}));
+          if (!result.valid) lines.push(t("Imagen omitida: {reason}", {reason: result.reason}));
+          else {
+            lines.push(t("Confianza mínima usada: {confidence}%.", {confidence: Math.round(result.confidence * 100)}));
+            lines.push(result.detections.length ? t("Detecciones:") : t("No se han encontrado personas, coches o animales por encima de la confianza mínima."));
+            for (const d of result.detections) lines.push("• " + (labels[d.label] || d.label) + " · " + Math.round(d.confidence * 100) + "%" +
+              (result.categories.includes(d.category) ? t(" · categoría seleccionada") : t(" · categoría excluida por el buzón")));
+            if (result.mailbox) {
+              if (!result.mailbox_enabled) lines.push(t("El buzón está desactivado: no enviaría avisos."));
+              else if (!result.rule_matches) lines.push(t("Las reglas de este buzón filtrarían esta imagen."));
+              else if (!result.channels.length) lines.push(t("Las reglas coinciden, pero el buzón no tiene destinos de correo o Telegram activos."));
+              else lines.push(t("En una recepción normal, este buzón intentaría avisar por {channels}. Esta prueba no lo ha enviado.", {channels: new Intl.ListFormat(uiLocale).format(result.channels.map(channel => channel === "correo" ? t("Correo") : "Telegram"))}));
+            }
+          }
+          showResult("image-test-result", lines.join("\n"), !result.valid);
+          if (result.preview) {
+            $("image-test-preview").src = "data:image/jpeg;base64," + result.preview;
+            $("image-test-preview").classList.remove("hidden");
+          }
+        } catch (error) { showResult("image-test-result", error.message, true); }
+        finally { $("test-analyze-image").disabled = false; }
+      };
+      let modelsSignature = "";
+      async function modelAction(id, action) {
+        if (action === "delete" && !confirm(t("¿Eliminar este modelo descargado? Podrás descargarlo otra vez. No se borran ajustes ni fotos."))) return;
+        try {
+          await api("models/" + encodeURIComponent(id) + (action === "delete" ? "" : "/" + action), {
+            method: action === "delete" ? "DELETE" : "POST", timeoutMs: 300000,
+          });
+          await loadModels();
+          await refresh();
+        } catch (error) { notice(error.message, true); }
+      }
+      $("model-download-cancel").onclick = async () => {
+        try { await api("models/cancel", {method: "POST"}); await loadModels(); }
+        catch (error) { notice(error.message, true); }
+      };
+      async function loadModels() {
+        if (!identity?.can_admin) return;
+        try {
+          const result = await api("models");
+          if (!identity?.can_admin) return;
+          const job = result.download;
+          const downloading = job?.state === "downloading";
+          $("model-download-state").textContent = t("Espacio libre: {size} GB. ", {size: (result.free_bytes / 1073741824).toLocaleString(uiLocale, {maximumFractionDigits: 1, minimumFractionDigits: 1})}) +
+            (job ? job.id + ": " + job.message + (downloading ? " " + Math.floor(job.received * 100 / job.total) + "%" : "") : "");
+          $("model-download-cancel").classList.toggle("hidden", !downloading);
+          const signature = JSON.stringify([result.models, downloading]);
+          if (signature === modelsSignature) return;
+          modelsSignature = signature;
+          const previous = $("test-model").value;
+          $("test-model").replaceChildren();
+          const activeOption = node("option", t("Modelo activo: {model}", {model: result.active}));
+          activeOption.value = ""; $("test-model").append(activeOption);
+          $("model-catalog").replaceChildren();
+          for (const model of result.models) {
+            const card = node("div", undefined, "box");
+            card.append(node("h3", model.name), node("p", model.description),
+              node("p", (model.builtin ? t("Incluido") : (model.size / 1000000).toFixed(1) + " MB · " + model.license) +
+                " · " + (model.active ? t("Activo") : model.installed ? t("Descargado") : t("Sin descargar"))));
+            const addButton = (label, action, disabled) => {
+              const button = node("button", label); button.type = "button"; button.disabled = disabled;
+              button.onclick = () => modelAction(model.id, action); card.append(button);
+            };
+            if (model.installed) {
+              addButton(t("Usar para correo y cámaras"), "activate", model.active);
+              if (!model.builtin) addButton(t("Eliminar descarga"), "delete", model.active || downloading);
+              const option = node("option", model.name); option.value = model.id; $("test-model").append(option);
+            } else if (!model.builtin) addButton(t("Descargar"), "download", downloading);
+            $("model-catalog").append(card);
+          }
+          if ([...$("test-model").options].some(option => option.value === previous)) $("test-model").value = previous;
+        } catch (error) { $("model-download-state").textContent = error.message; }
+      }
+      // Ajustes de arranque: respetar bloqueos del despliegue y avisar si requieren reinicio.
+      const serverFields = [
+        ["web_bind", t("IP de escucha del panel"), "text", t("0.0.0.0 escucha en todas las interfaces del equipo. No es un nombre de dominio.")],
+        ["web_port", t("Puerto del panel web"), "number", t("Inicial: 8099. Al cambiarlo tendrás que abrir la nueva dirección después de reiniciar.")],
+        ["smtp_bind", t("IP de escucha de SMTP de entrada"), "text", t("0.0.0.0 permite recibir fotos desde otros equipos de la red.")],
+        ["smtp_port", t("Puerto SMTP de entrada"), "number", t("Inicial: 2525. Debe coincidir con el puerto que pondrás en las cámaras.")],
+        ["trusted_networks", t("IP de cámaras sin autenticación"), "text", t("Ejemplo: 192.0.2.50/32. Varias IP o redes separadas por comas; vacío exige autenticación.")],
+        ["tls_cert", t("Ruta del certificado STARTTLS de entrada"), "text", t("Ruta absoluta, por ejemplo /ruta/pivigia.crt. Configura también la clave o deja ambos vacíos.")],
+        ["tls_key", t("Ruta de la clave privada STARTTLS de entrada"), "text", t("Ruta absoluta a un archivo legible por el proceso PiVigia. No pegues aquí el contenido de la clave.")],
+      ];
+      let serverData = null;
+      async function loadServer() {
+        try {
+          serverData = await api("server");
+          const r = serverData.running;
+          $("server-access").textContent = t("Estás accediendo al panel desde {origin}.", {origin: location.origin});
+          $("server-info").textContent = t("Instalación: ") + ({local: t("directa en Python"), homeassistant: t("complemento de Home Assistant"), docker: t("Docker / Compose"), yunohost: "YunoHost"}[serverData.deployment]) +
+            t("\nPanel en el proceso: ") + r.web_bind + ":" + r.web_port + t(" · SMTP de entrada en el proceso: ") + r.smtp_bind + ":" + r.smtp_port +
+            t("\nSTARTTLS de entrada: ") + (r.tls_cert ? t("configurado") : t("sin certificado")) +
+            t(" · Autenticación sin cifrado: ") + (r.allow_plain_auth ? t("permitida") : t("no permitida")) +
+            t("\nCámaras permitidas sin autenticación: ") + (r.trusted_networks || t("ninguna")) +
+            (serverData.restart_required ? t("\nHay cambios guardados pendientes de reiniciar el servicio.") : "");
+          $("server-form").classList.toggle("hidden", !serverData.editable);
+          $("server-managed").classList.toggle("hidden", serverData.editable);
+          if (!serverData.editable) {
+            const target = $("server-managed"); target.replaceChildren();
+            target.append(node("h3", t("Dónde cambiar los puertos de acceso")));
+            if (serverData.deployment === "homeassistant") {
+              const list = node("ol");
+              for (const text of [t("En Home Assistant abre Ajustes → Aplicaciones o Complementos → PiVigia → Configuración."),
+                t("Busca Red. Cambia el puerto de acceso asociado a 8099/tcp para el panel o 2525/tcp para las cámaras."),
+                t("Guarda y reinicia PiVigia. Abre el panel desde Abrir interfaz web y actualiza el puerto SMTP en tus cámaras si lo has cambiado."),
+                t("Las IP permitidas, la autenticación sin cifrado y los certificados se ajustan en las opciones del complemento, en esa misma pestaña de Configuración.")])
+                list.append(node("li", text));
+              target.append(list);
+              target.append(node("p", t("Los puertos internos 8099 y 2525 se mantienen: el Supervisor los conecta con los puertos de acceso que elijas. El panel no puede modificar la red de Home Assistant."), "hint"));
+            } else if (serverData.deployment === "yunohost") {
+              target.append(node("p", t("YunoHost gestiona HTTPS, los puertos asignados y STARTTLS. Consulta los puertos efectivos aquí y las instrucciones de instalación de YunoHost.")));
+            } else {
+              target.append(node("p", t("En .env configura PIVIGIA_WEB_HOST_PORT para el panel y PIVIGIA_SMTP_HOST_PORT para la entrada de cámaras. Después ejecuta docker compose up -d --build para recrear el contenedor. Ejemplo: 8100 para el panel y 2526 para SMTP.")));
+              target.append(node("p", t("Los puertos internos siguen siendo 8099 y 2525. Las IP permitidas y STARTTLS se configuran con las variables de .env que muestra .env.example."), "hint"));
+            }
+            return;
+          }
+          $("server-fields").replaceChildren();
+          for (const [key, title, type, explanation] of serverFields) {
+            const input = field($("server-fields"), "server_" + key, title, serverData.effective[key], type);
+            if (type === "number") { input.min = 1024; input.max = 65535; input.required = true; }
+            input.disabled = serverData.environment_fields.includes(key);
+            input.parentElement.append(node("small", explanation + (input.disabled ? t(" Fijado por una variable de entorno.") : "")));
+          }
+          $("server-plain-auth").checked = serverData.effective.allow_plain_auth;
+          $("server-plain-auth").disabled = serverData.environment_fields.includes("allow_plain_auth");
+        } catch (error) { showResult("server-result", error.message, true); }
+      }
+      $("server-form").onsubmit = async event => {
+        event.preventDefault();
+        const values = {};
+        for (const [key, , type] of serverFields) {
+          const value = document.querySelector('[name="server_' + key + '"]').value;
+          values[key] = type === "number" ? Number(value) : value;
+        }
+        values.allow_plain_auth = $("server-plain-auth").checked;
+        $("save-server").disabled = true;
+        try {
+          const result = await api("server", {method: "PUT", body: JSON.stringify(values)});
+          showResult("server-result", result.detail + (result.restart_required ? t(" Después del reinicio, abre el panel en el puerto {port}.", {port: values.web_port}) : t(" No hay cambios pendientes.")));
+          configurationDirty = false;
+          await loadServer();
+        } catch (error) { showResult("server-result", error.message, true); }
+        finally { $("save-server").disabled = false; }
+      };
+
+      setInterval(refreshCameras, 2000);
+      setInterval(() => {
+        if (!$("app").classList.contains("hidden")) refresh();
+      }, 15000);
+      initializeLogin();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pivigia"
+version = "0.1.4"
+description = "Vigilancia local de imágenes recibidas por SMTP"
+requires-python = ">=3.12"
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "aiosmtpd>=1.4.6,<2", "Pillow>=11,<13", "numpy>=2,<3", "opencv-python-headless>=4.10,<5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.28", "ruff>=0.11", "pyyaml>=6"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pivigia*"]
+
+[tool.setuptools.package-data]
+pivigia = ["static/*", "model_licenses/*", "locales/*.json"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
