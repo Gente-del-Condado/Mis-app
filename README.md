@@ -17,14 +17,14 @@ Tienda → menú ⋮ → Repositorios**:
 https://github.com/Gente-del-Condado/Mis-app
 ```
 
-Después selecciona **HA Private Git Manager** o **PiVigia**, instala, inicia y abre su interfaz web.
+Después selecciona la aplicación y sigue su documentación. **JackSignal Installer** se inicia una vez para copiar la integración y se detiene; después debes reiniciar Home Assistant. Las aplicaciones con interfaz web se abren desde su ficha.
 La primera instalación construye la app y requiere conexión a Internet.
 
 ## Aplicaciones
 
 | Aplicación | Descripción | Arquitecturas |
 | --- | --- | --- |
-| [JackSignal Installer](jacksignal_installer/DOCS.md) | Instala y actualiza el reproductor de audio local con avisos de Alarmo y receptor DLNA. | `amd64`, `aarch64` |
+| [JackSignal Installer](jacksignal_installer/README.md) | Instala JackSignal: avisos de Alarmo, apertura/cierre, voz de sensores sin YAML y DLNA solo de audio con prioridades. | `amd64`, `aarch64` |
 | [HA Private Git Manager](private_git_manager/README.md) | Gestiona claves SSH y aplicaciones de repositorios GitHub, Forgejo y Gitea desde Home Assistant. | `amd64`, `aarch64` |
 | [PiVigia](pivigia/README.md) | Analiza localmente fotos de cámaras recibidas por SMTP y envía avisos por correo o Telegram; incluye RTSP opcional. | `amd64`, `aarch64` |
 | [Headscale Gateway](headscale_gateway/README.md) | Ejecuta y administra Headscale Gateway en Home Assistant. | `amd64`, `aarch64` |
@@ -60,5 +60,7 @@ Para que Home Assistant ofrezca una actualización hay que aumentar la versión 
 el manifiesto de la app original. Las actualizaciones se instalan desde Home Assistant.
 
 [Automatización de publicación](https://github.com/Gente-del-Condado/HA-Private-Git-Manager/blob/main/PUBLISHING.md)
+
+[Guía de JackSignal](https://github.com/Gente-del-Condado/jacksignal-ha) · [Instalación y actualización](jacksignal_installer/DOCS.md) · [Cambios](jacksignal_installer/CHANGELOG.md).
 
 `jacksignal_installer/` se publica automáticamente desde [JackSignal](https://github.com/Gente-del-Condado/jacksignal). Incluye el instalador y la integración. Tras instalar o actualizar la app, pulsa **Iniciar**, comprueba el registro y reinicia Home Assistant. [Publicación y actualizaciones de JackSignal](https://github.com/Gente-del-Condado/jacksignal/blob/main/PUBLISHING.md).
