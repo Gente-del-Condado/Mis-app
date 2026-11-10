@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- Add a configuration overview showing assigned and unassigned Alarmo events and opening sensors, with sound, priority, repeat and playback conditions.
+- Configure each sensor to announce failed arming and/or opening (only while disarmed or with any alarm state).
+- Preserve existing failed-arming-only rules; ignore startup, reconnection and attribute-only sensor changes.
+- Keep all sensor playback under the existing priority and critical-siren protection.
+
 ## 0.4.0
 
 - Select the listening IPv4 from Home Assistant's visible network interfaces or enter it manually.
