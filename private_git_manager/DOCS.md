@@ -128,7 +128,7 @@ La integración complementaria **Private Git Manager · Forgejo Backup** añade 
 
 La restauración puede detener/reiniciar la aplicación y cambiar su versión instalada, visible en la ficha. Conserva el código Git local y su commit: revisa la versión antes de volver a actualizar o reconstruir. Las carpetas compartidas, Core y otras aplicaciones no se incluyen ni restauran desde estos botones. Las copias disponibles en una ubicación de red se restauran desde esa ubicación; Home Assistant Link (`.cloud_backup`) es exclusivo de Core y no está disponible para el gestor.
 
-Ambas operaciones son trabajos en segundo plano con progreso e historial en español e inglés. Puedes cerrar el gestor mientras terminan. Las contraseñas solo se mantienen en memoria durante la operación y no se guardan en estado, trabajos, logs o almacenamiento del navegador. Guárdalas de forma segura: el gestor no puede recuperarlas. Si se pierde la conexión con el Supervisor, el resultado se marca incierto y no se reintenta automáticamente; actualiza las copias y comprueba el estado antes de repetir. Tras reiniciar el gestor, los trabajos interrumpidos tampoco se repiten.
+Ambas operaciones son trabajos en segundo plano con progreso e historial en español e inglés. Puedes cerrar el gestor mientras terminan. Las contraseñas introducidas para crear o restaurar una copia manual solo se mantienen en memoria durante esa operación. Guárdalas de forma segura: el gestor no puede recuperarlas. Si se pierde la conexión con el Supervisor, el resultado se marca incierto y no se reintenta automáticamente; actualiza las copias y comprueba el estado antes de repetir. Tras reiniciar el gestor, los trabajos interrumpidos tampoco se repiten.
 
 Estas copias nativas de datos son distintas de las copias temporales de código `.pgm-backup-*` usadas para recuperar instalaciones fallidas.
 
@@ -138,7 +138,16 @@ En la revisión de una aplicación instalada verás la versión actual, la propu
 
 En **Copias de seguridad → Importar copia** puedes subir un .tar nativo de hasta 512 MiB. El gestor comprueba que contiene la aplicación y lo incorpora al listado del Supervisor. Después se abre la revisión con la versión de la copia y la confirmación habitual de restauración.
 
-En **Programar copias** eliges un intervalo de 1 a 720 horas y cuántas copias conservar, entre 1 y 30. Usa 0 horas para desactivar la programación. La primera copia vence al cumplirse el intervalo y se muestran la próxima fecha y la última copia completada. Las copias automáticas se guardan localmente sin cifrar. Después de una copia correcta, la retención elimina solo copias locales creadas por esa programación.
+En **Programar copias** eliges un intervalo de 1 a 720 horas y cuántas copias conservar, entre 1 y 30. Usa 0 horas para desactivar la programación. La primera copia vence al cumplirse el intervalo y se muestran la próxima fecha y la última copia completada. Con el destino **Local**, las copias automáticas se guardan sin cifrar. La retención elimina solo copias locales creadas por esa programación.
+
+### Copias cifradas de aplicaciones en Forgejo o GitHub
+
+1. Crea un repositorio privado dedicado a las copias. Añádelo en **Repositorios** con su URL SSH, una clave de despliegue y la huella verificada. La clave necesita escritura para guardar copias. Para recuperarlas basta una clave de lectura. Puedes dejar el repositorio vacío y omitir la sincronización de ramas.
+2. En **Copias de seguridad → Programar copias**, elige el destino, el intervalo y la retención local. Introduce la contraseña con la que el Supervisor cifrará las copias y guárdala también fuera del gestor. Para ejecutar la programación sin intervención, el gestor guarda esa contraseña en su archivo de estado privado con permisos restringidos. Al editar el mismo destino, dejarla vacía conserva la contraseña anterior.
+3. Para un envío puntual, crea una copia parcial cifrada de la aplicación y pulsa **Guardar en Git** en su ficha. El gestor envía los bytes originales del `.tar` en fragmentos, con un máximo total de 512 MiB. Cada copia tiene una etiqueta Git separada. La retención local no borra etiquetas remotas.
+4. En **Recuperar desde Git**, elige el destino y la copia. El gestor une los fragmentos, verifica la revisión y la suma SHA-256 e importa el `.tar` al Supervisor. Cuando termine el trabajo, el gestor abre la revisión. Introduce la contraseña de la copia y confirma con **Restaurar copia**. Si la copia ya está en el listado local, puedes restaurarla directamente.
+
+Si un envío programado falla, el gestor conserva la copia local y vuelve a intentar enviarla cuando venza el intervalo. Consulta **Registros y actividad** para comprobar el resultado. Este flujo cubre aplicaciones del Supervisor. Las copias de todo Home Assistant se configuran con Forgejo Backup en Core.
 
 ### Descargar y borrar copias
 

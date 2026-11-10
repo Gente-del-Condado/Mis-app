@@ -1,3 +1,10 @@
+# 0.17.0
+
+- Guarda copias parciales cifradas de cada aplicación de Home Assistant en un repositorio privado de Forgejo o GitHub por SSH.
+- Programa envíos con el cifrado nativo del Supervisor y retención local. Tras un fallo de envío, el programador reutiliza la copia local en el siguiente intento.
+- Recupera una copia de Git, verifica su integridad, impórtala al Supervisor y restaura la aplicación con su contraseña.
+- Añade los nuevos controles y mensajes en español e inglés y amplía la ayuda de Home Assistant y el manual web.
+
 # 0.16.0
 
 - Exporta e importa el catálogo cifrado del gestor por SSH en Forgejo y GitHub, en Home Assistant OS y YunoHost.

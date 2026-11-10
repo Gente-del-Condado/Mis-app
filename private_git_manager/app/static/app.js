@@ -1055,11 +1055,30 @@ async function openAppBackups(repo, slug) {
     const result = await api(`${applicationPath(repo, slug)}/backups`);
     if (modalContext !== current) return;
     current.installed = result.installed;
-    $("#modal-body").innerHTML = `<p>${esc(t("backupsHelp"))}</p><div class="backup-list">${result.backups.length ? result.backups.map((backup) => `<article class="backup-card"><strong>${esc(backup.name || backup.slug)}</strong><p class="muted">${esc(backupSummary(backup))}</p><div class="backup-actions">${button("restore-app-backup", t("restoreBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("restoreBackup") + ": " + (backup.name || backup.slug))}"`)}${button("download-app-backup", t("downloadBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("downloadBackup") + ": " + (backup.name || backup.slug))}"`)}${button("delete-app-backup", t("deleteBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("deleteBackup") + ": " + (backup.name || backup.slug))}"`, "subtle danger")}</div></article>`).join("") : `<p class="empty">${esc(t("emptyBackups"))}</p>`}</div>`;
-    $("#modal-actions").innerHTML = `${button("close-modal", t("close"))}${button("refresh-app-backups", t("refresh"))}${button("import-app-backup", t("importBackup"))}${button("schedule-app-backup", t("scheduleBackup"))}${button("create-app-backup", t("createBackup"), result.installed ? "" : "disabled", "primary")}`;
+    $("#modal-body").innerHTML = `<p>${esc(t("backupsHelp"))}</p><div class="backup-list">${result.backups.length ? result.backups.map((backup) => `<article class="backup-card"><strong>${esc(backup.name || backup.slug)}</strong><p class="muted">${esc(backupSummary(backup))}</p><div class="backup-actions">${button("restore-app-backup", t("restoreBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("restoreBackup") + ": " + (backup.name || backup.slug))}"`)}${button("download-app-backup", t("downloadBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("downloadBackup") + ": " + (backup.name || backup.slug))}"`)}${backup.protected && !backup.other_content && backup.type === "partial" ? button("export-git-backup", t("backupGitExport"), `data-backup="${esc(backup.slug)}"`) : ""}${button("delete-app-backup", t("deleteBackup"), `data-backup="${esc(backup.slug)}" aria-label="${esc(t("deleteBackup") + ": " + (backup.name || backup.slug))}"`, "subtle danger")}</div></article>`).join("") : `<p class="empty">${esc(t("emptyBackups"))}</p>`}</div>`;
+    $("#modal-actions").innerHTML = `${button("close-modal", t("close"))}${button("refresh-app-backups", t("refresh"))}${button("import-app-backup", t("importBackup"))}${button("import-git-backup", t("backupGitImport"))}${button("schedule-app-backup", t("scheduleBackup"))}${button("create-app-backup", t("createBackup"), result.installed ? "" : "disabled", "primary")}`;
   } catch (error) {
     if (modalContext === current) modalMessage(errorText(error));
   }
+}
+function backupGitRepos(selected = "", local = false) {
+  const repos = Object.values(state.repos).filter((repo) => !repo.url.startsWith("https:") && repo.key_id);
+  const options = repos.map((repo) => `<option value="${esc(repo.id)}" ${repo.id === selected ? "selected" : ""}>${esc(repo.name)} · ${esc(repo.url)}</option>`).join("");
+  return `<label for="backup-git-destination">${esc(t("backupGitRepo"))}
+    <select id="backup-git-destination" name="destination" aria-describedby="backup-git-help" ${local ? "" : "required"}>
+      <option value="">${esc(t(local ? "backupLocal" : "backupGitSelect"))}</option>${options}
+    </select></label>`;
+}
+async function openBackupGit(repo, slug, selected) {
+  const previous = modalContext;
+  const title = t(selected ? "backupGitExport" : "backupGitImport");
+  const path = `${applicationPath(repo, slug)}/backups`;
+  const backup = selected ? await api(`${path}/${encodeURIComponent(selected)}`) : null;
+  if (modalContext !== previous) return;
+  modal(selected ? "export-git-backup" : "import-git-backup", title,
+    `${backup ? `<p><strong>${esc(backup.name || backup.slug)}</strong></p><p>${esc(backupSummary(backup))}</p>` : ""}
+    <p id="backup-git-help">${esc(t("backupGitHelp"))}</p>${backupGitRepos()}`,
+    actions(selected ? "backupGitExport" : "backupGitList"), { repo, slug, selected, revision: backup?.revision, path, queued: Boolean(selected) });
 }
 function openBackupSchedule(repo, slug) {
   const schedule = state.repos[repo]?.backup_schedules?.[slug] || {};
@@ -1067,6 +1086,11 @@ function openBackupSchedule(repo, slug) {
     `<p id="backup-schedule-help">${esc(t("backupScheduleHelp"))}</p>
     ${field("backupEveryHours", "hours", schedule.hours ?? 0, 'type="number" min="0" max="720" step="1" required aria-describedby="backup-schedule-help"')}
     ${field("backupKeep", "keep", schedule.keep ?? 3, 'type="number" min="1" max="30" step="1" required')}
+    <p id="backup-git-help">${esc(t("backupGitScheduleHelp"))}</p>
+    ${backupGitRepos(schedule.git_destination, true)}
+    <label for="backup-git-password">${esc(t("backupPassword"))}
+      <input id="backup-git-password" name="password" type="password" maxlength="1024" autocomplete="new-password" aria-describedby="backup-git-help">
+    </label>
     <p>${esc(t("backupNextRun"))} · ${esc(date(schedule.next_at))}</p>
     <p>${esc(t("backupLastSuccess"))} · ${esc(date(schedule.last_success))}</p>`,
     actions(), { repo, slug });
@@ -1370,12 +1394,12 @@ async function queue(path, data = {}) {
   pollTimer = setTimeout(poll, 1500);
   return job;
 }
-async function waitConfigurationJob(id) {
+async function waitJob(id, timeoutCode) {
   const deadline = Date.now() + 900000;
   while (Date.now() < deadline) {
     const result = await api("state");
     const job = result.jobs[id];
-    if (job?.status === "succeeded") return;
+    if (job?.status === "succeeded") return job.result;
     if (job && terminal.has(job.status)) {
       const error = new Error(job.error || t("operation_failed"));
       error.code = job.code || "operation_failed";
@@ -1383,8 +1407,8 @@ async function waitConfigurationJob(id) {
     }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  const error = new Error(t("config_uncertain"));
-  error.code = "config_uncertain";
+  const error = new Error(t(timeoutCode));
+  error.code = timeoutCode;
   throw error;
 }
 async function submitModal(event) {
@@ -1521,7 +1545,45 @@ async function submitModal(event) {
     if (context.type === "schedule-app-backup") {
       await api(`${applicationPath(context.repo, context.slug)}/backups/schedule`, "POST", {
         hours: Number(data.hours), keep: Number(data.keep),
+        destination: data.destination || null, password: data.password || null,
       });
+    }
+    if (context.type === "export-git-backup") {
+      await queue(`${context.path}/${encodeURIComponent(context.selected)}/git`, {
+        confirmed: true, destination: data.destination, expected_revision: context.revision,
+      });
+    }
+    if (context.type === "import-git-backup") {
+      const query = new URLSearchParams({ destination: data.destination });
+      const result = await api(`${context.path}/git?${query}`, "GET", undefined, undefined, 130000);
+      if (!result.copies.length) {
+        modal("backup-git-empty", t("backupGitImport"), `<p>${esc(t("backupGitEmpty"))}</p>`, button("close-modal", t("close")));
+        return;
+      }
+      const options = result.copies.map((copy) =>
+        `<option value="${esc(copy.id)}">${esc(backupDate(copy.date))} · ${esc(copy.id.slice(17))}</option>`,
+      ).join("");
+      modal("select-git-backup", t("backupGitImport"),
+        `<p id="backup-git-import-help">${esc(t("backupGitImportHelp"))}</p>
+        <label for="backup-git-copy">${esc(t("backupGitCopy"))}
+          <select id="backup-git-copy" name="copy" required aria-describedby="backup-git-import-help">${options}</select>
+        </label>`,
+        actions("importBackup"), { ...context, type: "select-git-backup", destination: data.destination, copies: result.copies });
+      return;
+    }
+    if (context.type === "select-git-backup") {
+      const copy = context.copies.find((item) => item.id === data.copy);
+      if (!copy) throw new Error(t("backup_git_invalid"));
+      const job = await queue(`${context.path}/git`, {
+        confirmed: true, destination: context.destination, copy_id: copy.id, commit: copy.commit,
+      });
+      modalMessage(t("backupImportRunning"));
+      const imported = await waitJob(job.id, "backup_git_wait");
+      if (modalContext === context) {
+        await openRestoreBackup(context.repo, context.slug, imported.slug);
+        notice(t("backupImported"));
+      }
+      return;
     }
     if (context.type === "import-app-backup") {
       const imported = await uploadBackup(context.repo, context.slug, data.archive);
@@ -1565,7 +1627,7 @@ async function submitModal(event) {
           confirmed: true,
         },
       );
-      await waitConfigurationJob(job.id);
+      await waitJob(job.id, "config_uncertain");
     }
     if (context.type === "confirm") await context.callback();
     if (context.type === "recover")
@@ -1658,13 +1720,15 @@ document.addEventListener("click", async (event) => {
     await refreshApplicationLogs();
     return;
   }
-  if (["app-backups", "refresh-app-backups", "create-app-backup", "restore-app-backup", "download-app-backup", "delete-app-backup", "import-app-backup", "schedule-app-backup"].includes(action)) {
+  if (["app-backups", "refresh-app-backups", "create-app-backup", "restore-app-backup", "download-app-backup", "delete-app-backup", "import-app-backup", "schedule-app-backup", "export-git-backup", "import-git-backup"].includes(action)) {
     const context = modalContext;
     try {
       if (action === "app-backups") await openAppBackups(id, slug);
       if (action === "refresh-app-backups") await openAppBackups(context.repo, context.slug);
       if (action === "create-app-backup") openCreateBackup(context.repo, context.slug);
       if (action === "import-app-backup") openBackupImport(context.repo, context.slug);
+      if (action === "export-git-backup" || action === "import-git-backup")
+        await openBackupGit(context.repo, context.slug, node.dataset.backup);
       if (action === "schedule-app-backup") openBackupSchedule(context.repo, context.slug);
       if (action === "restore-app-backup") await openRestoreBackup(context.repo, context.slug, node.dataset.backup);
       if (action === "download-app-backup" || action === "delete-app-backup")

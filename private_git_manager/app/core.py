@@ -25,7 +25,7 @@ from .errors import Problem
 from .messages import event_text
 from .storage import atomic_json
 
-VERSION = "0.16.0"
+VERSION = "0.17.0"
 
 
 class SupervisorUncertain(Problem):
@@ -441,6 +441,8 @@ class Manager:
         public = json.loads(json.dumps(self.state))
         for repo in public["repos"].values():
             repo["has_token"] = bool(repo.pop("token", ""))
+            for schedule in repo.get("backup_schedules", {}).values():
+                schedule.pop("git_password", None)
         public["supervisor"] = bool(self.supervisor.token)
         public["version"] = VERSION
         self._public = json.dumps(public, ensure_ascii=False)
@@ -449,6 +451,9 @@ class Manager:
         for repo in self.state["repos"].values():
             if repo.get("token"):
                 message = message.replace(repo["token"], "[REDACTED]")
+            for schedule in repo.get("backup_schedules", {}).values():
+                if password := schedule.get("git_password"):
+                    message = message.replace(password, "[REDACTED]")
         message = re.sub(r"(?i)(authorization|password|token)[:=]\S+", r"\1=[REDACTED]", message)
         return message[:4000]
 

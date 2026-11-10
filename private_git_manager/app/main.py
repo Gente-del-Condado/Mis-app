@@ -264,6 +264,21 @@ class BackupRestore(ConfirmInput):
 class BackupSchedule(Input):
     hours: int = Field(ge=0, le=720)
     keep: int = Field(ge=1, le=30)
+    destination: str | None = Field(default=None, max_length=64)
+    password: str | None = Field(default=None, max_length=1024)
+
+
+class BackupGitTarget(ConfirmInput):
+    destination: str = Field(min_length=1, max_length=64)
+
+
+class BackupGitExport(BackupGitTarget):
+    expected_revision: str = Field(min_length=64, max_length=64)
+
+
+class BackupGitImport(BackupGitTarget):
+    copy_id: str = Field(min_length=1, max_length=81)
+    commit: str = Field(min_length=40, max_length=64)
 
 
 class BackupDelete(ConfirmInput):
@@ -612,8 +627,44 @@ def app_backups(repo_id: str, slug: str):
 @app.post("/api/repos/{repo_id}/apps/{slug}/backups/schedule")
 def set_backup_schedule(repo_id: str, slug: str, body: BackupSchedule):
     with mutation():
-        Backups(manager).configure_schedule(repo_id, slug, body.hours, body.keep)
+        Backups(manager).configure_schedule(
+            repo_id, slug, body.hours, body.keep, body.destination, body.password
+        )
     return {"ok": True}
+
+
+@app.get("/api/repos/{repo_id}/apps/{slug}/backups/git")
+def list_git_backups(repo_id: str, slug: str, destination: str = Query(max_length=64)):
+    with mutation():
+        return Backups(manager).git_copies(repo_id, slug, destination)
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/backups/git")
+def import_git_backup(repo_id: str, slug: str, body: BackupGitImport, request: Request):
+    confirmed(body)
+    return queued(
+        request,
+        "backup_git_import",
+        "repo:" + repo_id,
+        lambda: Backups(manager).git_import(
+            repo_id, slug, body.destination, body.copy_id, body.commit
+        ),
+    )
+
+
+@app.post("/api/repos/{repo_id}/apps/{slug}/backups/{selected}/git")
+def export_git_backup(
+    repo_id: str, slug: str, selected: str, body: BackupGitExport, request: Request
+):
+    confirmed(body)
+    return queued(
+        request,
+        "backup_git_export",
+        "repo:" + repo_id,
+        lambda: Backups(manager).git_export(
+            repo_id, slug, body.destination, selected, body.expected_revision
+        ),
+    )
 
 
 @app.post("/api/repos/{repo_id}/apps/{slug}/backups/import")

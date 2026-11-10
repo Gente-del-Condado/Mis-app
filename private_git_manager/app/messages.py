@@ -2,6 +2,7 @@
 
 EVENTS = {
     "app_backup_imported": ("Copia de seguridad importada.", "Backup imported."),
+    "app_backup_git_exported": ("Copia cifrada guardada en Git.", "Encrypted backup saved to Git."),
     "app_backup_schedule_saved": ("Programación de copias guardada.", "Backup schedule saved."),
     "app_backup_download_started": ("Descarga de copia iniciada.", "Backup download started."),
     "app_backup_delete_started": ("Borrando copia de seguridad.", "Deleting backup."),
