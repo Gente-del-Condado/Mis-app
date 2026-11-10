@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.3
+
+- Group sensor settings into clearly labelled opening and closing fields, each with its own sound and condition.
+- Reject enabled opening/closing alerts without a selected sound and explain how to disable or remove a rule.
+- Configure opening and closing states independently, including custom values; reject identical or unavailable states.
+- Suggest a state pair from a new sensor’s current vocabulary while preserving existing rules and manual overrides.
+- Show both configured transitions in the assignment overview. Existing rules keep their previous closing-state interpretation.
+
 ## 0.7.2
 
 - Prevent PulseAudio from discarding the end of finite clips: request a 200 ms output buffer and append one second of silence before FFmpeg disconnects.
