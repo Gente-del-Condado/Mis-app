@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## 0.14.1
+
+- Propuestas editables de voz según el tipo de sensor binario: abierta/cerrada, encendido/apagado y otras equivalencias según su clase en Home Assistant.
+- Se proponen al abrir el editor si aún no hay equivalencias guardadas; solo se aplican al guardar. Se conservan los textos personalizados y las listas vacías guardadas.
+- Botón para añadir las sugerencias que faltan sin reemplazar las existentes. Los tipos desconocidos y sensores numéricos siguen siendo manuales.
+- Sin cambios en los estados detectados, disparadores ni prioridades de Alarmo.
+
 ## 0.14.0
 
 - Equivalencias de voz por aviso desde el panel: estado detectado → texto pronunciado, sin YAML (por ejemplo, on → abierta y off → cerrada).
