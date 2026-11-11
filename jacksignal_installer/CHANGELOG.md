@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## 0.8.2
+
+- Simplificadas las instrucciones de instalación: tienda Mis-app, HACS / Marketplace mediante jacksignal-ha o copia manual.
+- Retiradas las referencias a gestores externos de las guías de JackSignal para evitar confundirlos con requisitos del reproductor.
+- Sin cambios en el audio, las prioridades ni la sincronización de los catálogos.
+
 ## 0.8.1
 
 - Unificada en español la documentación del proyecto, la ayuda del instalador y el historial de cambios.

@@ -20,7 +20,7 @@ El instalador escribe en `/config/custom_components/jacksignal` (montado como `/
 
 Esta aplicación tiene `startup: once` y `boot: manual_only`. No actives el inicio automático. El error «boot option is set to manual_only so it cannot be changed» corresponde a intentar cambiar esa opción; no implica un fallo de audio. Deja la aplicación detenida después de usarla.
 
-Si la integración no aparece tras reiniciar, comprueba el registro del instalador y después los registros de Home Assistant. No gestiones simultáneamente la misma integración con este instalador y con HACS/Private Git Manager.
+Si la integración no aparece tras reiniciar, comprueba el registro del instalador y después los registros de Home Assistant. Usa una sola vía para actualizar JackSignal: este instalador, HACS / Marketplace o la copia manual.
 
 ## Alternativa: Marketplace
 
