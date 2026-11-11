@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## 0.14.0
+
+- Equivalencias de voz por aviso desde el panel: estado detectado → texto pronunciado, sin YAML (por ejemplo, on → abierta y off → cerrada).
+- Editor con añadir/eliminar, vista previa de la frase y equivalencias visibles en las tarjetas. Hasta 32 estados por aviso, con validación de campos y duplicados.
+- Los estados sin equivalencia conservan su lectura original. Los disparadores, umbrales, prioridades de Alarmo y avisos anteriores mantienen su comportamiento.
+- La edición nativa, las copias y los ajustes generales de voz conservan las equivalencias.
+
 ## 0.13.0
 
 - Configuración general de motor, idioma, voz y velocidad, con propuesta de Piper cuando hay un único motor Wyoming Piper conectado.
