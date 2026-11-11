@@ -1,5 +1,5 @@
 name: Headscale Gateway
-version: 1.4.5
+version: 1.4.6
 slug: headscale_gateway
 description: Gateway HTTPS privado con VPN, DNS, certificados y panel de administración
 url: https://gentedelcondado.es/forgejo/wolfbelmi88/headscale-gateway/src/branch/main/docs/INSTALACION_PRIVADA.md

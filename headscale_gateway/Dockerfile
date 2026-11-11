@@ -1,4 +1,4 @@
-FROM golang:1.27.1-alpine AS build
+FROM golang:1.27.4-alpine AS build
 WORKDIR /src
 ADD source.tar.gz /src/
 RUN CGO_ENABLED=0 go build -mod=readonly -buildvcs=false -trimpath -o /out/headscale-gateway .

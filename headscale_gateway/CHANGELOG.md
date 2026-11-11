@@ -1,3 +1,10 @@
+# 1.4.6
+
+- Actualización de Caddy a 2.11.5, go-jose a 4.1.6 y QUIC a 0.63.0 para corregir las alertas de seguridad de sus dependencias.
+- Actualización de glob y minimatch en las herramientas de empaquetado de la bandeja.
+- Compilación con Go 1.27.4 y actualización de x/net y compress para incorporar correcciones de HTTP, TLS y compresión.
+- Renovación del inventario y los avisos de licencia de las dependencias actualizadas.
+
 # 1.4.5
 
 - Envío y recuperación manual de perfiles y copias cifradas en repositorios privados de Forgejo.
