@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pivigia"
-version = "0.1.5"
+version = "0.1.6"
 description = "Vigilancia local de imágenes recibidas por SMTP"
 requires-python = ">=3.12"
 # Pillow 13 corrige los avisos de procesamiento de imágenes de octubre de 2026.

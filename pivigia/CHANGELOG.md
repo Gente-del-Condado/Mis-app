@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## 0.1.6 — Seguridad del código
+
+- Limitada la complejidad MIME a 128 partes, incluidos contenedores y mensajes anidados. Los correos que exceden el límite quedan fallidos, sin reintentos automáticos ni avisos por ausencia.
+- Limitados los fallos de autenticación SMTP por IP y globalmente, incluso entre conexiones nuevas. El rechazo temporal caduca automáticamente.
+- Los errores externos dejan de copiarse al historial y a los registros del trabajador; se muestran diagnósticos controlados y traducidos.
+- Solo se decodifican JPEG, PNG, GIF, WebP, BMP y TIFF. Se excluyen formatos que pueden invocar intérpretes externos, como EPS/PostScript.
+- Corregidos los permisos del directorio de datos, SQLite y token también en instalaciones existentes, sin sustituir sus datos.
+- Pruebas de regresión, documentación y catálogos español/inglés actualizados, conservando estructura y contratos de instalación.
+
 ## 0.1.5 — Seguridad de imágenes
 
 - Actualizado Pillow de 12.3.0 a 13.0.0 para corregir vulnerabilidades de procesamiento de imágenes, incluidas corrupción de memoria y denegación de servicio.

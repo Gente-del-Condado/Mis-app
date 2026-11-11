@@ -13,6 +13,7 @@ import numpy as np
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from .models import ModelManager
+from .config import IMAGE_FORMATS
 from .i18n import tr
 
 Image.MAX_IMAGE_PIXELS = 16_777_216
@@ -60,7 +61,7 @@ class Detector:
         if len(content) > settings.max_image_bytes:
             return [], tr("Imagen supera el límite de bytes")
         try:
-            with Image.open(io.BytesIO(content)) as source:
+            with Image.open(io.BytesIO(content), formats=IMAGE_FORMATS) as source:
                 width, height = source.size
                 if width * height > Image.MAX_IMAGE_PIXELS:
                     return [], tr("Imagen supera el límite de 16 megapíxeles")

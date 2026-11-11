@@ -1,5 +1,5 @@
 name: PiVigia
-version: "0.1.5"
+version: "0.1.6"
 slug: pivigia
 description: Fotos por correo, modelos descargables, pruebas de detección y cámaras RTSP opcionales. Acceso con Home Assistant.
 arch:

@@ -142,6 +142,8 @@ Para instalar desde una carpeta local de desarrollo, conserva su identidad y sus
 
 - **Sigue pidiendo certificado:** comprueba la versión instalada, recarga Configuración y omite ambos campos TLS en YAML.
 - **No llegan mensajes:** revisa puerto de entrada, autenticación y registro. La prueba SMTP de salida no comprueba la cámara.
+- **SMTP responde `454` al autenticar:** corrige las credenciales de la cámara y deja pasar 60 segundos desde los fallos. El límite es de cinco fallos por IP y cien globales en una ventana de 60 segundos, compartido entre conexiones. Las cámaras que salen por la misma IP comparten su límite.
+- **Correo rechazado por demasiadas partes MIME:** simplifica el mensaje de la cámara; el máximo es de 128 partes contando contenedores y mensajes anidados. El original queda en el historial fallido, sin reintentos automáticos. Las imágenes admitidas son JPEG, PNG, GIF, WebP, BMP y TIFF.
 - **No aparecen cambios:** confirma que has guardado y reiniciado cuando el ajuste sea de arranque.
 - **No aparece una actualización:** revisa el repositorio de la instancia y el registro de Supervisor.
 

@@ -10,6 +10,9 @@ from urllib.parse import urlsplit
 from pydantic import BaseModel, Field, model_validator, field_validator
 from .i18n import tr, match_language
 
+# Solo códecs raster para fotos; no habilitar intérpretes externos como Ghostscript.
+IMAGE_FORMATS = ("JPEG", "PNG", "GIF", "WEBP", "BMP", "TIFF")
+
 
 class Mailbox(BaseModel):
     address: str

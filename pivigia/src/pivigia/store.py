@@ -16,7 +16,11 @@ class Store:
     def __init__(self, path=None):
         self.path = Path(path) if path else data_dir()
         self.path.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # mkdir(mode=...) no corrige instalaciones existentes; cerrar el directorio antes de abrir SQLite.
+        self.path.chmod(0o700)
         self.db_path = self.path / "pivigia.sqlite3"
+        if self.db_path.exists():
+            self.db_path.chmod(0o600)
         with self.db() as db:
             db.executescript("""
               PRAGMA journal_mode=WAL;
@@ -41,6 +45,7 @@ class Store:
             fd = os.open(self.token_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
             with os.fdopen(fd, "w") as f:
                 f.write(os.environ.get("PIVIGIA_ADMIN_TOKEN") or secrets.token_urlsafe(32))
+        self.token_path.chmod(0o600)
         self.token = (os.environ.get("PIVIGIA_ADMIN_TOKEN") or self.token_path.read_text()).strip()
         if len(self.token) < 16:
             raise ValueError(tr("El token de administración debe tener al menos 16 caracteres"))

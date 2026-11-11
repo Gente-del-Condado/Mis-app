@@ -6,6 +6,7 @@ import math
 from html import escape
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+from .config import IMAGE_FORMATS
 from .i18n import N_, tr
 
 LABELS = {
@@ -62,7 +63,7 @@ def prepare_images(original, result, mailbox):
         if index not in wanted:
             continue
         content = part.get_payload(decode=True) or b""
-        with Image.open(io.BytesIO(content)) as source:
+        with Image.open(io.BytesIO(content), formats=IMAGE_FORMATS) as source:
             if source.width * source.height > Image.MAX_IMAGE_PIXELS:
                 raise ValueError(tr("Imagen demasiado grande para la notificación"))
             image = ImageOps.exif_transpose(source).convert("RGB")

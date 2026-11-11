@@ -1,6 +1,8 @@
 """Entrada SMTP autenticada o por IP autorizada; valida antes de admitir la cola."""
 import ipaddress
 import ssl
+import time
+from collections import deque
 
 from aiosmtpd.controller import Controller
 from aiosmtpd.smtp import AuthResult, LoginPassword
@@ -10,11 +12,16 @@ from .server import ServerSettings
 from .i18n import tr
 
 MAX_MESSAGE = 15_000_000
+AUTH_WINDOW = 60
+AUTH_FAILURES_PER_IP = 5
+AUTH_FAILURES_TOTAL = 100
 
 
 class Handler:
     def __init__(self, store, server_settings=None):
         self.store = store
+        # El controlador comparte el handler entre conexiones en un único bucle SMTP.
+        self.auth_failures = deque()
         settings = server_settings or ServerSettings().effective()
         self.trusted = [
             ipaddress.ip_network(x.strip())
@@ -26,9 +33,19 @@ class Handler:
         return any(ipaddress.ip_address(session.peer[0]) in network for network in self.trusted)
 
     def authenticate(self, server, session, envelope, mechanism, auth_data):
-        if not isinstance(auth_data, LoginPassword):
-            return AuthResult(success=False, handled=False)
+        now, peer = time.monotonic(), ipaddress.ip_address(session.peer[0])
+        if isinstance(peer, ipaddress.IPv6Address) and peer.ipv4_mapped:
+            peer = peer.ipv4_mapped
+        while self.auth_failures and self.auth_failures[0][0] <= now - AUTH_WINDOW:
+            self.auth_failures.popleft()
+        # El límite global acota también la memoria y los hashes ante IP cambiantes.
+        if (len(self.auth_failures) >= AUTH_FAILURES_TOTAL
+                or sum(address == peer for _, address in self.auth_failures) >= AUTH_FAILURES_PER_IP):
+            return AuthResult(success=False, handled=False,
+                              message=tr("454 Demasiados intentos de autenticación; reintenta más tarde"))
         try:
+            if not isinstance(auth_data, LoginPassword):
+                raise ValueError()
             username = auth_data.login.decode().lower()
             password = auth_data.password.decode()
             box = next(
@@ -37,6 +54,8 @@ class Handler:
             valid = box is not None and check_password(password, box.password)
         except (UnicodeError, ValueError):
             valid = False
+        if not valid:
+            self.auth_failures.append((now, peer))
         return AuthResult(success=valid, handled=False, auth_data=username if valid else None)
 
     async def handle_RCPT(self, server, session, envelope, address, rcpt_options):

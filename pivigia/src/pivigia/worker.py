@@ -13,10 +13,42 @@ from email.utils import formatdate, make_msgid
 
 from .detector import Detector
 from .notifications import alert_text, prepare_images, set_email_content
-from .telegram import TelegramClient
+from .telegram import TelegramClient, TelegramError
 from .i18n import tr, service_language, use_language
 
 log = logging.getLogger(__name__)
+MAX_MIME_PARTS = 128
+
+
+class MessageLimitError(ValueError):
+    """La estructura MIME excede el presupuesto, aunque quepa en el límite SMTP."""
+
+
+def parse_message(raw):
+    """Cuenta también contenedores y correos anidados antes de crear cada nodo."""
+    parts = 0
+
+    def factory(*, policy):
+        nonlocal parts
+        parts += 1
+        if parts > MAX_MIME_PARTS:
+            raise MessageLimitError()
+        return EmailMessage(policy=policy)
+
+    return BytesParser(policy=policy.default.clone(message_factory=factory)).parsebytes(raw)
+
+
+def delivery_description(error):
+    """Solo los errores construidos por PiVigia pueden aportar texto al historial."""
+    if isinstance(error, (DeliveryError, TelegramError)):
+        return str(error)
+    if isinstance(error, smtplib.SMTPAuthenticationError):
+        return tr("El servidor SMTP rechazó las credenciales.")
+    if isinstance(error, ssl.SSLError):
+        return tr("No se pudo establecer una conexión TLS segura.")
+    if isinstance(error, smtplib.SMTPRecipientsRefused):
+        return tr("El servidor SMTP rechazó el destinatario.")
+    return tr("No se pudo completar la entrega. Revisa la configuración y la conexión.")
 
 
 class ShutdownRequested(Exception):
@@ -58,8 +90,9 @@ class Worker:
                 ticks += 1
                 if ticks % 60 == 0:
                     self.store.cleanup(self.store.settings().retention_days)
-            except Exception:
-                log.exception(tr("Error del trabajador"))
+            except Exception as error:
+                # Los errores de dependencias pueden incluir credenciales o valores de ajustes.
+                log.error("%s: %s", tr("Error del trabajador"), type(error).__name__)
                 self.stop_event.wait(2)
 
     def process(self, job):
@@ -78,7 +111,7 @@ class Worker:
                     job["id"], status="discarded", error=tr("Buzón desactivado o eliminado"), raw=None
                 )
                 return
-            message = BytesParser(policy=policy.default).parsebytes(job["raw"])
+            message = parse_message(job["raw"])
             if message.get("X-PiVigia"):
                 self.store.update(job["id"], status="discarded", error=tr("Bucle de reenvío evitado"), raw=None)
                 return
@@ -135,7 +168,7 @@ class Worker:
                 except ShutdownRequested:
                     raise
                 except Exception as error:
-                    failures.append(f"{channel}: {error}")
+                    failures.append(f"{channel}: {delivery_description(error)}")
                     retry_after = max(retry_after, getattr(error, "retry_after", 0))
                     return
                 delivered.append(key)
@@ -173,13 +206,15 @@ class Worker:
             self.store.update(job["id"], status="sent", raw=None, error="")
         except ShutdownRequested:
             self.store.update(job["id"], status="queued", next_try=0)
+        except MessageLimitError:
+            # No reintentar automáticamente una estructura que seguirá excediendo el límite.
+            self.store.update(job["id"], status="failed", attempts=job["attempts"] + 1,
+                              error=tr("Correo rechazado: demasiadas partes MIME."))
         except Exception as error:
             attempts = job["attempts"] + 1
-            description = f"{type(error).__name__}: {error}"
-            if settings:
-                for secret in (settings.smtp_password, settings.telegram_bot_token):
-                    if secret:
-                        description = description.replace(secret, tr("[oculto]"))
+            # No basta con sustituir secretos literales: podrían llegar codificados o escapados.
+            description = (str(error) if isinstance(error, DeliveryError) else
+                           tr("No se pudo procesar el correo. Revisa la configuración y los modelos."))
             self.store.update(
                 job["id"],
                 attempts=attempts,
@@ -209,7 +244,7 @@ class Worker:
     @staticmethod
     def _forward(settings, destination, original, job, result, images=None):
         if not settings.smtp_host or not settings.smtp_from:
-            raise RuntimeError(tr("Configura el servidor SMTP de salida y el remitente"))
+            raise DeliveryError(tr("Configura el servidor SMTP de salida y el remitente"))
         message = EmailMessage()
         message["From"] = settings.smtp_from
         message["To"] = destination
@@ -227,7 +262,7 @@ class Worker:
     @staticmethod
     def send_email(settings, destination, message):
         if not settings.smtp_host or not settings.smtp_from:
-            raise RuntimeError(tr("Configura el servidor SMTP de salida y el remitente"))
+            raise DeliveryError(tr("Configura el servidor SMTP de salida y el remitente"))
         context = ssl.create_default_context()
         if settings.smtp_security == "ssl":
             smtp = smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=20, context=context)
