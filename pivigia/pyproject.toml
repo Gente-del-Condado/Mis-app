@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pivigia"
-version = "0.1.4"
+version = "0.1.5"
 description = "Vigilancia local de imágenes recibidas por SMTP"
 requires-python = ">=3.12"
-dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "aiosmtpd>=1.4.6,<2", "Pillow>=11,<13", "numpy>=2,<3", "opencv-python-headless>=4.10,<5"]
+# Pillow 13 corrige los avisos de procesamiento de imágenes de octubre de 2026.
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "aiosmtpd>=1.4.6,<2", "Pillow>=13.0.0,<14", "numpy>=2,<3", "opencv-python-headless>=4.10,<5"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.28", "ruff>=0.11", "pyyaml>=6"]

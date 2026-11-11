@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## 0.1.5 — Seguridad de imágenes
+
+- Actualizado Pillow de 12.3.0 a 13.0.0 para corregir vulnerabilidades de procesamiento de imágenes, incluidas corrupción de memoria y denegación de servicio.
+- El requisito mínimo de Pillow también pasa a 13.0.0: las instalaciones desde fuentes no pueden seleccionar las versiones afectadas.
+- Auditoría de las dependencias fijadas en CI y pruebas de compatibilidad de formatos de imagen, orientación EXIF y generación de notificaciones.
+- Complemento Home Assistant y paquete YunoHost sincronizados. Se conservan estructura, opciones, identificadores e idiomas.
+
 ## 0.1.4
 
 - Manual web en Markdown, con navegación lateral, búsqueda local, temas claro/oscuro, ejemplos y capturas reproducibles del panel con datos ficticios.
