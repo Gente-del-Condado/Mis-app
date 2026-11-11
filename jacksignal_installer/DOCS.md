@@ -36,3 +36,7 @@ Las reglas se configuran en **JackSignal → Configurar**, dentro de Dispositivo
 ## Envío directo y diagnóstico (0.8.0)
 
 Tras actualizar el instalador, pulsa Iniciar y reinicia Home Assistant. En la integración JackSignal → Configurar aparecen **Enviar audio** (subir archivo, URL o Mis medios, siempre P0) y **Diagnóstico DLNA**. Solo se admite audio. Los archivos válidos de hasta 100 MB quedan en Mis medios/jacksignal; las URLs no se guardan. Detener el envío directo no corta Alarmo. No es necesario activar DLNA para usar el envío directo.
+
+## Panel Gestionar avisos (0.10.0)
+
+Después de actualizar, iniciar el instalador y reiniciar Home Assistant, abre **JackSignal** en la barra lateral con una cuenta administradora. También tienes un enlace en **JackSignal → Configurar → Gestionar avisos**. Si el panel no aparece, recarga la página del navegador. Puedes buscar, filtrar, editar y activar o desactivar avisos sin borrar su configuración. Las pruebas usan P0, sin repetición, y su botón de detener no corta Alarmo. El acceso **Configuración y audio** conserva el resto de herramientas de la integración.

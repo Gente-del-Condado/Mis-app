@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## 0.10.0
+
+- Nuevo panel «Gestionar avisos» en la barra lateral, en español y para administradores, con secciones de Sensores, Alarmo y Voz.
+- Buscador sin distinción de tildes, filtros por configuración y activación, edición directa y resultados paginados.
+- Activación y desactivación persistentes sin borrar sonidos, condiciones ni frases; compatibilidad con las reglas existentes y los formularios tradicionales.
+- Pruebas manuales con prioridad baja, sin repetición, y detención limitada al audio de prueba para proteger los avisos de Alarmo.
+- Validación de cada sonido de apertura y cierre, control de cambios concurrentes y selección de archivos locales sin salir del editor.
+- Pruebas de permisos, conservación de reglas, desactivación y prioridades, y revisión visual con datos simulados en escritorio y móvil.
+
 ## 0.9.0
 
 - Nombre DLNA configurable por instalación, con validación de 1 a 64 caracteres y conservación de la identidad del receptor.

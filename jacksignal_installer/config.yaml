@@ -1,5 +1,5 @@
 name: Instalador de JackSignal
-version: "0.9.0"
+version: "0.10.0"
 slug: jacksignal_installer
 description: Instala JackSignal para audio local, avisos de Alarmo, voz de sensores y recepción DLNA exclusiva de audio.
 url: https://github.com/Gente-del-Condado/jacksignal-ha
