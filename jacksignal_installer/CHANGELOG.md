@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## 0.11.0
+
+- Voz: selección de idioma y voz según las capacidades del motor, frase con valor del sensor y escucha del borrador sin guardar. Las reglas antiguas conservan sus valores predeterminados.
+- Ayuda en español para instalar Piper local mediante Wyoming y corregir el idioma de Google Translate.
+- Panel con vista compacta, contadores y estado de reproducción actualizado cada cinco segundos mientras está visible.
+- Selección de hasta 200 avisos para modificar activación o prioridad con validación conjunta y protección contra cambios concurrentes.
+- Copia de avisos de sensor o voz con revisión antes de guardar; comienza desactivada y conserva los estados de apertura/cierre del destino.
+- Las pruebas mantienen P0, sin repetición, y su parada solo afecta a la prueba del panel.
+
 ## 0.10.0
 
 - Nuevo panel «Gestionar avisos» en la barra lateral, en español y para administradores, con secciones de Sensores, Alarmo y Voz.

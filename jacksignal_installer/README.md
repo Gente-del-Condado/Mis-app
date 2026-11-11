@@ -2,10 +2,10 @@
 
 Instala o actualiza **JackSignal**, la integración que reproduce avisos, música y voz por la salida de audio local de Home Assistant.
 
-- Panel «Gestionar avisos»: buscador, filtros, edición, pruebas y activación sin borrar.
+- Panel «Gestionar avisos»: buscador, filtros, vista compacta, copias, edición en bloque y activación sin borrar.
 - Sonidos de Alarmo con prioridades y sirena repetitiva.
 - Sonidos independientes al abrir y cerrar sensores.
-- Texto a voz de sensores, configurable sin YAML.
+- Texto a voz de sensores, con idioma, voz y prueba previa sin YAML; compatible con Piper local mediante Wyoming.
 - Acciones visuales para cualquier automatización.
 - Receptor DLNA/UPnP opcional, exclusivamente de audio.
 

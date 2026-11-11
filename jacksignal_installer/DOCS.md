@@ -40,3 +40,9 @@ Tras actualizar el instalador, pulsa Iniciar y reinicia Home Assistant. En la in
 ## Panel Gestionar avisos (0.10.0)
 
 Después de actualizar, iniciar el instalador y reiniciar Home Assistant, abre **JackSignal** en la barra lateral con una cuenta administradora. También tienes un enlace en **JackSignal → Configurar → Gestionar avisos**. Si el panel no aparece, recarga la página del navegador. Puedes buscar, filtrar, editar y activar o desactivar avisos sin borrar su configuración. Las pruebas usan P0, sin repetición, y su botón de detener no corta Alarmo. El acceso **Configuración y audio** conserva el resto de herramientas de la integración.
+
+## Mejoras del panel (0.11.0)
+
+El panel añade vista compacta, contadores y estado de reproducción actualizado cada cinco segundos. Selecciona avisos para cambiar activación/prioridad en bloque o usa **Copiar a…** para revisar una copia en otro sensor antes de guardarla. En **Voz**, elige idioma y voz compatibles con el motor, revisa la frase y escúchala antes de guardar. Las pruebas siguen siendo P0.
+
+Para voz local, instala **Piper**, configura una voz española, inicia la aplicación y añade la integración **Wyoming** descubierta. Pulsa **Actualizar** en JackSignal para seleccionar ese motor. Google Translate puede usar **es**; el idioma de la interfaz no determina el de la voz.
