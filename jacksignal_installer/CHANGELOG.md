@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## 0.12.1
+
+- El idioma automático de los avisos de voz prefiere español de España, español genérico u otra variante española compatible, en ese orden; si el motor no ofrece español, utiliza su idioma predeterminado.
+- La voz automática corresponde al idioma efectivo, también en Piper. Se utiliza el código exacto anunciado por el motor (`es_ES`, `es-ES`, `es`, etc.).
+- Se respetan los idiomas y voces seleccionados explícitamente; las reglas antiguas sin selección explícita también usan la nueva preferencia española.
+- El panel muestra el idioma automático efectivo y permite cambiarlo por aviso. Las prioridades y velocidades se conservan.
+
 ## 0.12.0
 
 - Velocidad de voz independiente por aviso, configurable desde el panel sin YAML, entre 0,5× y 2×; la tarjeta muestra la selección.

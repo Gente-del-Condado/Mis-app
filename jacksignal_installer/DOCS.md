@@ -50,3 +50,7 @@ Para voz local, instala **Piper**, configura una voz española, inicia la aplica
 ## Velocidad por aviso (0.12.0)
 
 En **JackSignal → Voz → Editar**, el campo **Velocidad de voz** admite de 0,5× a 2×. Prueba con 0,8 para hablar más despacio o 1,2 para hablar más rápido. **Escuchar antes de guardar** utiliza la velocidad del borrador y mantiene P0. Guarda para aplicarla al aviso. No hace falta reiniciar Piper; el ajuste se aplica sobre su velocidad global.
+
+## Idioma automático (0.12.1)
+
+JackSignal prefiere español cuando el motor lo admite, empezando por español de España. En **Voz → Editar → Idioma** puedes mantener **Automático** o seleccionar otro idioma; el panel indica el efectivo. Las voces seleccionadas explícitamente se conservan. Si solo aparece inglés en Piper, instala una voz española y recarga Wyoming.
