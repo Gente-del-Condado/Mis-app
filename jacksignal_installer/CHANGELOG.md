@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## 0.9.0
+
+- Nombre DLNA configurable por instalación, con validación de 1 a 64 caracteres y conservación de la identidad del receptor.
+- El diagnóstico muestra el nombre anunciado; las instalaciones anteriores conservan JackSignal Audio.
+- Añadida una guía de pruebas de diagnóstico, archivos, URLs y prioridades de Alarmo, con aclaraciones sobre varias estancias.
+- Sin cambios en la política de prioridades ni en la reproducción de audio.
+
 ## 0.8.2
 
 - Simplificadas las instrucciones de instalación: tienda Mis-app, HACS / Marketplace mediante jacksignal-ha o copia manual.
