@@ -37,3 +37,7 @@ Las reglas se configuran en **JackSignal → Configurar**, dentro de Dispositivo
 Start the installer and check its log. It copies the integration and stops automatically. Restart Home Assistant, then add JackSignal under Devices & services. After each installer update, start it again and restart Home Assistant. Automatic boot is intentionally unsupported. Your settings and media remain intact; previous integration code is backed up in `/config/.jacksignal-previous`.
 
 Configure playback rules in the **JackSignal integration**, not in this installer app. See the full guide linked above for Alarmo, opening/closing sounds, sensor speech and audio-only DLNA.
+
+## Envío directo y diagnóstico (0.8.0)
+
+Tras actualizar el instalador, pulsa Iniciar y reinicia Home Assistant. En la integración JackSignal → Configurar aparecen **Enviar audio** (subir archivo, URL o Mis medios, siempre P0) y **Diagnóstico DLNA**. Solo se admite audio. Los archivos válidos de hasta 100 MB quedan en Mis medios/jacksignal; las URLs no se guardan. Detener el envío directo no corta Alarmo. No es necesario activar DLNA para usar el envío directo.

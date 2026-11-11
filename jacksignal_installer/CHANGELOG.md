@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0
+
+- Add native direct audio upload, HTTP(S) URL and local media forms; valid uploads are retained in My media/jacksignal with unique filenames (100 MB maximum).
+- Inspect actual audio streams with FFprobe and reject video, including disguised files; allow embedded album artwork.
+- Route direct audio through low-priority playback and scope its stop button to direct playback so Alarmo remains protected.
+- Add refreshable DLNA runtime diagnostics with receiver/discovery status, description URL, playback priority and sanitized HTTP activity/errors.
+- Add English/Spanish form text, documentation and regression coverage for uploads, rejection, diagnostics and priority handling.
+
 ## 0.7.5
 
 - Advertise the installed integration version in the DLNA device description instead of the fixed 0.7.0 value.
