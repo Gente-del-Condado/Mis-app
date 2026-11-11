@@ -1,7 +1,7 @@
-name: JackSignal Installer
-version: "0.8.0"
+name: Instalador de JackSignal
+version: "0.8.1"
 slug: jacksignal_installer
-description: Install JackSignal for local audio, Alarmo alerts, sensor speech and audio-only DLNA.
+description: Instala JackSignal para audio local, avisos de Alarmo, voz de sensores y recepción DLNA exclusiva de audio.
 url: https://github.com/Gente-del-Condado/jacksignal-ha
 homeassistant: "2026.11.0"
 arch:

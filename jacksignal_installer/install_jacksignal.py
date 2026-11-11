@@ -14,7 +14,7 @@ def integration_version(directory: Path) -> str:
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
     version = manifest.get("version")
     if manifest.get("domain") != DOMAIN or not isinstance(version, str) or not version:
-        raise ValueError(f"Invalid JackSignal manifest in {directory}")
+        raise ValueError(f"Manifiesto de JackSignal no válido en {directory}")
     return version
 
 
@@ -22,14 +22,14 @@ def install(source: Path, config: Path) -> None:
     """Stage a complete update and preserve the previous integration."""
     version = integration_version(source)
     if not config.is_dir() or not (config / "configuration.yaml").is_file():
-        raise ValueError(f"Home Assistant configuration was not found at {config}")
+        raise ValueError(f"No se ha encontrado la configuración de Home Assistant en {config}")
 
     components = config / "custom_components"
     destination = components / DOMAIN
     previous = config / ".jacksignal-previous"
     for path in (components, destination, previous):
         if path.is_symlink():
-            raise ValueError(f"Refusing to replace or follow symbolic link: {path}")
+            raise ValueError(f"No se puede sustituir ni seguir el enlace simbólico: {path}")
 
     components.mkdir(exist_ok=True)
     if previous.exists():
@@ -41,7 +41,7 @@ def install(source: Path, config: Path) -> None:
     if destination.exists():
         installed = integration_version(destination)
         if installed == version:
-            print(f"JackSignal {version} is already installed.")
+            print(f"JackSignal {version} ya está instalado.")
             return
 
     with TemporaryDirectory(prefix=".jacksignal-stage-", dir=config) as temp:
@@ -59,12 +59,12 @@ def install(source: Path, config: Path) -> None:
                 previous.rename(destination)
             raise
 
-    print(f"Installed JackSignal {version}. Restart Home Assistant to load it.")
+    print(f"Instalado JackSignal {version}. Reinicia Home Assistant para cargarlo.")
 
 
 if __name__ == "__main__":
     try:
         install(Path(__file__).with_name(DOMAIN), Path("/homeassistant"))
     except (OSError, ValueError) as err:
-        print(f"JackSignal installation failed: {err}", file=sys.stderr)
+        print(f"Ha fallado la instalación de JackSignal: {err}", file=sys.stderr)
         sys.exit(1)

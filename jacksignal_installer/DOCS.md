@@ -1,4 +1,4 @@
-# Usar JackSignal Installer
+# Usar Instalador de JackSignal
 
 ## Primera instalación
 
@@ -32,11 +32,6 @@ Las reglas se configuran en **JackSignal → Configurar**, dentro de Dispositivo
 
 [Guía completa: sonidos, voz, prioridades, automatizaciones y DLNA](https://github.com/Gente-del-Condado/jacksignal-ha).
 
-## English
-
-Start the installer and check its log. It copies the integration and stops automatically. Restart Home Assistant, then add JackSignal under Devices & services. After each installer update, start it again and restart Home Assistant. Automatic boot is intentionally unsupported. Your settings and media remain intact; previous integration code is backed up in `/config/.jacksignal-previous`.
-
-Configure playback rules in the **JackSignal integration**, not in this installer app. See the full guide linked above for Alarmo, opening/closing sounds, sensor speech and audio-only DLNA.
 
 ## Envío directo y diagnóstico (0.8.0)
 
