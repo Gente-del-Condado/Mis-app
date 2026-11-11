@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## 0.12.0
+
+- Velocidad de voz independiente por aviso, configurable desde el panel sin YAML, entre 0,5× y 2×; la tarjeta muestra la selección.
+- La prueba previa usa la velocidad del borrador y mantiene P0; los avisos automáticos conservan su prioridad y la protección de Alarmo.
+- Ajuste de tempo conservando el tono, compatible con Piper y otros motores TTS, sin cambiar la velocidad global del motor ni otros sonidos.
+- Reglas existentes a 1×; las copias, la desactivación y la edición desde el formulario nativo conservan el ajuste.
+- Validación del rango en el servidor y pruebas de duración, tono, persistencia y prioridades.
+
 ## 0.11.0
 
 - Voz: selección de idioma y voz según las capacidades del motor, frase con valor del sensor y escucha del borrador sin guardar. Las reglas antiguas conservan sus valores predeterminados.

@@ -46,3 +46,7 @@ Después de actualizar, iniciar el instalador y reiniciar Home Assistant, abre *
 El panel añade vista compacta, contadores y estado de reproducción actualizado cada cinco segundos. Selecciona avisos para cambiar activación/prioridad en bloque o usa **Copiar a…** para revisar una copia en otro sensor antes de guardarla. En **Voz**, elige idioma y voz compatibles con el motor, revisa la frase y escúchala antes de guardar. Las pruebas siguen siendo P0.
 
 Para voz local, instala **Piper**, configura una voz española, inicia la aplicación y añade la integración **Wyoming** descubierta. Pulsa **Actualizar** en JackSignal para seleccionar ese motor. Google Translate puede usar **es**; el idioma de la interfaz no determina el de la voz.
+
+## Velocidad por aviso (0.12.0)
+
+En **JackSignal → Voz → Editar**, el campo **Velocidad de voz** admite de 0,5× a 2×. Prueba con 0,8 para hablar más despacio o 1,2 para hablar más rápido. **Escuchar antes de guardar** utiliza la velocidad del borrador y mantiene P0. Guarda para aplicarla al aviso. No hace falta reiniciar Piper; el ajuste se aplica sobre su velocidad global.

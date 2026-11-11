@@ -5,7 +5,7 @@ Instala o actualiza **JackSignal**, la integración que reproduce avisos, músic
 - Panel «Gestionar avisos»: buscador, filtros, vista compacta, copias, edición en bloque y activación sin borrar.
 - Sonidos de Alarmo con prioridades y sirena repetitiva.
 - Sonidos independientes al abrir y cerrar sensores.
-- Texto a voz de sensores, con idioma, voz y prueba previa sin YAML; compatible con Piper local mediante Wyoming.
+- Texto a voz de sensores, con idioma, voz, velocidad por aviso y prueba previa sin YAML; compatible con Piper local mediante Wyoming.
 - Acciones visuales para cualquier automatización.
 - Receptor DLNA/UPnP opcional, exclusivamente de audio.
 
