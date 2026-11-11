@@ -1,5 +1,15 @@
 # Historial de cambios
 
+## 0.15.0
+
+- Sensores reúne audio y voz en la misma ficha, con edición, pruebas y activación independientes. Incluye sensores numéricos y mantiene el filtro Solo voz.
+- Corrección: un cambio de atributos durante TTS ya no descarta el aviso cuando el estado del sensor sigue igual.
+- Un audio rechazado por prioridad o un fallo al generar voz ya no consume el intervalo mínimo.
+- Diagnóstico visible del último cambio automático: intervalo, prioridad, cambio de estado durante TTS, error o envío al reproductor.
+- Los nuevos avisos binarios del panel proponen cada cambio y 0 segundos. Los avisos existentes mantienen sus condiciones; el formulario explica la diferencia entre prueba, activación y disparador.
+- Aviso de conflicto cuando audio y voz están configurados para el mismo cambio. Se conservan las prioridades de Alarmo.
+- Pruebas de eventos reales en Home Assistant con TTS simulado, atributos durante generación, intervalo, diagnóstico y selección conjunta de audio y voz.
+
 ## 0.14.1
 
 - Propuestas editables de voz según el tipo de sensor binario: abierta/cerrada, encendido/apagado y otras equivalencias según su clase en Home Assistant.
