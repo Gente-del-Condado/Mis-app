@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## 0.13.0
+
+- Configuración general de motor, idioma, voz y velocidad, con propuesta de Piper cuando hay un único motor Wyoming Piper conectado.
+- Los nuevos avisos del panel heredan la voz general; los existentes conservan sus valores salvo que se marque «Aplicar a todos». Cada aviso admite personalización independiente y mantiene texto, condiciones y prioridad.
+- Preparación de Piper con confirmación para administradores con Supervisor: instala la aplicación oficial si falta, configura es_ES-davefx-medium e inicio automático y la inicia. Conserva la configuración de instalaciones existentes.
+- Avisos de progreso y errores, enlaces para revisar Piper y completar Wyoming; no se instala automáticamente al cargar la integración.
+- Pruebas de herencia, excepciones, validación, prioridades y preparación de Piper simulada. Pendiente validar la instalación en Home Assistant OS real.
+
 ## 0.12.1
 
 - El idioma automático de los avisos de voz prefiere español de España, español genérico u otra variante española compatible, en ese orden; si el motor no ofrece español, utiliza su idioma predeterminado.

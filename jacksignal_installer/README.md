@@ -5,6 +5,7 @@ Instala o actualiza **JackSignal**, la integración que reproduce avisos, músic
 - Panel «Gestionar avisos»: buscador, filtros, vista compacta, copias, edición en bloque y activación sin borrar.
 - Sonidos de Alarmo con prioridades y sirena repetitiva.
 - Sonidos independientes al abrir y cerrar sensores.
+- Voz general con Piper, español y velocidad compartidos, personalizable por aviso; instalación asistida con confirmación en Home Assistant OS.
 - Texto a voz de sensores, con idioma, voz, velocidad por aviso y prueba previa sin YAML; compatible con Piper local mediante Wyoming.
 - Acciones visuales para cualquier automatización.
 - Receptor DLNA/UPnP opcional, exclusivamente de audio.
