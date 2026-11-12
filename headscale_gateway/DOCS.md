@@ -215,3 +215,9 @@ Las compilaciones normales no activan el módulo comercial opcional.
 Al pedir ayuda, incluye versión, arquitectura, forma de acceso y el error sin
 credenciales. Evita compartir bases de datos, copias, opciones con contraseñas
 o registros completos sin revisar.
+
+## Licencia y fuentes
+
+El código propio es software libre bajo **AGPL-3.0-only**. `source.tar.gz`
+contiene las fuentes del motor, `LICENSE`, `NOTICE` y `SOURCE.md` con las
+instrucciones de compilación. Los avisos de terceros se conservan en `notices/`.
