@@ -1,5 +1,12 @@
 # Historial de cambios
 
+## 0.18.0
+
+- Historial persistente en Home Assistant, con retención configurable entre 1 y 365 días (7 por defecto) y límite global de 1.000 registros.
+- Filtros por resultado, audio o voz, prioridad, periodo y texto; consulta en bloques de 50 sobre todos los registros conservados.
+- Borrado confirmado por sensor o completo desde el panel, sin modificar avisos ni prioridades de Alarmo.
+- Limpieza automática, escrituras agrupadas y guardado al detener la integración; los intentos pendientes al reiniciar se muestran como interrumpidos.
+
 ## 0.17.0
 
 - Historial unificado de audio y voz en cada ficha del sensor, con hora, origen, prioridad, transición y motivo del resultado.
