@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## 0.17.0
+
+- Historial unificado de audio y voz en cada ficha del sensor, con hora, origen, prioridad, transición y motivo del resultado.
+- Registro de intentos automáticos, pruebas del panel/configuración y acciones de voz; incluye el audio del sensor seleccionado ante fallo al armar Alarmo.
+- Seguimiento de FFmpeg: inicio, finalización sin errores, interrupción y error. No se presenta como confirmación de sonido físico.
+- Omisiones explícitas por intervalo, prioridad, desactivación, modo manual, condiciones o falta de audio.
+- Últimos 50 registros por sensor, con límite global de 1.000 en memoria. Se conservan al editar avisos y se vacían al reiniciar Home Assistant.
+- Actualización de historiales abiertos y consulta manual, accesibles solo a administradores; prioridades de Alarmo intactas.
+
 ## 0.16.0
 
 - Disponibilidad y estado interno en cada ficha del sensor: disponible, no disponible, desconocido o entidad ausente.
