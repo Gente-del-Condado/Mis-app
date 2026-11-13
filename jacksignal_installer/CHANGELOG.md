@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## 0.16.0
+
+- Disponibilidad y estado interno en cada ficha del sensor: disponible, no disponible, desconocido o entidad ausente.
+- Último cambio de estado, actualización de atributos y registro en Home Assistant, con fecha/hora y tiempo transcurrido; no se confunden con conectividad física o last_seen de Zigbee.
+- Consulta de sensores visibles cada cinco segundos sin interrumpir la edición; aviso de datos desactualizados si falla la conexión.
+- Filtro por disponibilidad y menú más compacto con configuración de voz/Piper y ayuda de diagnóstico desplegables.
+- Sin cambios en disparadores, equivalencias ni prioridades de Alarmo. Pruebas de fechas, atributos, consultas, filtros y presentación.
+
 ## 0.15.0
 
 - Sensores reúne audio y voz en la misma ficha, con edición, pruebas y activación independientes. Incluye sensores numéricos y mantiene el filtro Solo voz.
