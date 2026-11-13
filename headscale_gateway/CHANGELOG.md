@@ -1,3 +1,10 @@
+# 1.4.7
+
+- Versión común del motor, complemento, paquete YunoHost y clientes de escritorio y Android.
+- Documentación de instalación, privacidad, firmas y canales actualizada en ambos manuales públicos.
+- Preparación del catálogo YunoHost y publicación de los fuentes completos sin historial privado.
+- Se conservan los controles de seguridad previos a la publicación automática en Mis-app.
+
 # 1.4.6
 
 - Actualización de Caddy a 2.11.5, go-jose a 4.1.6 y QUIC a 0.63.0 para corregir las alertas de seguridad de sus dependencias.
